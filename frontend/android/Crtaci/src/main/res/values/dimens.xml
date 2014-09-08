@@ -1,0 +1,7 @@
+<resources>
+    <dimen name="activity_horizontal_margin">16dp</dimen>
+    <dimen name="activity_vertical_margin">16dp</dimen>
+    <dimen name="player_height">266dip</dimen>
+    <dimen name="thumbnail_width">80dip</dimen>
+    <dimen name="thumbnail_height">60dip</dimen>
+</resources>

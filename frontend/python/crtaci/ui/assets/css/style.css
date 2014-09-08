@@ -1,0 +1,65 @@
+body {
+    width: 100%;
+    background: #87CEEB;
+}
+
+ul {
+    list-style-type: none;
+    margin: 0; padding: 0;
+}
+
+ul li {
+    height: 180px; width: 240px;
+    background : #eeeeee;
+    margin: 1.5em 1.5em; padding: 5px;
+    float: left;
+}
+
+ul li img {
+    margin: 0 auto;
+}
+
+a:hover, a:visited, a:link, a:active {
+    border: none;
+    outline: none;
+    text-decoration: none;
+}
+
+ul div.image {
+    opacity: 1.0;
+    vertical-align: middle;
+    text-align: center;
+    position: relative;
+    display: inline-block;
+}
+
+ul div.image:hover {
+    opacity: 0.6;
+}
+
+ul div.text {
+    vertical-align: bottom;
+    text-align: center;
+    text-transform: capitalize;
+    font-family: "Comic Sans MS", "Comic Sans";
+    font-size: 13px;
+    font-weight: bold;
+    color: #27408B;
+}
+
+ul div.play {
+    opacity: 0;
+    background: url("qrc:///images/play.png") center center no-repeat;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 70px;
+    height: 70px;
+    margin: -35px 0 0 -35px;
+    z-index: 10;
+}
+
+ul div.play:hover {
+    opacity: 1.0 !important;
+    cursor: pointer;
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Crtaći</string>
+    <string name="app_credits">http://crtaci.rs\nAuthor: Milan Nikolić\n(gen2brain)\n\nFor Naya and Noam &lt;3\n\nThis program is released under the terms of the GNU General Public License version 3\nhttp://www.gnu.org/licenses/gpl-3.0.txt</string>
+    <string name="action_about">About</string>
+    <string name="action_rate">Rate this app</string>
+    <string name="error_network">Check your network connection</string>
+
+</resources>

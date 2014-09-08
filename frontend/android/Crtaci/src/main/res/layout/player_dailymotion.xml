@@ -1,0 +1,14 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="fill_parent"
+    android:background="@android:color/black"
+    tools:context=".SampleActivity" >
+
+   <rs.crtaci.crtaci.utils.DMWebVideoView
+        android:id="@+id/dailymotion_view"
+        android:layout_width="fill_parent"
+        android:layout_height="@dimen/player_height"
+        android:layout_gravity="center_vertical" />
+
+</FrameLayout>

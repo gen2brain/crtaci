@@ -1,0 +1,58 @@
+[Setup]
+AppName=Crtaci
+AppVerName=Crtaci {VERSION}
+VersionInfoVersion={VERSION}
+AppPublisher=
+AppPublisherURL=http://crtaci.rs/
+AppSupportURL=
+AppUpdatesURL=
+DefaultDirName={pf}\Crtaci
+DefaultGroupName=Crtaci
+AllowNoIcons=yes
+OutputDir=.
+Uninstallable=yes
+WindowVisible=no
+AppCopyright=Author: Milan Nikolic <gen2brain@gmail.com>
+OutputBaseFilename=crtaci-{VERSION}-setup
+UninstallDisplayIcon={app}\crtaci.exe
+LicenseFile=crtaci\COPYING
+DisableStartupPrompt=yes
+ChangesAssociations=yes
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}";
+
+[Files]
+Source: "crtaci\*.pyd"; DestDir: "{app}";
+Source: "crtaci\*.exe"; DestDir: "{app}";
+Source: "crtaci\*.dll"; DestDir: "{app}";
+Source: "crtaci\*.manifest"; DestDir: "{app}";
+Source: "crtaci\AUTHORS"; DestDir: "{app}";
+Source: "crtaci\COPYING"; DestDir: "{app}";
+Source: "crtaci\README.md"; DestDir: "{app}";
+Source: "crtaci\ChangeLog"; DestDir: "{app}";
+Source: "crtaci\qt4_plugins\codecs\*.dll"; DestDir: "{app}\qt4_plugins\codecs";
+Source: "crtaci\qt4_plugins\iconengines\*.dll"; DestDir: "{app}\qt4_plugins\iconengines";
+Source: "crtaci\qt4_plugins\imageformats\*.dll"; DestDir: "{app}\qt4_plugins\imageformats";
+Source: "crtaci\backend\crtaci-http.exe"; DestDir: "{app}\backend";
+Source: "crtaci\fonts\*"; DestDir: "{app}\fonts";
+Source: "crtaci\libquvi-scripts\0.9\*"; DestDir: "{app}\libquvi-scripts\0.9"; Flags: recursesubdirs
+Source: "crtaci\lua\*"; DestDir: "{app}\lua"; Flags: recursesubdirs
+Source: "crtaci\mime\*"; DestDir: "{app}\mime";
+Source: "crtaci\socket\*"; DestDir: "{app}\socket";
+Source: "crtaci\mpv\*"; DestDir: "{app}\mpv";
+Source: "crtaci\lxp.dll"; DestDir: "{app}";
+Source: "crtaci\mpv.com"; DestDir: "{app}";
+Source: "crtaci\mpv.exe"; DestDir: "{app}";
+
+[Icons]
+Name: {group}\Crtaci; Filename: {app}\crtaci.exe; Tasks: desktopicon;
+Name: {group}\{cm:ProgramOnTheWeb,crtaci}; Filename: http://crtaci.rs/;
+Name: {group}\{cm:UninstallProgram,crtaci}; Filename: {app}\unins000.exe;
+Name: {userdesktop}\Crtaci; Filename: {app}\crtaci.exe; Tasks: desktopicon;
+
+[Run]
+Filename: {app}\crtaci.exe; Description: {cm:LaunchProgram,crtaci}; Flags: nowait postinstall skipifsilent;
+
+[Dirs]
+Tasks: desktopicon; Name: {ICON};

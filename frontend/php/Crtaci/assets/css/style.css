@@ -1,0 +1,137 @@
+html {
+    min-width: 1008px;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #FFFFFF;
+}
+
+#wrapper {
+    width: 1008px;
+    margin: 5px auto;
+    padding: 0;
+}
+
+nav {
+    margin: 0;
+    padding: 0;
+}
+
+nav ul {
+    list-style-type: none;
+    width: 189px;
+    height: 645px;
+    margin: 0;
+    padding: 0;
+    float: left;
+    background: #FFFFFF;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    border-top: 3px solid #DCDCDC;
+    border-bottom: 3px solid #DCDCDC;
+    border-left: 3px solid #DCDCDC;
+}
+
+nav ul li {
+    margin: 0 0 15px 0;
+    text-transform: capitalize;
+    font-family: "Comic Sans MS", "Comic Sans";
+    font-size: 12px;
+    font-weight: bold;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+nav ul li img {
+    vertical-align: middle;
+    margin: 0 10px 0 0;
+}
+
+article ul {
+    list-style-type: none;
+    width: 798px;
+    height: 630px;
+    margin: 0;
+    padding: 15px 0 0 15px;
+    background: #87CEEB;
+    float: right;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    border-top: 3px solid #DCDCDC;
+    border-bottom: 3px solid #DCDCDC;
+    border-right: 3px solid #DCDCDC;
+}
+
+article ul li {
+    height: 180px; width: 240px;
+    background : #eeeeee;
+    margin: 0 15px 15px 0;
+    padding: 2px;
+    float: left;
+}
+
+article ul li img {
+    margin: 0 auto;
+}
+
+a:hover, a:visited, a:link, a:active {
+    border: none;
+    outline: none;
+    text-decoration: none;
+    color: #27408B;
+}
+
+article ul div.image {
+    opacity: 1.0;
+    vertical-align: middle;
+    text-align: center;
+    position: relative;
+    display: inline-block;
+}
+
+article ul div.image:hover {
+    opacity: 0.6;
+}
+
+article ul div.text {
+    vertical-align: bottom;
+    text-align: center;
+    text-transform: capitalize;
+    font-family: "Comic Sans MS", "Comic Sans";
+    font-size: 12px;
+    font-weight: bold;
+    color: #27408B;
+    margin-top: -3px;
+}
+
+article ul div.play {
+    opacity: 0;
+    background: url("../img/play.png") center center no-repeat;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 70px;
+    height: 70px;
+    margin: -35px 0 0 -35px;
+    z-index: 10;
+}
+
+article ul div.play:hover {
+    opacity: 1.0 !important;
+    cursor: pointer;
+}
+
+.odd {
+    background: #FFFFFF;
+}
+
+.even {
+    background: #F0F8FF;
+}
+
+.selected {
+    background: #BEBEBE;
+}

@@ -1,0 +1,10 @@
+<RCC>
+  <qresource prefix="/">
+    <file>images/crtaci.png</file>
+    <file>images/info.png</file>
+    <file>images/loading.gif</file>
+    <file>images/play.png</file>
+    <file>images/rotate-left.png</file>
+    <file>images/rotate-right.png</file>
+  </qresource>
+</RCC>

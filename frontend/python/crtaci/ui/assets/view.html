@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="qrc:///assets/css/style.css" />
+    <script type="text/javascript" src="qrc:///assets/js/jquery.js"></script>
+    <script type="text/javascript" src="qrc:///assets/js/jquery.lazyload.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $("img").lazyload({
+                effect : "fadeIn"
+            });
+        });
+    </script>
+</head>
+<body>
+    <ul>
+        {HTML}
+    </ul>
+</body>
+</html>

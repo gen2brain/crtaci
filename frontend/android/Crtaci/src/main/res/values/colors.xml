@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="item">#27408B</color>
+    <color name="item_selected">#6484A4</color>
+    <color name="background">#FFFFFF</color>
+    <color name="background_alternate">#F0F8FF</color>
+    <color name="background_cartoon">#87CEEB</color>
+</resources>
