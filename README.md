@@ -1,9 +1,9 @@
 About
 -----
 
-"Crtaći" pretražuje YouTube i DailyMotion za starim dobrim crtanim filmovima.
+"Crtaći" searches YouTube and DailyMotion for good old cartoons.
 
-Aplikacija je dostupna za Windows, Mac OS X, Linux, Android i Web.
+Application is available for Windows, Mac OS X, Linux, Android and Web.
 
 Web Site
 -------
