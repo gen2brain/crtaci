@@ -14,6 +14,7 @@ import android.view.Window;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.InputStream;
@@ -35,6 +36,7 @@ public class CartoonsActivity extends ActionBarActivity {
 
     public static final String TAG = "CartoonsActivity";
 
+    private boolean twoPane;
     private Character character;
     private ArrayList<Cartoon> cartoons;
     private CartoonsTask cartoonsTask;
@@ -46,6 +48,12 @@ public class CartoonsActivity extends ActionBarActivity {
 
         supportRequestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_cartoons);
+
+        if(findViewById(R.id.cartoons_container) != null) {
+            twoPane = true;
+        } else {
+            twoPane = false;
+        }
 
         final ActionBar actionBar = getSupportActionBar();
         actionBar.setDisplayShowTitleEnabled(true);
@@ -140,7 +148,7 @@ public class CartoonsActivity extends ActionBarActivity {
         if (prev != null) {
             ft.remove(prev);
         }
-        ft.replace(R.id.container, CartoonsFragment.newInstance(results));
+        ft.replace(R.id.container, CartoonsFragment.newInstance(results, twoPane));
         ft.commit();
     }
 
@@ -178,9 +186,13 @@ public class CartoonsActivity extends ActionBarActivity {
             }
 
             Type listType = new TypeToken<ArrayList<Cartoon>>(){}.getType();
-            ArrayList<Cartoon> list = new Gson().fromJson(reader, listType);
-
-            return list;
+            try {
+                ArrayList<Cartoon> list = new Gson().fromJson(reader, listType);
+                return list;
+            } catch(JsonSyntaxException e) {
+                e.printStackTrace();
+                return null;
+            }
         }
 
         protected void onPostExecute(ArrayList<Cartoon> results) {

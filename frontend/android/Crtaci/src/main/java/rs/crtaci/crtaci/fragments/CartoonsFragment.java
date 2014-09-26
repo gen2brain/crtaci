@@ -45,14 +45,16 @@ public class CartoonsFragment extends Fragment {
 
     public static final String TAG = "CartoonsFragment";
 
+    private boolean twoPane;
     private ArrayList<Cartoon> cartoons;
 
     protected ImageLoader imageLoader = ImageLoader.getInstance();
 
-    public static CartoonsFragment newInstance(ArrayList<Cartoon> cartoons) {
+    public static CartoonsFragment newInstance(ArrayList<Cartoon> cartoons, boolean twoPane) {
         CartoonsFragment fragment = new CartoonsFragment();
         Bundle args = new Bundle();
         args.putSerializable("cartoons", cartoons);
+        args.putBoolean("twoPane", twoPane);
         fragment.setArguments(args);
         return fragment;
     }
@@ -67,6 +69,8 @@ public class CartoonsFragment extends Fragment {
         } else {
             cartoons = (ArrayList<Cartoon>) getArguments().getSerializable("cartoons");
         }
+
+        twoPane = getArguments().getBoolean("twoPane");
 
         View rootView = inflater.inflate(R.layout.fragment_cartoons, container, false);
 
@@ -170,9 +174,8 @@ public class CartoonsFragment extends Fragment {
                     .build();
 
             String thumb;
-            int screenSize = getResources().getConfiguration().screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
-            if(screenSize == Configuration.SCREENLAYOUT_SIZE_LARGE) {
-                thumb = cartoon.thumbnails.medium;
+            if(twoPane) {
+                thumb = cartoon.thumbnails.large;
             } else {
                 thumb = cartoon.thumbnails.small;
             }

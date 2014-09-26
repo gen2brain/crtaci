@@ -12,6 +12,7 @@ import android.view.MenuItem;
 import android.view.Window;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.InputStream;
@@ -71,6 +72,10 @@ public class CharactersActivity extends ActionBarActivity {
             if(charactersTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
                 charactersTask.cancel(true);
             }
+        }
+        if(Utils.isServiceRunning(this)) {
+            Intent intent = new Intent(this, CrtaciHttpService.class);
+            stopService(intent);
         }
     }
 
@@ -153,11 +158,14 @@ public class CharactersActivity extends ActionBarActivity {
                 return null;
             }
 
-            Type listType = new TypeToken<ArrayList<Character>>() {
-            }.getType();
-            ArrayList<Character> list = new Gson().fromJson(reader, listType);
-
-            return list;
+            Type listType = new TypeToken<ArrayList<Character>>() {}.getType();
+            try {
+                ArrayList<Character> list = new Gson().fromJson(reader, listType);
+                return list;
+            } catch(JsonSyntaxException e) {
+                e.printStackTrace();
+                return null;
+            }
         }
 
         protected void onPostExecute(ArrayList<Character> results) {

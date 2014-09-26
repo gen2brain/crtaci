@@ -23,6 +23,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.InputStream;
@@ -47,6 +48,7 @@ public class CharactersFragment extends Fragment {
     private boolean twoPane;
     private ArrayList<Character> characters;
     private CartoonsTask cartoonsTask;
+    private int selectedListItem = -1;
 
     public static CharactersFragment newInstance(ArrayList<Character> characters, boolean twoPane) {
         CharactersFragment fragment = new CharactersFragment();
@@ -72,8 +74,8 @@ public class CharactersFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_characters, container, false);
 
-        ListView listView = (ListView) rootView.findViewById(R.id.characters);
-        ListAdapter adapter = new ItemAdapter();
+        final ListView listView = (ListView) rootView.findViewById(R.id.characters);
+        final ItemAdapter adapter = new ItemAdapter();
         listView.setAdapter(adapter);
         listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
@@ -88,6 +90,10 @@ public class CharactersFragment extends Fragment {
                     } else {
                         query = character.name;
                     }
+
+                    selectedListItem = position;
+                    adapter.notifyDataSetChanged();
+
                     if(Utils.isNetworkAvailable(getActivity())) {
                         cartoonsTask = new CartoonsTask();
                         cartoonsTask.execute(query);
@@ -139,7 +145,11 @@ public class CharactersFragment extends Fragment {
 
         @Override
         public int getCount() {
-            return characters.size();
+            if(characters != null && !characters.isEmpty()) {
+                return characters.size();
+            } else {
+                return 0;
+            }
         }
 
         @Override
@@ -157,7 +167,7 @@ public class CharactersFragment extends Fragment {
             View view = convertView;
             final ViewHolder holder;
 
-            if (convertView == null) {
+            if(convertView == null) {
                 LayoutInflater inflater = getLayoutInflater(null);
                 view = inflater.inflate(R.layout.item_list_character, parent, false);
 
@@ -173,6 +183,10 @@ public class CharactersFragment extends Fragment {
                 view.setBackgroundResource(R.drawable.item_background);
             } else {
                 view.setBackgroundResource(R.drawable.item_background_alternate);
+            }
+
+            if(position == selectedListItem) {
+                view.setBackgroundColor(getResources().getColor(R.color.item_selected));
             }
 
             Character character = characters.get(position);
@@ -219,7 +233,7 @@ public class CharactersFragment extends Fragment {
         if (prev != null) {
             ft.remove(prev);
         }
-        ft.replace(R.id.cartoons_container, CartoonsFragment.newInstance(results));
+        ft.replace(R.id.cartoons_container, CartoonsFragment.newInstance(results, twoPane));
         ft.commit();
     }
 
@@ -256,9 +270,13 @@ public class CharactersFragment extends Fragment {
             }
 
             Type listType = new TypeToken<ArrayList<Cartoon>>(){}.getType();
-            ArrayList<Cartoon> list = new Gson().fromJson(reader, listType);
-
-            return list;
+            try {
+                ArrayList<Cartoon> list = new Gson().fromJson(reader, listType);
+                return list;
+            } catch(JsonSyntaxException e) {
+                e.printStackTrace();
+                return null;
+            }
         }
 
         protected void onPostExecute(ArrayList<Cartoon> results) {

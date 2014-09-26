@@ -602,6 +602,11 @@ func Vimeo(character Character) {
 
 			pictures := video["pictures"].(map[string]interface{})
 			sizes := pictures["sizes"].([]interface{})
+
+			if len(sizes) < 4 {
+				continue
+			}
+
 			videoThumbSmall := sizes[3].(map[string]interface{})["link"].(string)
 			videoThumbMedium := sizes[2].(map[string]interface{})["link"].(string)
 			videoThumbLarge := sizes[1].(map[string]interface{})["link"].(string)
@@ -889,11 +894,11 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if char.Name != "" {
-			wg.Add(2)
+			wg.Add(3)
 			cartoons = make([]Cartoon, 0)
 			go YouTube(*char)
 			go DailyMotion(*char)
-			//go Vimeo(*char)
+			go Vimeo(*char)
 			wg.Wait()
 
 			sortCartoons(cartoons)

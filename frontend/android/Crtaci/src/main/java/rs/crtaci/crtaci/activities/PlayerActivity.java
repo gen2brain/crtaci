@@ -13,6 +13,7 @@ import android.util.Log;
 import rs.crtaci.crtaci.R;
 import rs.crtaci.crtaci.entities.Cartoon;
 import rs.crtaci.crtaci.utils.DMWebVideoView;
+import rs.crtaci.crtaci.utils.HTML5WebView;
 
 
 public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer.OnInitializedListener {
@@ -22,6 +23,7 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
     public static final String apiKey = "YOUR_API_KEY";
 
     private DMWebVideoView dailymotionView;
+    private HTML5WebView vimeoView;
 
     private Cartoon cartoon;
 
@@ -44,10 +46,14 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
             dailymotionView.setAutoPlaying(true);
             dailymotionView.setAllowAutomaticNativeFullscreen(true);
             dailymotionView.setBackgroundColor(0x00000000);
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-                dailymotionView.getSettings().setMediaPlaybackRequiresUserGesture(false);
-            }
             dailymotionView.setVideoId(cartoon.id);
+        } else if(cartoon.service.equals("vimeo")) {
+            vimeoView = new HTML5WebView(this);
+            setContentView(vimeoView.getLayout());
+            vimeoView.setKeepScreenOn(true);
+            vimeoView.setBackgroundColor(0x00000000);
+            String params = "?autoplay=1&&badge=0&byline=0&portrait=0&title=0";
+            vimeoView.loadUrl("https://player.vimeo.com/video/" + cartoon.id + params);
         }
     }
 
@@ -67,6 +73,9 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
     public void onBackPressed() {
         if(cartoon.service.equals("dailymotion")) {
             dailymotionView.handleBackPress(this);
+        } else if(cartoon.service.equals("vimeo")) {
+            vimeoView.hideCustomView();
+            //vimeoView.goBack();
         }
         super.onBackPressed();
     }

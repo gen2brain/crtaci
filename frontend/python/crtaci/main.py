@@ -80,7 +80,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             try:
                 character =  self.get_name(self.client.results[0]["Character"])
                 title = "%s / %s" % (u"Crtaći", self.get_name(self.client.results[0]["Character"]))
-            except IndexError:
+            except Exception:
                 title = u"Crtaći"
 
             self.setWindowTitle(title)

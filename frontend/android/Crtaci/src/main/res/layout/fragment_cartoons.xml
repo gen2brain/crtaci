@@ -3,4 +3,6 @@
     android:id="@+id/cartoons"
     android:background="@color/background_cartoon"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent" />
+    android:layout_height="fill_parent"
+    android:drawSelectorOnTop="true"
+    android:clickable="true" />
