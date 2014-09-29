@@ -19,5 +19,6 @@ License
 -------
 
 Author: Milan Nikolic <gen2brain>
+
 Crtaci is free/libre software released under the terms of the GNU GPL license,
 see the `COPYING' file for details.
