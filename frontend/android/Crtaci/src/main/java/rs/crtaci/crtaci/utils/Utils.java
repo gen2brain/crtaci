@@ -5,23 +5,24 @@ import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.Build;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
-
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
+import java.net.Proxy;
 import java.net.Socket;
 import java.net.SocketAddress;
-import java.net.URI;
-import java.util.List;
+import java.net.URL;
 
 import rs.crtaci.crtaci.R;
 import rs.crtaci.crtaci.services.CrtaciHttpService;
@@ -29,23 +30,13 @@ import rs.crtaci.crtaci.services.CrtaciHttpService;
 
 public class Utils {
 
-    public static boolean isNetworkAvailable(Context context) {
-        final ConnectivityManager conMgr =  (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        final NetworkInfo activeNetwork = conMgr.getActiveNetworkInfo();
-        if (activeNetwork != null && activeNetwork.isConnected()) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
     public static boolean isNetworkReachable() {
         boolean reachable = false;
         try {
             SocketAddress sockaddr = new InetSocketAddress("8.8.8.8", 53);
             Socket sock = new Socket();
 
-            int timeout = 3000;
+            int timeout = 5000;
             sock.connect(sockaddr, timeout);
             sock.close();
             reachable = true;
@@ -64,19 +55,130 @@ public class Utils {
         return false;
     }
 
-    public static InputStream httpGet(String url){
-        URI uri;
+    public static String httpGet(String uri, Context context){
+        URL url;
+        String result = null;
         InputStream data = null;
-        DefaultHttpClient httpClient = new DefaultHttpClient();
+        HttpURLConnection urlConnection = null;
+        System.setProperty("http.keepAlive", "false");
+
         try {
-            uri = new URI(url);
-            HttpGet method = new HttpGet(uri);
-            HttpResponse response = httpClient.execute(method);
-            data = response.getEntity().getContent();
+            url = new URL(uri);
+
+            if(Connectivity.isConnectedMobile(context)) {
+                String proxyHost = getProxyHost(context);
+                int proxyPort = getProxyPort(context);
+                if(!proxyHost.isEmpty() && proxyPort != -1) {
+                    Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyHost, proxyPort));
+                    urlConnection = (HttpURLConnection) url.openConnection(proxy);
+                } else {
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                }
+            } else {
+                urlConnection = (HttpURLConnection) url.openConnection();
+            }
+
+            urlConnection.setUseCaches(false);
+            urlConnection.setAllowUserInteraction(false);
+            urlConnection.setRequestMethod("GET");
+            urlConnection.setRequestProperty("Connection", "close");
+            urlConnection.setConnectTimeout(3000);
+            urlConnection.setReadTimeout(15000);
+
+            urlConnection.connect();
+
+            int errorCode = urlConnection.getResponseCode();
+            boolean isError = errorCode >= 400;
+
+            if(isError) {
+                Log.d("STATUS", String.valueOf(errorCode));
+            }
+
+            data = isError ? urlConnection.getErrorStream() : urlConnection.getInputStream();
+
+            if(data != null) {
+                result = convertInputStreamToString(data);
+                urlConnection.disconnect();
+            }
         } catch(Exception e) {
+            if(urlConnection != null) {
+                urlConnection.disconnect();
+            }
+            if(data != null) {
+                try {
+                    data.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
+            }
             e.printStackTrace();
         }
-        return data;
+        return result;
+    }
+
+    public static String getProxyHost(Context context) {
+        String proxyHost = new String();
+        int apiVersion = android.os.Build.VERSION.SDK_INT;
+        try {
+            if(apiVersion >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                proxyHost = System.getProperty("http.proxyHost");
+            } else {
+                proxyHost = android.net.Proxy.getHost(context);
+            }
+        } catch (Exception ex) {
+        }
+        if(proxyHost == null || proxyHost.equals("")) {
+            return new String();
+        } else {
+            return proxyHost;
+        }
+    }
+
+    public static int getProxyPort(Context context) {
+        int proxyPort = -1;
+        int apiVersion = android.os.Build.VERSION.SDK_INT;
+        try {
+            if(apiVersion >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                proxyPort = Integer.valueOf(System.getProperty("http.proxyPort"));
+            } else {
+                proxyPort = android.net.Proxy.getPort(context);
+            }
+        } catch (Exception ex) {
+        }
+        return proxyPort;
+    }
+
+    public static String convertInputStreamToString(InputStream inputStream) throws IOException {
+        Reader reader = new InputStreamReader(inputStream, "UTF-8");
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String line = "";
+        String result = "";
+        while((line = bufferedReader.readLine()) != null)
+            result += line;
+
+        bufferedReader.close();
+        reader.close();
+        inputStream.close();
+        return result;
+
+    }
+
+    public static boolean portAvailable(int port) {
+        Socket s = null;
+        try {
+            s = new Socket("127.0.0.1", port);
+            return false;
+        } catch (IOException e) {
+            return true;
+        } finally {
+            if(s != null){
+                try {
+                    s.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     public static String toTitleCase(String input) {
