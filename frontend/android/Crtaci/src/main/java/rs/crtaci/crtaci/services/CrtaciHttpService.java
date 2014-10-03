@@ -16,9 +16,8 @@ public class CrtaciHttpService extends Service {
     String command;
     Process process;
 
-    public static final String host = "127.0.0.1";
-    public static final String bind = ":7313";
-    public static final String url = String.format("http://%s%s/", host, bind);
+    public static final String bind = "127.0.0.1:7313";
+    public static final String url = String.format("http://%s/", bind);
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -39,6 +38,7 @@ public class CrtaciHttpService extends Service {
             try {
                 if(process != null) {
                     process.destroy();
+                    process = null;
                 }
             } catch(Exception e) {
                 e.printStackTrace();
@@ -53,7 +53,7 @@ public class CrtaciHttpService extends Service {
         CrtaciHttpThread thread = new CrtaciHttpThread(this);
         thread.start();
 
-        return START_NOT_STICKY;
+        return START_STICKY;
     }
 
 
@@ -73,8 +73,10 @@ public class CrtaciHttpService extends Service {
                 params.add(command);
                 params.add("-bind");
                 params.add(bind);
+
                 ProcessBuilder pb = new ProcessBuilder(params);
                 process = pb.start();
+                process.waitFor();
             } catch(Exception e){
                 e.printStackTrace();
             }

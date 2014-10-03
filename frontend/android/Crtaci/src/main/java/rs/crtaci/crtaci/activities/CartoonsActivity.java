@@ -1,5 +1,6 @@
 package rs.crtaci.crtaci.activities;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NavUtils;
@@ -14,14 +15,11 @@ import android.view.Window;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import rs.crtaci.crtaci.fragments.CartoonsFragment;
@@ -29,6 +27,7 @@ import rs.crtaci.crtaci.services.CrtaciHttpService;
 import rs.crtaci.crtaci.R;
 import rs.crtaci.crtaci.entities.Character;
 import rs.crtaci.crtaci.entities.Cartoon;
+import rs.crtaci.crtaci.utils.Connectivity;
 import rs.crtaci.crtaci.utils.Utils;
 
 
@@ -84,11 +83,7 @@ public class CartoonsActivity extends ActionBarActivity {
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
         super.onDestroy();
-        if(cartoonsTask != null) {
-            if(cartoonsTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
-                cartoonsTask.cancel(true);
-            }
-        }
+        cancelCartoonsTask();
     }
 
     @Override
@@ -117,6 +112,9 @@ public class CartoonsActivity extends ActionBarActivity {
             return true;
         } else if(id == R.id.action_rate) {
             Utils.rateThisApp(this);
+        } else if(id == R.id.action_reload) {
+            cancelCartoonsTask();
+            startCartoonsTask();
         }
         return super.onOptionsItemSelected(item);
     }
@@ -134,11 +132,20 @@ public class CartoonsActivity extends ActionBarActivity {
             query = character.name;
         }
 
-        if(Utils.isNetworkAvailable(this)) {
+        if(Connectivity.isConnected(this)) {
             cartoonsTask = new CartoonsTask();
             cartoonsTask.execute(query);
         } else {
             Toast.makeText(this, getString(R.string.error_network), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void cancelCartoonsTask() {
+        if(cartoonsTask != null) {
+            if(cartoonsTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+                cartoonsTask.cancel(true);
+            }
+            cartoonsTask = null;
         }
     }
 
@@ -162,34 +169,53 @@ public class CartoonsActivity extends ActionBarActivity {
 
         protected ArrayList<Cartoon> doInBackground(String... params) {
             String query = params[0];
-            String url = CrtaciHttpService.url + "search/" + query.replace(" ", "%20");
+            try {
+                query = URLEncoder.encode(query, "utf-8");
+                query = query.replaceAll("\\+", "%20");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            String url = CrtaciHttpService.url + "search/" + query;
 
-            InputStream input = null;
-            while(input == null) {
-                if(!Utils.isNetworkReachable()) {
-                    return null;
-                }
-
-                if(isCancelled()) {
-                    return null;
-                }
-
-                input = Utils.httpGet(url);
+            String result;
+            if(!Utils.isNetworkReachable()) {
+                return null;
             }
 
-            Reader reader;
-            try {
-                reader = new InputStreamReader(input, "UTF-8");
-            } catch(UnsupportedEncodingException e) {
-                e.printStackTrace();
+            if(isCancelled()) {
+                return null;
+            }
+
+            result = Utils.httpGet(url, getApplication());
+
+            if(result == null) {
+                if(Utils.portAvailable(7313)) {
+                    Intent intent = new Intent(getApplication(), CrtaciHttpService.class);
+                    stopService(intent);
+                    startService(intent);
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                result = Utils.httpGet(url, getApplication());
+                if(result == null) {
+                    return null;
+                }
+            }
+
+            if(isCancelled()) {
                 return null;
             }
 
             Type listType = new TypeToken<ArrayList<Cartoon>>(){}.getType();
             try {
-                ArrayList<Cartoon> list = new Gson().fromJson(reader, listType);
+                ArrayList<Cartoon> list = new Gson().fromJson(result, listType);
                 return list;
-            } catch(JsonSyntaxException e) {
+            } catch(Exception e) {
                 e.printStackTrace();
                 return null;
             }
@@ -207,7 +233,6 @@ public class CartoonsActivity extends ActionBarActivity {
                 }
             } else {
                 Toast.makeText(getApplication(), getString(R.string.error_network), Toast.LENGTH_LONG).show();
-                finish();
             }
         }
 

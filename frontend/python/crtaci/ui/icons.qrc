@@ -13,6 +13,7 @@
     <file>icons/droidi.png</file>
     <file>icons/dusko_dugousko.png</file>
     <file>icons/dzoni_test.png</file>
+    <file>icons/elmer.png</file>
     <file>icons/evoksi.png</file>
     <file>icons/generalova_radnja.png</file>
     <file>icons/gustavus.png</file>
@@ -20,11 +21,13 @@
     <file>icons/himen_i_gospodari_svemira.png</file>
     <file>icons/iznogud.png</file>
     <file>icons/kalimero.png</file>
+    <file>icons/kasper.png</file>
     <file>icons/kuce_dragoljupce.png</file>
     <file>icons/lale_gator.png</file>
     <file>icons/la_linea.png</file>
-    <file>icons/legenda_o_tarzanu.png</file>
     <file>icons/le_piaf.png</file>
+    <file>icons/legenda_o_tarzanu.png</file>
+    <file>icons/macor_mika.png</file>
     <file>icons/mali_leteci_medvjedici.png</file>
     <file>icons/masha_i_medved.png</file>
     <file>icons/mece_dobrici.png</file>
@@ -49,6 +52,7 @@
     <file>icons/ren_i_stimpi.png</file>
     <file>icons/robotek.png</file>
     <file>icons/salabajzerici.png</file>
+    <file>icons/silja.png</file>
     <file>icons/silvester.png</file>
     <file>icons/snorkijevci.png</file>
     <file>icons/sofronije.png</file>
@@ -61,6 +65,7 @@
     <file>icons/supermen.png</file>
     <file>icons/super_mis.png</file>
     <file>icons/talicni_tom.png</file>
+    <file>icons/tarzan_gospodar_dzungle.png</file>
     <file>icons/tom_i_dzeri.png</file>
     <file>icons/transformersi.png</file>
     <file>icons/vitez_koja.png</file>

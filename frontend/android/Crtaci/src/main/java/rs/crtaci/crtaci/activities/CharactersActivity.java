@@ -12,13 +12,8 @@ import android.view.MenuItem;
 import android.view.Window;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
@@ -59,8 +54,7 @@ public class CharactersActivity extends ActionBarActivity {
                 Intent intent = new Intent(this, CrtaciHttpService.class);
                 startService(intent);
             }
-            charactersTask = new CharactersTask();
-            charactersTask.execute();
+            startCharactersTask();
         }
     }
 
@@ -68,13 +62,9 @@ public class CharactersActivity extends ActionBarActivity {
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
         super.onDestroy();
-        if(charactersTask != null) {
-            if(charactersTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
-                charactersTask.cancel(true);
-            }
-        }
+        cancelCharactersTask();
         if(Utils.isServiceRunning(this)) {
-            Intent intent = new Intent(this, CrtaciHttpService.class);
+            Intent intent = new Intent(getApplication(), CrtaciHttpService.class);
             stopService(intent);
         }
     }
@@ -102,8 +92,25 @@ public class CharactersActivity extends ActionBarActivity {
             return true;
         } else if(id == R.id.action_rate) {
             Utils.rateThisApp(this);
+        } else if(id == R.id.action_reload) {
+            cancelCharactersTask();
+            startCharactersTask();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public void startCharactersTask() {
+        charactersTask = new CharactersTask();
+        charactersTask.execute();
+    }
+
+    public void cancelCharactersTask() {
+        if(charactersTask != null) {
+            if(charactersTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+                charactersTask.cancel(true);
+            }
+            charactersTask = null;
+        }
     }
 
     public void replaceFragment(ArrayList<Character> results) {
@@ -135,34 +142,47 @@ public class CharactersActivity extends ActionBarActivity {
         }
 
         protected ArrayList<Character> doInBackground(Void... params) {
-            InputStream input = null;
-            while(input == null) {
+            String result;
+            try {
+                Thread.sleep(500);
+            } catch(InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if(isCancelled()) {
+                return null;
+            }
+
+            result = Utils.httpGet(CrtaciHttpService.url + "list", getApplication());
+
+            if(result == null) {
+                if(Utils.portAvailable(7313)) {
+                    Intent intent = new Intent(getApplication(), CrtaciHttpService.class);
+                    stopService(intent);
+                    startService(intent);
+                }
+
                 try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
+                    Thread.sleep(1000);
+                } catch(InterruptedException e) {
                     e.printStackTrace();
                 }
 
-                if(isCancelled()) {
+                result = Utils.httpGet(CrtaciHttpService.url + "list", getApplication());
+                if(result == null) {
                     return null;
                 }
-
-                input = Utils.httpGet(CrtaciHttpService.url + "list");
             }
 
-            Reader reader;
-            try {
-                reader = new InputStreamReader(input, "UTF-8");
-            } catch(UnsupportedEncodingException e) {
-                e.printStackTrace();
+            if(isCancelled()) {
                 return null;
             }
 
             Type listType = new TypeToken<ArrayList<Character>>() {}.getType();
             try {
-                ArrayList<Character> list = new Gson().fromJson(reader, listType);
+                ArrayList<Character> list = new Gson().fromJson(result, listType);
                 return list;
-            } catch(JsonSyntaxException e) {
+            } catch(Exception e) {
                 e.printStackTrace();
                 return null;
             }
@@ -178,8 +198,6 @@ public class CharactersActivity extends ActionBarActivity {
                 } catch(Exception e) {
                     e.printStackTrace();
                 }
-            } else {
-                finish();
             }
         }
 

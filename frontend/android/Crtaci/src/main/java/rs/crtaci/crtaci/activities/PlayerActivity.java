@@ -5,15 +5,21 @@ import com.google.android.youtube.player.YouTubeInitializationResult;
 import com.google.android.youtube.player.YouTubePlayer;
 import com.google.android.youtube.player.YouTubePlayerView;
 
-import android.annotation.TargetApi;
-import android.os.Build;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.WebViewClient;
+import android.widget.MediaController;
+import android.widget.ProgressBar;
+import android.widget.VideoView;
 
 import rs.crtaci.crtaci.R;
 import rs.crtaci.crtaci.entities.Cartoon;
-import rs.crtaci.crtaci.utils.DMWebVideoView;
-import rs.crtaci.crtaci.utils.HTML5WebView;
+import rs.crtaci.crtaci.utils.VideoEnabledWebChromeClient;
+import rs.crtaci.crtaci.utils.VideoEnabledWebView;
 
 
 public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer.OnInitializedListener {
@@ -22,10 +28,11 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
 
     public static final String apiKey = "YOUR_API_KEY";
 
-    private DMWebVideoView dailymotionView;
-    private HTML5WebView vimeoView;
+    private VideoEnabledWebView webView;
+    private VideoEnabledWebChromeClient webChromeClient;
 
     private Cartoon cartoon;
+    private String video;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -34,27 +41,111 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
 
         Bundle bundle = getIntent().getExtras();
         cartoon = (Cartoon) bundle.get("cartoon");
+        video = bundle.getString("video");
 
         if(cartoon.service.equals("youtube")) {
-            setContentView(R.layout.player_youtube);
-            YouTubePlayerView youTubeView = (YouTubePlayerView) findViewById(R.id.youtube_view);
-            youTubeView.initialize(apiKey, this);
+            if(video != null && !video.isEmpty()) {
+                videoPlayer(video);
+            } else {
+                playYouTube();
+            }
         } else if(cartoon.service.equals("dailymotion")) {
-            setContentView(R.layout.player_dailymotion);
-            dailymotionView = ((DMWebVideoView) findViewById(R.id.dailymotion_view));
-            dailymotionView.setKeepScreenOn(true);
-            dailymotionView.setAutoPlaying(true);
-            dailymotionView.setAllowAutomaticNativeFullscreen(true);
-            dailymotionView.setBackgroundColor(0x00000000);
-            dailymotionView.setVideoId(cartoon.id);
+            if(video != null && !video.isEmpty()) {
+                videoPlayer(video);
+            } else {
+                playDailyMotion();
+            }
         } else if(cartoon.service.equals("vimeo")) {
-            vimeoView = new HTML5WebView(this);
-            setContentView(vimeoView.getLayout());
-            vimeoView.setKeepScreenOn(true);
-            vimeoView.setBackgroundColor(0x00000000);
-            String params = "?autoplay=1&&badge=0&byline=0&portrait=0&title=0";
-            vimeoView.loadUrl("https://player.vimeo.com/video/" + cartoon.id + params);
+            if(video != null && !video.isEmpty()) {
+                videoPlayer(video);
+            } else {
+                playVimeo();
+            }
         }
+    }
+
+    public void playYouTube() {
+        setContentView(R.layout.player_youtube);
+        YouTubePlayerView youTubeView = (YouTubePlayerView) findViewById(R.id.youtube_view);
+        youTubeView.initialize(apiKey, this);
+    }
+
+    public void playDailyMotion() {
+        String params = "?html=1&fullscreen=1&autoplay=1&related=0&logo=0&info=0";
+        String url = "http://www.dailymotion.com/embed/video/" + cartoon.id + params;
+        webViewPlayer(url);
+    }
+
+    public void playVimeo() {
+        String params = "?autoplay=1&badge=0&byline=0&portrait=0&title=0";
+        String url = "http://player.vimeo.com/video/" + cartoon.id + params;
+        webViewPlayer(url);
+    }
+
+    public void webViewPlayer(String url) {
+        setContentView(R.layout.player_webview);
+        webView = (VideoEnabledWebView) findViewById(R.id.webView);
+        View nonVideoLayout = findViewById(R.id.nonVideoLayout);
+        ViewGroup videoLayout = (ViewGroup) findViewById(R.id.videoLayout);
+        View loadingView = getLayoutInflater().inflate(R.layout.loading, null);
+        webChromeClient = new VideoEnabledWebChromeClient(nonVideoLayout, videoLayout, loadingView);
+
+        webView.setWebChromeClient(webChromeClient);
+        webView.setWebViewClient(new WebViewClient());
+        webView.setKeepScreenOn(true);
+        webView.setBackgroundColor(0x00000000);
+        webView.loadUrl(url);
+
+        if(cartoon.service.equals("dailymotion")) {
+            ViewGroup.LayoutParams params = webView.getLayoutParams();
+            params.height = 400;
+            webView.setLayoutParams(params);
+        }
+    }
+
+    public void videoPlayer(String url) {
+        setContentView(R.layout.player);
+        final VideoView videoView = (VideoView) findViewById(R.id.video_view);
+        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        progressBar.setVisibility(View.VISIBLE);
+
+        videoView.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+                progressBar.setVisibility(View.INVISIBLE);
+                videoView.start();
+            }
+        });
+
+        videoView.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                onBackPressed();
+            }
+        });
+
+        videoView.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+                Log.d(TAG, "onError");
+                if(cartoon.service.equals("youtube")) {
+                    playYouTube();
+                } else if(cartoon.service.equals("dailymotion")) {
+                    playDailyMotion();
+                } else if(cartoon.service.equals("vimeo")) {
+                    playVimeo();
+                }
+                return true;
+            }
+        });
+
+        MediaController mediaController = new MediaController(this);
+        mediaController.setAnchorView(videoView);
+        mediaController.setMediaPlayer(videoView);
+        videoView.setKeepScreenOn(true);
+        videoView.setMediaController(mediaController);
+        videoView.setVideoURI(Uri.parse(url));
+        videoView.requestFocus();
     }
 
     @Override
@@ -71,33 +162,13 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
 
     @Override
     public void onBackPressed() {
-        if(cartoon.service.equals("dailymotion")) {
-            dailymotionView.handleBackPress(this);
-        } else if(cartoon.service.equals("vimeo")) {
-            vimeoView.hideCustomView();
-            //vimeoView.goBack();
+        if(video == null || video.isEmpty()) {
+            if(cartoon.service.equals("dailymotion") || cartoon.service.equals("vimeo")) {
+                webChromeClient.onBackPressed();
+                webView.destroy();
+            }
         }
         super.onBackPressed();
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-            if(cartoon.service.equals("dailymotion")) {
-                dailymotionView.onPause();
-            }
-        }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB){
-            if(cartoon.service.equals("dailymotion")) {
-                dailymotionView.onResume();
-            }
-        }
     }
 
 }

@@ -14,7 +14,7 @@ from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.dir_util import copy_tree
 
-APP_VERSION = "1.1"
+APP_VERSION = "1.2"
 BASE_DIR = dirname(realpath(__file__))
 
 

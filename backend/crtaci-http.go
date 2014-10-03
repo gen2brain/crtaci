@@ -19,7 +19,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"html"
 	"io/ioutil"
 	"log"
 	"net"
@@ -34,11 +33,12 @@ import (
 
 	"code.google.com/p/google-api-go-client/googleapi/transport"
 	youtube "code.google.com/p/google-api-go-client/youtube/v3"
+	"github.com/gen2brain/vidextr"
 )
 
 var (
 	appName    = "crtaci-http"
-	appVersion = "1.0"
+	appVersion = "1.1"
 )
 
 type Cartoon struct {
@@ -79,6 +79,7 @@ var characters = []Character{
 	{"droidi", "", "long"},
 	{"duško dugouško", "dusko dugousko", "medium"},
 	{"džoni test", "dzoni test", "long"},
+	{"elmer", "", "medium"},
 	{"evoksi", "", "long"},
 	{"generalova radnja", "", "medium"},
 	{"gustav", "gustavus", "medium"},
@@ -86,6 +87,7 @@ var characters = []Character{
 	{"hi men i gospodari svemira", "himen i gospodari svemira", "long"},
 	{"iznogud", "", "medium"},
 	{"kalimero-", "", "medium"},
+	{"kasper", "", "medium"},
 	{"kuče dragoljupče", "kuce dragoljupce", "medium"},
 	{"lale gator", "", "medium"},
 	{"la linea", "", "medium"},
@@ -93,6 +95,7 @@ var characters = []Character{
 	{"le piaf", "", "short"},
 	{"mali leteći medvjedići", "mali leteci medvjedici", "long"},
 	{"masa i medvjed", "masha i medved", "medium"},
+	{"mačor mika", "macor mika", "long"},
 	{"mece dobrići", "mece dobrici", "medium"},
 	{"miki maus", "", "medium"},
 	{"mornar popaj", "", "medium"},
@@ -116,6 +119,7 @@ var characters = []Character{
 	{"robotech", "robotek", "long"},
 	{"šalabajzerići", "salabajzerici", "medium"},
 	{"silvester - ", "", "medium"},
+	{"šilja", "silja", "medium"},
 	{"snorkijevci", "", "medium"},
 	{"sofronije", "", "medium"},
 	{"super miš", "super mis", "medium"},
@@ -127,6 +131,7 @@ var characters = []Character{
 	{"strumfovi", "strumpfovi", "medium"},
 	{"sundjer bob kockalone", "sundjer bob", "medium"},
 	{"talični tom", "talicni tom", "long"},
+	{"tarzan gospodar džungle", "tarzan gospodar dzungle", "long"},
 	{"tom i džeri", "tom i dzeri", "medium"},
 	{"transformersi", "", "long"},
 	{"vitez koja", "", "medium"},
@@ -197,6 +202,7 @@ var censoredWords = []string{
 	"igracke od plastelina",
 	"sex",
 	"sexy",
+	"flesh",
 	"ubisoft",
 	"wanna",
 	"special",
@@ -206,6 +212,10 @@ var censoredWords = []string{
 	"monster",
 	"intro",
 	"countdown",
+	"eternity",
+	"summer",
+	"galaxy",
+	"constitution",
 	"hunkyard",
 	"riders",
 	"flash",
@@ -214,21 +224,32 @@ var censoredWords = []string{
 	"gamer",
 	"remix",
 	"tour",
+	"bjorke",
 	"remastered",
 	"celebration",
+	"experiments",
 	"gameplay",
 	"surprise",
+	"batters",
+	"bottle",
 	"erasers",
 	"series",
 	"comics",
 	"village",
 	"theatre",
+	"dolphin",
 	"stallone",
 	"koniec",
 	"latino",
+	"lovers",
 	"lubochka",
 	"prikljuchenija",
+	"aakerhus",
+	"sylvia",
 	"deutsch",
+	"remue",
+	"kespar",
+	"desierto",
 	"pelicula",
 	"episodio",
 	"rwerk",
@@ -240,8 +261,13 @@ var censoredWords = []string{
 	"schweiz",
 	"verkackt",
 	"sottile",
+	"elasmosaurio",
 	"ombra",
 	"dejas",
+	"et ses",
+	"tu sais",
+	"ma vision",
+	"how could",
 	" del ",
 }
 
@@ -278,9 +304,17 @@ var censoredIds = []string{
 	"sotlkpiczWk",
 	"wPUhMP7aGnw",
 	"AR0Jc1rh2N0",
+	"xuGex-B3GbQ",
+	"drEJEbHDgIA",
 	"xy53o1",
 	"xy53q1",
 	"x3osiz",
+	"x25ja2c",
+	"x4aha4",
+	"x7k5hx",
+	"x60rr7",
+	"x7k5ko",
+	"4562474",
 	"21508130",
 	"14072389",
 }
@@ -291,7 +325,7 @@ var (
 	reYear  = regexp.MustCompile(`(19\d{2}|20\d{2})`)
 	reExt   = regexp.MustCompile(`(?i)^.*\.?(avi|mp4|flv|wmv|mpg|mpeg)$`)
 	reRip   = regexp.MustCompile(`(?i:xvid)?(tv|dvd)?(-|\s)(rip)(bg)?(audio)?`)
-	reChars = regexp.MustCompile(`(?i:braca grimm|i snupi [sš]ou|i snupi|charlie brown and snoopy|brzi gonzales i patak da[cč]a|patak da[cč]a i brzi gonzales|patak da[cč]a i elmer|patak da[cč]a i gicko prasi[cć]|i hello kitty|tom and jerry|tom i d[zž]eri [sš]ou|spongebob squarepants|paja patak i [sš]ilja|bini i sesil|masha i medved)`)
+	reChars = regexp.MustCompile(`(?i:braca grimm|i snupi [sš]ou|i snupi|charlie brown and snoopy|brzi gonzales i patak da[cč]a|patak da[cč]a i brzi gonzales|patak da[cč]a i elmer|patak da[cč]a i gicko prasi[cć]|i hello kitty|tom and jerry|tom i d[zž]eri [sš]ou|spongebob squarepants|paja patak i [sš]ilja|bini i sesil|masha i medved|elmer fudd)`)
 	reTime  = regexp.MustCompile(`(\d{2})h(\d{2})m(\d{2})s`)
 	rePart  = regexp.MustCompile(`\s([\diI]{1,2})\.?\s?(?i:/|deo|od|part)\s?([\diI]{1,2})?\s*(?i:deo)?`)
 
@@ -476,7 +510,11 @@ func DailyMotion(character Character) {
 		}
 
 		hasMore := data["has_more"].(bool)
-		response := data["list"].([]interface{})
+		response, ok := data["list"].([]interface{})
+		if !ok {
+			log.Print("Error converting interface: %v", data["list"])
+			return nil, false
+		}
 
 		if len(response) == 0 {
 			return nil, false
@@ -487,7 +525,11 @@ func DailyMotion(character Character) {
 
 	parseResponse := func(response []interface{}) {
 		for _, obj := range response {
-			video := obj.(map[string]interface{})
+			video, ok := obj.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
 			videoId := video["id"].(string)
 			videoTitle := strings.ToLower(video["title"].(string))
 			videoUrl := video["url"].(string)
@@ -584,7 +626,11 @@ func Vimeo(character Character) {
 			return nil
 		}
 
-		response := data["data"].([]interface{})
+		response, ok := data["data"].([]interface{})
+		if !ok {
+			log.Print("Error converting interface: %v", data["data"])
+			return nil
+		}
 
 		if len(response) == 0 {
 			return nil
@@ -595,12 +641,20 @@ func Vimeo(character Character) {
 
 	parseResponse := func(response []interface{}) {
 		for _, obj := range response {
-			video := obj.(map[string]interface{})
+			video, ok := obj.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
 			videoId := strings.Replace(video["link"].(string), "https://vimeo.com/", "", -1)
 			videoTitle := strings.ToLower(video["name"].(string))
 			videoUrl := video["link"].(string)
 
-			pictures := video["pictures"].(map[string]interface{})
+			pictures, ok := video["pictures"].(map[string]interface{})
+			if !ok {
+				continue
+			}
+
 			sizes := pictures["sizes"].([]interface{})
 
 			if len(sizes) < 4 {
@@ -851,34 +905,27 @@ func sortCartoons(cartoons []Cartoon) {
 	OrderedBy(season, episode).Sort(cartoons)
 }
 
-func setServer(w http.ResponseWriter) {
+func setHeader(w http.ResponseWriter) {
 	w.Header().Set("Server", fmt.Sprintf("%s/%s", appName, appVersion))
-}
-
-func handleIndex(w http.ResponseWriter, r *http.Request) {
-	setServer(w)
-	if r.URL.Path[1:] != "" {
-		http.Error(w, "404 Not Found", http.StatusNotFound)
-		return
-	}
-	w.WriteHeader(200)
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 }
 
 func handleList(w http.ResponseWriter, r *http.Request) {
-	setServer(w)
+	setHeader(w)
+
 	js, err := json.MarshalIndent(characters, "", "    ")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.Write(js)
 }
 
 func handleSearch(w http.ResponseWriter, r *http.Request) {
-	setServer(w)
+	setHeader(w)
 
-	path := html.EscapeString(r.URL.Path[1:])
+	//path := html.EscapeString(r.URL.Path[1:])
+	path := r.URL.Path[1:]
 	path = strings.TrimRight(path, "/")
 	paths := strings.Split(path, "/")
 
@@ -909,7 +956,6 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
 			w.Write(js)
 		} else {
 			http.Error(w, "404 Not Found", http.StatusNotFound)
@@ -921,13 +967,57 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func handleExtract(w http.ResponseWriter, r *http.Request) {
+	setHeader(w)
+
+	//path := html.EscapeString(r.URL.Path[1:])
+	path := r.URL.Path[1:]
+	path = strings.TrimRight(path, "/")
+	paths := strings.Split(path, "/")
+
+	if len(paths) == 3 {
+		var url string;
+		var err error;
+		service := paths[1]
+		videoId := paths[2]
+
+		switch {
+		case service == "youtube":
+			url, err = vidextr.YouTube(videoId)
+		case service == "dailymotion":
+			url, err = vidextr.DailyMotion(videoId)
+		case service == "vimeo":
+			url, err = vidextr.Vimeo(videoId)
+		}
+
+		if err != nil {
+			log.Print(err.Error())
+			return
+		}
+
+		js, err := json.Marshal(url)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(js)
+	} else {
+		http.Error(w, "403 Forbidden", http.StatusForbidden)
+		return
+	}
+}
+
 func main() {
 	bind := flag.String("bind", ":7313", "Bind address")
 	flag.Parse()
 
-	http.HandleFunc("/", handleIndex)
 	http.HandleFunc("/list", handleList)
-	http.HandleFunc("/list/", handleList)
 	http.HandleFunc("/search/", handleSearch)
-	http.ListenAndServe(*bind, nil)
+	http.HandleFunc("/extract/", handleExtract)
+
+    l, err := net.Listen("tcp4", *bind)
+    if err != nil {
+        log.Fatal(err)
+    }
+    http.Serve(l, nil)
 }

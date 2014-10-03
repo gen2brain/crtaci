@@ -2,9 +2,9 @@ package rs.crtaci.crtaci.fragments;
 
 
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.text.SpannableString;
@@ -20,6 +20,8 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonElement;
 import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -38,6 +40,7 @@ import java.util.List;
 import rs.crtaci.crtaci.R;
 import rs.crtaci.crtaci.activities.PlayerActivity;
 import rs.crtaci.crtaci.entities.Cartoon;
+import rs.crtaci.crtaci.services.CrtaciHttpService;
 import rs.crtaci.crtaci.utils.Utils;
 
 
@@ -47,6 +50,7 @@ public class CartoonsFragment extends Fragment {
 
     private boolean twoPane;
     private ArrayList<Cartoon> cartoons;
+    private Cartoon selectedCartoon;
 
     protected ImageLoader imageLoader = ImageLoader.getInstance();
 
@@ -82,9 +86,8 @@ public class CartoonsFragment extends Fragment {
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent intent = new Intent(getActivity(), PlayerActivity.class);
-                intent.putExtra("cartoon", cartoons.get(position));
-                startActivity(intent);
+                selectedCartoon = cartoons.get(position);
+                new ExtractTask().execute(selectedCartoon.service, selectedCartoon.id);
             }
         });
 
@@ -217,6 +220,71 @@ public class CartoonsFragment extends Fragment {
                 }
             }
         }
+    }
+
+
+    private class ExtractTask extends AsyncTask<String, Void, String> {
+
+        protected void onPreExecute() {
+            super.onPreExecute();
+            getActivity().setProgressBarIndeterminateVisibility(true);
+        }
+
+        protected String doInBackground(String... params) {
+            String service = params[0];
+            String videoId = params[1];
+            String url = String.format("%sextract/%s/%s", CrtaciHttpService.url, service, videoId);
+
+            String result;
+            if(!Utils.isNetworkReachable()) {
+                return null;
+            }
+
+            result = Utils.httpGet(url, getActivity());
+
+            if(result == null) {
+                if(Utils.portAvailable(7313)) {
+                    Intent intent = new Intent(getActivity(), CrtaciHttpService.class);
+                    getActivity().stopService(intent);
+                    getActivity().startService(intent);
+                }
+
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                result = Utils.httpGet(url, getActivity());
+                if(result == null) {
+                    return null;
+                }
+            }
+
+            try {
+                JsonElement jsonElement = new Gson().fromJson(result, JsonElement.class);
+                if(jsonElement != null) {
+                    return jsonElement.getAsString();
+                } else {
+                    return null;
+                }
+
+            } catch(Exception e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        protected void onPostExecute(String results) {
+            Log.d(TAG, "onPostExecute");
+            getActivity().setProgressBarIndeterminateVisibility(false);
+
+            Intent intent = new Intent(getActivity(), PlayerActivity.class);
+            intent.putExtra("video", results);
+            intent.putExtra("cartoon", selectedCartoon);
+            startActivity(intent);
+        }
+
     }
 
 }

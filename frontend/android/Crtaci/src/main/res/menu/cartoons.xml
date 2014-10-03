@@ -2,12 +2,19 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="rs.crtaci.crtaci.activities.CartoonsActivity" >
+
     <item android:id="@+id/action_about"
         android:title="@string/action_about"
         android:orderInCategory="100"
         app:showAsAction="never" />
+
     <item android:id="@+id/action_rate"
         android:title="@string/action_rate"
         android:orderInCategory="110"
         app:showAsAction="never" />
+
+    <item android:id="@+id/action_reload"
+        android:title="@string/action_reload"
+        android:icon="@android:drawable/ic_popup_sync"
+        app:showAsAction="collapseActionView|ifRoom" />
 </menu>

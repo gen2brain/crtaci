@@ -17,20 +17,16 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 
 import rs.crtaci.crtaci.R;
@@ -38,6 +34,7 @@ import rs.crtaci.crtaci.activities.CartoonsActivity;
 import rs.crtaci.crtaci.entities.Cartoon;
 import rs.crtaci.crtaci.entities.Character;
 import rs.crtaci.crtaci.services.CrtaciHttpService;
+import rs.crtaci.crtaci.utils.Connectivity;
 import rs.crtaci.crtaci.utils.Utils;
 
 
@@ -74,32 +71,67 @@ public class CharactersFragment extends Fragment {
 
         View rootView = inflater.inflate(R.layout.fragment_characters, container, false);
 
-        final ListView listView = (ListView) rootView.findViewById(R.id.characters);
+        createListView(rootView);
+
+        return rootView;
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy");
+        super.onDestroy();
+        cancelCartoonsTask();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        Log.d(TAG, "onSaveInstanceState");
+        super.onSaveInstanceState(outState);
+        if(characters != null && !characters.isEmpty()) {
+            outState.putSerializable("characters", characters);
+        }
+    }
+
+    public void startCartoonsTask() {
+        String query;
+        Character character = characters.get(selectedListItem);
+        if(!character.altname.isEmpty()) {
+            query = character.altname;
+        } else {
+            query = character.name;
+        }
+
+        if(Connectivity.isConnected(getActivity())) {
+            cartoonsTask = new CartoonsTask();
+            cartoonsTask.execute(query);
+        } else {
+            Toast.makeText(getActivity(), getString(R.string.error_network), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public void cancelCartoonsTask() {
+        if(cartoonsTask != null) {
+            if(cartoonsTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+                cartoonsTask.cancel(true);
+            }
+            cartoonsTask = null;
+        }
+    }
+
+    public void createListView(View view) {
+        final ListView listView = (ListView) view.findViewById(R.id.characters);
         final ItemAdapter adapter = new ItemAdapter();
+
         listView.setAdapter(adapter);
         listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if(twoPane) {
-                    String query;
-                    Character character = characters.get(position);
-                    if(!character.altname.isEmpty()) {
-                        query = character.altname;
-                    } else {
-                        query = character.name;
-                    }
-
-                    selectedListItem = position;
+                selectedListItem = position;
+                if (twoPane) {
+                    startCartoonsTask();
                     adapter.notifyDataSetChanged();
-
-                    if(Utils.isNetworkAvailable(getActivity())) {
-                        cartoonsTask = new CartoonsTask();
-                        cartoonsTask.execute(query);
-                    } else {
-                        Toast.makeText(getActivity(), getString(R.string.error_network), Toast.LENGTH_LONG).show();
-                    }
                 } else {
                     Intent intent = new Intent(getActivity(), CartoonsActivity.class);
                     intent.putExtra("character", characters.get(position));
@@ -110,28 +142,6 @@ public class CharactersFragment extends Fragment {
 
         if(twoPane) {
             listView.performItemClick(listView.getChildAt(0), 0, adapter.getItemId(0));
-        }
-
-        return rootView;
-    }
-
-    @Override
-    public void onDestroy() {
-        Log.d(TAG, "onDestroy");
-        super.onDestroy();
-        if(cartoonsTask != null) {
-            if(cartoonsTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
-                cartoonsTask.cancel(true);
-            }
-        }
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        Log.d(TAG, "onSaveInstanceState");
-        super.onSaveInstanceState(outState);
-        if(characters != null && !characters.isEmpty()) {
-            outState.putSerializable("characters", characters);
         }
     }
 
@@ -246,34 +256,53 @@ public class CharactersFragment extends Fragment {
 
         protected ArrayList<Cartoon> doInBackground(String... params) {
             String query = params[0];
-            String url = CrtaciHttpService.url + "search/" + query.replace(" ", "%20");
+            try {
+                query = URLEncoder.encode(query, "utf-8");
+                query = query.replaceAll("\\+", "%20");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            String url = CrtaciHttpService.url + "search/" + query;
 
-            InputStream input = null;
-            while(input == null) {
-                if (!Utils.isNetworkReachable()) {
-                    return null;
-                }
-
-                if(isCancelled()) {
-                    return null;
-                }
-
-                input = Utils.httpGet(url);
+            String result;
+            if(!Utils.isNetworkReachable()) {
+                return null;
             }
 
-            Reader reader;
-            try {
-                reader = new InputStreamReader(input, "UTF-8");
-            } catch(UnsupportedEncodingException e) {
-                e.printStackTrace();
+            if(isCancelled()) {
+                return null;
+            }
+
+            result = Utils.httpGet(url, getActivity());
+
+            if(result == null) {
+                if(Utils.portAvailable(7313)) {
+                    Intent intent = new Intent(getActivity(), CrtaciHttpService.class);
+                    getActivity().stopService(intent);
+                    getActivity().startService(intent);
+                }
+
+                try {
+                    Thread.sleep(500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                result = Utils.httpGet(url, getActivity());
+                if(result == null) {
+                    return null;
+                }
+            }
+
+            if(isCancelled()) {
                 return null;
             }
 
             Type listType = new TypeToken<ArrayList<Cartoon>>(){}.getType();
             try {
-                ArrayList<Cartoon> list = new Gson().fromJson(reader, listType);
+                ArrayList<Cartoon> list = new Gson().fromJson(result, listType);
                 return list;
-            } catch(JsonSyntaxException e) {
+            } catch(Exception e) {
                 e.printStackTrace();
                 return null;
             }
