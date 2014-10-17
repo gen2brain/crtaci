@@ -38,7 +38,7 @@ import (
 
 var (
 	appName    = "crtaci-http"
-	appVersion = "1.1"
+	appVersion = "1.2"
 )
 
 type Cartoon struct {
@@ -62,82 +62,87 @@ type Thumbnail struct {
 type Character struct {
 	Name     string
 	AltName  string
+	AltName2 string
 	Duration string
 }
 
 var characters = []Character{
-	{"atomski mrav", "", "medium"},
-	{"a je to", "", "medium"},
-	{"bananamen", "", "medium"},
-	{"bombončići", "bomboncici", "medium"},
-	{"braća grim", "braca grim", "long"},
-	{"brzi gonzales", "", "medium"},
-	{"čarli braun", "carli braun", "medium"},
-	{"čili vili", "cili vili", "medium"},
-	{"cipelići", "cipelici", "medium"},
-	{"denis napast", "", "long"},
-	{"droidi", "", "long"},
-	{"duško dugouško", "dusko dugousko", "medium"},
-	{"džoni test", "dzoni test", "long"},
-	{"elmer", "", "medium"},
-	{"evoksi", "", "long"},
-	{"generalova radnja", "", "medium"},
-	{"gustav", "gustavus", "medium"},
-	{"helo kiti", "", "medium"},
-	{"hi men i gospodari svemira", "himen i gospodari svemira", "long"},
-	{"iznogud", "", "medium"},
-	{"kalimero-", "", "medium"},
-	{"kasper", "", "medium"},
-	{"kuče dragoljupče", "kuce dragoljupce", "medium"},
-	{"lale gator", "", "medium"},
-	{"la linea", "", "medium"},
-	{"legenda o tarzanu", "", "long"},
-	{"le piaf", "", "short"},
-	{"mali leteći medvjedići", "mali leteci medvjedici", "long"},
-	{"masa i medvjed", "masha i medved", "medium"},
-	{"mačor mika", "macor mika", "long"},
-	{"mece dobrići", "mece dobrici", "medium"},
-	{"miki maus", "", "medium"},
-	{"mornar popaj", "", "medium"},
-	{"nindža kornjače", "nindza kornjace", "long"},
-	{"ogi i žohari", "ogi i zohari", "long"},
-	{"otkrića bez granica", "otkrica bez granica", "long"},
-	{"paja patak", "", "medium"},
-	{"patak dača", "patak daca", "medium"},
-	{"pepa prase", "", "medium"},
-	{"pepe le tvor", "", "medium"},
-	{"pera detlić", "pera detlic", "medium"},
-	{"pera kojot", "", "medium"},
-	{"pink panter", "", "medium"},
-	{"plava princeza", "", "long"},
-	{"porodica kremenko", "", "long"},
-	{"poručnik draguljče", "porucnik draguljce", "medium"},
-	{"profesor baltazar", "", "medium"},
-	{"ptica trkačica", "ptica trkacica", "medium"},
-	{"rakuni", "", "long"},
-	{"ren i stimpi", "", "medium"},
-	{"robotech", "robotek", "long"},
-	{"šalabajzerići", "salabajzerici", "medium"},
-	{"silvester - ", "", "medium"},
-	{"šilja", "silja", "medium"},
-	{"snorkijevci", "", "medium"},
-	{"sofronije", "", "medium"},
-	{"super miš", "super mis", "medium"},
-	{"supermen", "", "medium"},
-	{"sport bili", "", "medium"},
-	{"srle i pajče", "srle i pajce", "medium"},
-	{"stanlio i olio", "", "medium"},
-	{"stripi", "", "medium"},
-	{"strumfovi", "strumpfovi", "medium"},
-	{"sundjer bob kockalone", "sundjer bob", "medium"},
-	{"talični tom", "talicni tom", "long"},
-	{"tarzan gospodar džungle", "tarzan gospodar dzungle", "long"},
-	{"tom i džeri", "tom i dzeri", "medium"},
-	{"transformersi", "", "long"},
-	{"vitez koja", "", "medium"},
-	{"voltron force", "", "long"},
-	{"vuk vučko", "vuk vucko", "medium"},
-	{"zamenik boža", "zamenik boza", "medium"},
+	{"atomski mrav", "", "", "medium"},
+	{"a je to", "", "", "medium"},
+	{"bananamen", "", "", "medium"},
+	{"blinki bil", "", "блинки бил", "long"},
+	{"bombončići", "bomboncici", "", "medium"},
+	{"braća grim", "braca grim", "najlepse bajke", "long"},
+	{"brzi gonzales", "", "", "medium"},
+	{"čarli braun", "carli braun", "", "medium"},
+	{"čili vili", "cili vili", "", "medium"},
+	{"cipelići", "cipelici", "", "medium"},
+	{"denis napast", "", "", "long"},
+	{"droidi", "", "", "long"},
+	{"duško dugouško", "dusko dugousko", "dusko 20dugousko", "medium"},
+	{"džoni test", "dzoni test", "", "long"},
+	{"elmer", "", "", "medium"},
+	{"eustahije brzić", "eustahije brzic", "", "medium"},
+	{"evoksi", "", "", "long"},
+	{"generalova radnja", "", "", "medium"},
+	{"gustav", "gustavus", "", "medium"},
+	{"helo kiti", "", "", "medium"},
+	{"hi men i gospodari svemira", "himen i gospodari svemira", "", "long"},
+	{"inspektor radiša", "inspektor radisa", "", "medium"},
+	{"iznogud", "", "", "medium"},
+	{"kalimero-", "kalimero - ", "", "medium"},
+	{"kasper", "", "", "medium"},
+	{"kuče dragoljupče", "kuce dragoljupce", "", "medium"},
+	{"lale gator", "", "", "medium"},
+	{"la linea", "", "", "medium"},
+	{"legenda o tarzanu", "", "", "long"},
+	{"le piaf", "", "", "short"},
+	{"mali leteći medvjedići", "mali leteci medvjedici", "", "long"},
+	{"masa i medved", "masha i medved", "masa i medvjed", "medium"},
+	{"mačor mika", "macor mika", "", "long"},
+	{"mece dobrići", "mece dobrici", "", "medium"},
+	{"miki maus", "", "", "medium"},
+	{"mornar popaj", "", "", "medium"},
+	{"nindža kornjače", "nindza kornjace", "ninja kornjace", "long"},
+	{"ogi i žohari", "ogi i zohari", "", "long"},
+	{"otkrića bez granica", "otkrica bez granica", "", "long"},
+	{"paja patak", "", "", "medium"},
+	{"patak dača", "patak daca", "", "medium"},
+	{"pepa prase", "", "", "medium"},
+	{"pepe le tvor", "", "", "medium"},
+	{"pera detlić", "pera detlic", "", "medium"},
+	{"pera kojot", "", "", "medium"},
+	{"pink panter", "", "", "medium"},
+	{"plava princeza", "", "", "long"},
+	{"porodica kremenko", "", "", "long"},
+	{"poručnik draguljče", "porucnik draguljce", "", "medium"},
+	{"profesor baltazar", "", "", "medium"},
+	{"ptica trkačica", "ptica trkacica", "", "medium"},
+	{"rakuni", "", "", "long"},
+	{"ren i stimpi", "", "", "medium"},
+	{"robotech", "robotek", "", "long"},
+	{"šalabajzerići", "salabajzerici", "", "medium"},
+	{"silvester - ", "", "silvester i tviti", "medium"},
+	{"šilja", "silja", "", "medium"},
+	{"snorkijevci", "", "", "medium"},
+	{"sofronije", "", "", "medium"},
+	{"super miš", "super mis", "", "medium"},
+	{"supermen", "", "", "medium"},
+	{"sport bili", "", "", "medium"},
+	{"srle i pajče", "srle i pajce", "", "medium"},
+	{"stanlio i olio", "", "", "medium"},
+	{"stari crtaći", "stari crtaci", "stari sinhronizovani crtaci", "medium"},
+	{"stripi", "", "", "medium"},
+	{"štrumfovi", "strumpfovi", "strumfovi", "medium"},
+	{"sundjer bob kockalone", "sundjer bob", "sunđer bob", "medium"},
+	{"talični tom", "talicni tom", "", "long"},
+	{"tarzan gospodar džungle", "tarzan gospodar dzungle", "", "long"},
+	{"tom i džeri", "tom i dzeri", "", "medium"},
+	{"transformersi", "", "", "long"},
+	{"vitez koja", "", "", "medium"},
+	{"voltron force", "", "", "long"},
+	{"vuk vučko", "vuk vucko", "", "medium"},
+	{"zamenik boža", "zamenik boza", "", "medium"},
 }
 
 var filters = []string{
@@ -166,6 +171,8 @@ var filters = []string{
 	"srb ",
 	" srb",
 	" sd",
+	" hq",
+	" svcd",
 	"hrvatska",
 	"hrv,srp,bos",
 	"zagorci",
@@ -182,6 +189,12 @@ var filters = []string{
 	"iz 60-70-80-tih",
 	"144p h 264 aac",
 	"sihroni fll 2",
+	"zlekedik",
+	"gusztav allast keres",
+	"guszt v k",
+    "rtb",
+	"djuza stoiljkovic",
+	"okrenite preko smplayer-a",
 }
 
 var censoredWords = []string{
@@ -243,12 +256,15 @@ var censoredWords = []string{
 	"latino",
 	"lovers",
 	"lubochka",
+	"tobbe",
 	"prikljuchenija",
+	"slovenska",
 	"aakerhus",
 	"sylvia",
 	"deutsch",
 	"remue",
 	"kespar",
+    "splitter",
 	"desierto",
 	"pelicula",
 	"episodio",
@@ -263,6 +279,7 @@ var censoredWords = []string{
 	"sottile",
 	"elasmosaurio",
 	"ombra",
+    "ehlers",
 	"dejas",
 	"et ses",
 	"tu sais",
@@ -306,6 +323,7 @@ var censoredIds = []string{
 	"AR0Jc1rh2N0",
 	"xuGex-B3GbQ",
 	"drEJEbHDgIA",
+	"JF4qkkgQsO4",
 	"xy53o1",
 	"xy53q1",
 	"x3osiz",
@@ -321,15 +339,20 @@ var censoredIds = []string{
 
 var (
 	reTitle = regexp.MustCompile(`[0-9A-Za-zžćčšđ_,]+`)
+	reAlpha = regexp.MustCompile(`[A-Za-zžćčšđ]+`)
 	reDesc  = regexp.MustCompile(`(?U)(\(|\[).*(\)|\])`)
 	reYear  = regexp.MustCompile(`(19\d{2}|20\d{2})`)
-	reExt   = regexp.MustCompile(`(?i)^.*\.?(avi|mp4|flv|wmv|mpg|mpeg)$`)
+    reExt   = regexp.MustCompile(`\.(?i:avi|mp4|flv|wmv|mpg|mpeg)$`)
 	reRip   = regexp.MustCompile(`(?i:xvid)?(tv|dvd)?(-|\s)(rip)(bg)?(audio)?`)
-	reChars = regexp.MustCompile(`(?i:braca grimm|i snupi [sš]ou|i snupi|charlie brown and snoopy|brzi gonzales i patak da[cč]a|patak da[cč]a i brzi gonzales|patak da[cč]a i elmer|patak da[cč]a i gicko prasi[cć]|i hello kitty|tom and jerry|tom i d[zž]eri [sš]ou|spongebob squarepants|paja patak i [sš]ilja|bini i sesil|masha i medved|elmer fudd)`)
+	reChars = regexp.MustCompile(`(?i:braca grimm|i snupi [sš]ou|i snupi|charlie brown and snoopy|brzi gonzales i patak da[cč]a|patak da[cč]a i brzi gonzales|patak da[cč]a i elmer|patak da[cč]a i gicko prasi[cć]|i hello kitty|tom and jerry|tom i d[zž]eri [sš]ou|spongebob squarepants|paja patak i [sš]ilja|bini i sesil|masha i medved|elmer fudd|blinkibil|kockalone|najlepse bajke|stari sinhronizovani crtaci|popeye the sailor|kasper i drugari,)`)
 	reTime  = regexp.MustCompile(`(\d{2})h(\d{2})m(\d{2})s`)
 	rePart  = regexp.MustCompile(`\s([\diI]{1,2})\.?\s?(?i:/|deo|od|part)\s?([\diI]{1,2})?\s*(?i:deo)?`)
 
-	reE1 = regexp.MustCompile(`(?i:epizoda|epizida|epzioda|episode|epizodas|episoda)\s?(\d{1,3})`)
+	reTitleR = regexp.MustCompile(`^(\d{1,2}\.?)\s?(\d{1,})?(.*)$`)
+	reTitleNotEp = regexp.MustCompile(`\d{2,}\s(?i:razbojnika|sati|malih|pljeskavica)`)
+	reTitle20 = regexp.MustCompile(`(\s20)`)
+
+	reE1 = regexp.MustCompile(`(?i:epizoda|epizida|epzioda|episode|epizodas|episoda|Эпизод)\s?(\d{1,3})`)
 	reE2 = regexp.MustCompile(`(\d{1,3})\.?-?\s?(?i:epizoda|epizida|epzioda|episode|epizodas|episoda)`)
 	reE3 = regexp.MustCompile(`\s(?i:ep|e)\.?\s*(\d{1,3})`)
 	reE4 = regexp.MustCompile(`(?:^|-|\.|\s)\s?(\d{1,3}\b)`)
@@ -410,6 +433,7 @@ func YouTube(character Character) {
 
 	name := strings.ToLower(character.Name)
 	altname := strings.ToLower(character.AltName)
+	altname2 := strings.ToLower(character.AltName2)
 
 	getResponse := func(token string) *youtube.SearchListResponse {
 		apiCall := yt.Search.List("id,snippet").
@@ -435,8 +459,8 @@ func YouTube(character Character) {
 			videoThumbMedium := video.Snippet.Thumbnails.Medium.Url
 			videoThumbLarge := video.Snippet.Thumbnails.High.Url
 
-			if isValidTitle(videoTitle, name, altname, videoId) {
-				formattedTitle := getFormattedTitle(videoTitle, name, altname)
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) {
+				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
 				cartoon := Cartoon{
 					videoId,
@@ -478,8 +502,9 @@ func DailyMotion(character Character) {
 
 	name := strings.ToLower(character.Name)
 	altname := strings.ToLower(character.AltName)
+	altname2 := strings.ToLower(character.AltName2)
 
-	timeout := time.Duration(5 * time.Second)
+	timeout := time.Duration(6 * time.Second)
 
 	dialTimeout := func(network, addr string) (net.Conn, error) {
 		return net.DialTimeout(network, addr, timeout)
@@ -512,7 +537,6 @@ func DailyMotion(character Character) {
 		hasMore := data["has_more"].(bool)
 		response, ok := data["list"].([]interface{})
 		if !ok {
-			log.Print("Error converting interface: %v", data["list"])
 			return nil, false
 		}
 
@@ -539,8 +563,8 @@ func DailyMotion(character Character) {
 
 			videoDuration := getDuration(video["duration"].(float64))
 
-			if isValidTitle(videoTitle, name, altname, videoId) && character.Duration == videoDuration {
-				formattedTitle := getFormattedTitle(videoTitle, name, altname)
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && character.Duration == videoDuration {
+				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
 				cartoon := Cartoon{
 					videoId,
@@ -587,8 +611,9 @@ func Vimeo(character Character) {
 
 	name := strings.ToLower(character.Name)
 	altname := strings.ToLower(character.AltName)
+	altname2 := strings.ToLower(character.AltName2)
 
-	timeout := time.Duration(5 * time.Second)
+	timeout := time.Duration(6 * time.Second)
 
 	dialTimeout := func(network, addr string) (net.Conn, error) {
 		return net.DialTimeout(network, addr, timeout)
@@ -628,7 +653,6 @@ func Vimeo(character Character) {
 
 		response, ok := data["data"].([]interface{})
 		if !ok {
-			log.Print("Error converting interface: %v", data["data"])
 			return nil
 		}
 
@@ -667,8 +691,8 @@ func Vimeo(character Character) {
 
 			videoDuration := getDuration(video["duration"].(float64))
 
-			if isValidTitle(videoTitle, name, altname, videoId) && character.Duration == videoDuration {
-				formattedTitle := getFormattedTitle(videoTitle, name, altname)
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && character.Duration == videoDuration {
+				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
 				cartoon := Cartoon{
 					videoId,
@@ -708,7 +732,7 @@ func getDuration(videoDuration float64) string {
 	}
 }
 
-func getFormattedTitle(videoTitle string, name string, altname string) string {
+func getFormattedTitle(videoTitle string, name string, altname string, altname2 string) string {
 
 	title := videoTitle
 
@@ -718,13 +742,20 @@ func getFormattedTitle(videoTitle string, name string, altname string) string {
 		part = p[0][1]
 	}
 
+    title = reYear.ReplaceAllString(title, "")
+
+	re20 := reTitle20.FindAllStringSubmatch(title, -1)
+	if len(re20) > 1 {
+		title = reTitle20.ReplaceAllString(title, " ")
+	}
+
 	for _, filter := range filters {
 		title = strings.Replace(title, filter, " ", -1)
 	}
 
 	for _, re := range []*regexp.Regexp{
-		reDesc, reYear, reExt, reRip, reChars, reTime, rePart,
-		reE1, reS1, reE2, reE5, reE6, reE3, reE4, reS2, reS3} {
+		reDesc, reExt, reRip, reChars, reTime, rePart,
+		reE1, reS1, reE2, reE5, reE6, reE3, reS2, reS3} {
 		title = re.ReplaceAllString(title, "")
 	}
 
@@ -735,19 +766,24 @@ func getFormattedTitle(videoTitle string, name string, altname string) string {
 	name = strings.Replace(name, "-", "", -1)
 	name = strings.TrimRight(name, " ")
 
-	title = strings.Replace(title, name, "", 1)
+	if altname2 != "" {
+		title = strings.Replace(title, altname2, "", 1)
+	}
 	if altname != "" {
 		title = strings.Replace(title, altname+" ", "", 1)
 	}
+	title = strings.Replace(title, name, "", 1)
 
 	title = strings.TrimLeft(title, " ")
 	title = strings.TrimRight(title, " ")
 
-	if strings.HasPrefix(title, "i ") {
+	title = reTitleR.ReplaceAllString(title, "$3")
+
+	if strings.HasPrefix(title, "i ") || strings.HasPrefix(title, "and ") || strings.HasPrefix(title, " i ") {
 		title = fmt.Sprintf("%s %s", name, title)
 	}
 
-	if title == "" || title == ",," || title == "," {
+	if !reAlpha.MatchString(title) {
 		title = name
 	}
 
@@ -760,10 +796,17 @@ func getFormattedTitle(videoTitle string, name string, altname string) string {
 
 func getEpisode(videoTitle string) int {
 	title := videoTitle
+
+    title = reYear.ReplaceAllString(title, "")
+
+	re20 := reTitle20.FindAllStringSubmatch(title, -1)
+	if len(re20) > 1 {
+		title = reTitle20.ReplaceAllString(title, " ")
+	}
+
 	for _, filter := range filters {
 		title = strings.Replace(title, filter, " ", -1)
 	}
-
 	for _, re := range []*regexp.Regexp{reDesc, reYear, reTime, rePart, reS1} {
 		title = re.ReplaceAllString(title, "")
 	}
@@ -800,9 +843,10 @@ func getEpisode(videoTitle string) int {
 	}
 
 	e4 := reE4.FindAllStringSubmatch(title, -1)
-	if len(e4) > 0 {
+	notEp := reTitleNotEp.MatchString(title)
+	if len(e4) > 0 && !notEp {
 		ep, _ = strconv.Atoi(e4[0][1])
-		if ep > 100 {
+		if ep > 100 || ep == 0 {
 			return -1
 		}
 		return ep
@@ -813,6 +857,14 @@ func getEpisode(videoTitle string) int {
 
 func getSeason(videoTitle string) int {
 	title := videoTitle
+
+    title = reYear.ReplaceAllString(title, "")
+
+	re20 := reTitle20.FindAllStringSubmatch(title, -1)
+	if len(re20) > 1 {
+		title = reTitle20.ReplaceAllString(title, " ")
+	}
+
 	for _, re := range []*regexp.Regexp{reDesc, reYear, reTime, rePart, reE1} {
 		title = re.ReplaceAllString(title, "")
 	}
@@ -833,6 +885,9 @@ func getSeason(videoTitle string) int {
 	s3 := reS3.FindAllStringSubmatch(title, -1)
 	if len(s3) > 0 {
 		s, _ = strconv.Atoi(s3[0][1])
+		if s >= 20 || s == 0 {
+			return -1
+		}
 		return s
 	}
 
@@ -869,7 +924,8 @@ func isCensored(videoTitle string, videoId string) bool {
 	return false
 }
 
-func isValidTitle(videoTitle string, name string, altname string, videoId string) bool {
+func isValidTitle(videoTitle string, name string, altname string, altname2 string, videoId string) bool {
+	videoTitle = reTitleR.ReplaceAllString(videoTitle, "$3")
 	if strings.HasPrefix(videoTitle, name) {
 		if !isCensored(videoTitle, videoId) {
 			return true
@@ -877,6 +933,13 @@ func isValidTitle(videoTitle string, name string, altname string, videoId string
 	}
 	if altname != "" {
 		if strings.HasPrefix(videoTitle, altname) {
+			if !isCensored(videoTitle, videoId) {
+				return true
+			}
+		}
+	}
+	if altname2 != "" {
+		if strings.HasPrefix(videoTitle, altname2) {
 			if !isCensored(videoTitle, videoId) {
 				return true
 			}
