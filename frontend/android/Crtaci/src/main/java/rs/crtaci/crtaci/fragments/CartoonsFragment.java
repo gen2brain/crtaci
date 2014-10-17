@@ -1,6 +1,7 @@
 package rs.crtaci.crtaci.fragments;
 
 
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
@@ -277,12 +278,15 @@ public class CartoonsFragment extends Fragment {
 
         protected void onPostExecute(String results) {
             Log.d(TAG, "onPostExecute");
-            getActivity().setProgressBarIndeterminateVisibility(false);
+            Activity activity = getActivity();
+            if(activity != null) {
+                activity.setProgressBarIndeterminateVisibility(false);
 
-            Intent intent = new Intent(getActivity(), PlayerActivity.class);
-            intent.putExtra("video", results);
-            intent.putExtra("cartoon", selectedCartoon);
-            startActivity(intent);
+                Intent intent = new Intent(activity, PlayerActivity.class);
+                intent.putExtra("video", results);
+                intent.putExtra("cartoon", selectedCartoon);
+                startActivity(intent);
+            }
         }
 
     }

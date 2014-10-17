@@ -36,12 +36,7 @@ Source: "crtaci\qt4_plugins\iconengines\*.dll"; DestDir: "{app}\qt4_plugins\icon
 Source: "crtaci\qt4_plugins\imageformats\*.dll"; DestDir: "{app}\qt4_plugins\imageformats";
 Source: "crtaci\backend\crtaci-http.exe"; DestDir: "{app}\backend";
 Source: "crtaci\fonts\*"; DestDir: "{app}\fonts";
-Source: "crtaci\libquvi-scripts\0.9\*"; DestDir: "{app}\libquvi-scripts\0.9"; Flags: recursesubdirs
-Source: "crtaci\lua\*"; DestDir: "{app}\lua"; Flags: recursesubdirs
-Source: "crtaci\mime\*"; DestDir: "{app}\mime";
-Source: "crtaci\socket\*"; DestDir: "{app}\socket";
 Source: "crtaci\mpv\*"; DestDir: "{app}\mpv";
-Source: "crtaci\lxp.dll"; DestDir: "{app}";
 Source: "crtaci\mpv.com"; DestDir: "{app}";
 Source: "crtaci\mpv.exe"; DestDir: "{app}";
 

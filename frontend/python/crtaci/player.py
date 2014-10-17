@@ -40,7 +40,7 @@ class Player(QThread):
         return cmd
 
     def get_info(self):
-        ydl = YoutubeDL({"quiet": True})
+        ydl = YoutubeDL({"quiet": True, "prefer_insecure": True})
         ydl.add_default_info_extractors()
         try:
             info = ydl.extract_info(self.url, download=False)
@@ -53,8 +53,10 @@ class Player(QThread):
         sys.stderr.write("URL: %s\n" % self.url)
         if info is not None:
             cmd = self.get_cmd()
-            cmd += ["--media-title", info["title"].encode("utf-8"), info["url"]]
-            sys.stderr.write("Playing: %s\n\n" % info["url"])
+            title = u"%s" % info["title"]
+            url = u"%s" % info["url"]
+            cmd += ["--media-title", title, url]
+            sys.stderr.write("Playing: %s\n\n" % url)
             ret = subprocess.call(cmd)
             self.finished.emit(ret)
         else:

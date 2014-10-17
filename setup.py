@@ -14,7 +14,7 @@ from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.dir_util import copy_tree
 
-APP_VERSION = "1.2"
+APP_VERSION = "1.3"
 BASE_DIR = dirname(realpath(__file__))
 
 
@@ -75,11 +75,10 @@ class build_exe(Command):
         dest_path = join(self.dist_dir, "crtaci")
         for file_name in [
                 "AUTHORS", "ChangeLog", "COPYING",
-                "README.md", "mpv.exe", "mpv.com", "lxp.dll"]:
+                "README.md", "mpv.exe", "mpv.com"]:
             shutil.copy(join(BASE_DIR, file_name), dest_path)
         for dir_name in [
-            "backend", "fonts", "mpv", "mime",
-            "lua", "libquvi-scripts", "socket"]:
+            "backend", "fonts", "mpv"]:
             copy_tree(join(BASE_DIR, dir_name), join(dest_path, dir_name))
 
     def run_build_installer(self):
@@ -125,7 +124,7 @@ class build_dmg(Command):
         lines = data.split("\n")
         for line in lines:
             if "0.0.0" in line:
-                line = line.replace("0.0.0", "1.0")
+                line = line.replace("0.0.0", "1.3")
             elif "icon-windowed.icns" in line:
                 line = line.replace("icon-windowed.icns", "crtaci.icns")
             elif "MacOS/crtaci" in line:
@@ -152,7 +151,7 @@ class build_dmg(Command):
 
     def run_build_dmg(self):
         src_path = join(self.dist_dir, "dmg")
-        dst_path = join(self.dist_dir, "crtaci-%s.dmg" % "1.0")
+        dst_path = join(self.dist_dir, "crtaci-%s.dmg" % APP_VERSION)
         subprocess.call(["hdiutil", "create", dst_path, "-srcfolder", src_path])
 
     def run(self):

@@ -60,7 +60,7 @@ public class Utils {
         String result = null;
         InputStream data = null;
         HttpURLConnection urlConnection = null;
-        System.setProperty("http.keepAlive", "false");
+        //System.setProperty("http.keepAlive", "false");
 
         try {
             url = new URL(uri);
@@ -81,7 +81,7 @@ public class Utils {
             urlConnection.setUseCaches(false);
             urlConnection.setAllowUserInteraction(false);
             urlConnection.setRequestMethod("GET");
-            urlConnection.setRequestProperty("Connection", "close");
+            //urlConnection.setRequestProperty("Connection", "close");
             urlConnection.setConnectTimeout(3000);
             urlConnection.setReadTimeout(15000);
 

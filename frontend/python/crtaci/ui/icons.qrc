@@ -3,6 +3,7 @@
     <file>icons/a_je_to.png</file>
     <file>icons/atomski_mrav.png</file>
     <file>icons/bananamen.png</file>
+    <file>icons/blinki_bil.png</file>
     <file>icons/bomboncici.png</file>
     <file>icons/braca_grim.png</file>
     <file>icons/brzi_gonzales.png</file>
@@ -14,11 +15,13 @@
     <file>icons/dusko_dugousko.png</file>
     <file>icons/dzoni_test.png</file>
     <file>icons/elmer.png</file>
+    <file>icons/eustahije_brzic.png</file>
     <file>icons/evoksi.png</file>
     <file>icons/generalova_radnja.png</file>
     <file>icons/gustavus.png</file>
     <file>icons/helo_kiti.png</file>
     <file>icons/himen_i_gospodari_svemira.png</file>
+    <file>icons/inspektor_radisa.png</file>
     <file>icons/iznogud.png</file>
     <file>icons/kalimero.png</file>
     <file>icons/kasper.png</file>
@@ -59,6 +62,7 @@
     <file>icons/sport_bili.png</file>
     <file>icons/srle_i_pajce.png</file>
     <file>icons/stanlio_i_olio.png</file>
+    <file>icons/stari_crtaci.png</file>
     <file>icons/stripi.png</file>
     <file>icons/strumpfovi.png</file>
     <file>icons/sundjer_bob.png</file>

@@ -93,8 +93,12 @@ public class CharactersFragment extends Fragment {
     }
 
     public void startCartoonsTask() {
-        String query;
         Character character = characters.get(selectedListItem);
+        if(character == null) {
+            return;
+        }
+
+        String query;
         if(!character.altname.isEmpty()) {
             query = character.altname;
         } else {
@@ -129,7 +133,7 @@ public class CharactersFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 selectedListItem = position;
-                if (twoPane) {
+                if(twoPane) {
                     startCartoonsTask();
                     adapter.notifyDataSetChanged();
                 } else {
