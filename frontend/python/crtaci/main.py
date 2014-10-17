@@ -7,11 +7,13 @@ from PyQt4.QtWebKit import QWebPage
 from crtaci.http import Http
 from crtaci.client import Client
 from crtaci.player import Player
+from crtaci.update import Update
 from crtaci.utils import titlecase, readrc
 from crtaci.ui.mainwindow_ui import Ui_MainWindow
 from crtaci.ui.about_ui import Ui_AboutDialog
 from crtaci.ui import assets_rc
 from crtaci.ui import icons_rc
+from crtaci import APP_VERSION
 
 
 class MainWindow(QMainWindow, Ui_MainWindow):
@@ -26,6 +28,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.client = Client()
         self.player = Player(parent=self)
+        self.update = Update(parent=self)
 
         self.connect_signals()
         self.webView.page().setLinkDelegationPolicy(QWebPage.DelegateAllLinks)
@@ -37,10 +40,12 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.set_loading()
         self.client.mode = "list"
         self.client.start()
+        self.update.start()
 
     def connect_signals(self):
         self.client.finished.connect(self.on_client_finished)
         self.player.finished.connect(self.on_player_finished)
+        self.update.finished.connect(self.on_update_finished)
         self.webView.linkClicked.connect(self.on_link_clicked)
         self.listWidget.currentItemChanged.connect(self.on_item_changed)
         self.pushButton.clicked.connect(self.on_about_clicked)
@@ -90,10 +95,18 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def on_player_finished(self, ret):
         if ret != 0:
             reply = QMessageBox.question(
-                self, 'Player crashed!', 'Open URL in browser?',
+                self, 'Player Crashed!', 'Open URL in browser?',
                 QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
             if reply == QMessageBox.Yes:
                 QDesktopServices.openUrl(QUrl(self.player.url))
+
+    def on_update_finished(self, ret):
+        if ret:
+            reply = QMessageBox.question(
+                self, 'New Version Available', 'Do you want to download new version?',
+                QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+            if reply == QMessageBox.Yes:
+                QDesktopServices.openUrl(QUrl("http://crtaci.rs"))
 
     def on_link_clicked(self, url):
         self.player.url = url.toString()
@@ -168,5 +181,8 @@ class AboutDialog(QDialog, Ui_AboutDialog):
         QDialog.__init__(self, parent)
         self.setupUi(self)
         self.setModal(True)
+        html = self.textBrowser.toHtml()
+        html = html.replace("APP_VERSION", APP_VERSION)
+        self.textBrowser.setHtml(html)
         self.show()
 

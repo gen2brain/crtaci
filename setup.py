@@ -14,7 +14,9 @@ from distutils.command.build import build
 from distutils.command.clean import clean
 from distutils.dir_util import copy_tree
 
-APP_VERSION = "1.3"
+sys.path.insert(0, os.path.realpath(os.path.join("frontend", "python")))
+
+from crtaci import APP_VERSION
 BASE_DIR = dirname(realpath(__file__))
 
 
