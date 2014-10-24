@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:fb="http://ogp.me/ns/fb#">
 <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8" />
     <title>Crtaći</title>
@@ -31,10 +31,19 @@
 
         ga('create', 'UA-54547867-1', 'auto');
         ga('send', 'pageview');
-
     </script>
 </head>
 <body>
+    <div id="fb-root"></div>
+    <script>
+        (function(d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) return;
+        js = d.createElement(s); js.id = id;
+        js.src = "//connect.facebook.net/en_US/all.js#xfbml=1&appId=169674583105876&version=v2.0";
+        fjs.parentNode.insertBefore(js, fjs);
+        }(document, 'script', 'facebook-jssdk'));
+    </script>
     <div id="wrapper">
         <header>
             <a href="/"><img src="assets/img/logo.png"/></a>
@@ -59,6 +68,9 @@
             <li><a class="source" href="https://github.com/gen2brain/crtaci" target="_blank">Source</a></li>
             <li><a class="demo" href="http://demo.crtaci.rs" target="_blank">Demo</a></li>
         </ul>
+
+        <div class="fb-like" data-href="https://www.facebook.com/pages/crtacirs/875207785823593" data-width="450px" data-layout="standard" data-action="like" data-show-faces="true" data-share="true"></div>
     </div>
+
 </body>
 </html>
