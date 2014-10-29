@@ -6,8 +6,6 @@ function get_icon($character) {
     } else {
         $char = $character["Name"];
     }
-    $char = str_replace(" - ", "", $char);
-    $char = str_replace("-", "", $char);
     $char = str_replace(" ", "_", $char);
     return sprintf("assets/icons/%s.png", $char);
 }
@@ -50,10 +48,7 @@ function get_html($query, $characters, $cartoons) {
             </li>\n
 EOF;
 
-        $n = str_replace(" - ", "", $character["Name"]);
-        $n = str_replace("-", "", $n);
-
-        $ch .= sprintf($li, $class, get_icon($character), $a, ucwords($n), $n);
+        $ch .= sprintf($li, $class, get_icon($character), $a, ucwords($n), $character["Name"]);
     }
 
     foreach($cartoons as $cartoon) {

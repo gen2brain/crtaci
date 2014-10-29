@@ -84,7 +84,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         elif self.client.mode == "search":
             try:
                 character =  self.get_name(self.client.results[0]["Character"])
-                title = "%s / %s" % (u"Crtaći", self.get_name(self.client.results[0]["Character"]))
+                title = "%s / %s" % (u"Crtaći", character)
             except Exception:
                 title = u"Crtaći"
 
@@ -132,7 +132,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @staticmethod
     def get_name(name):
-        name = name.replace(" - ", "").replace("-", "")
         return titlecase(name)
 
     @staticmethod
@@ -141,8 +140,6 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             char = character["AltName"]
         else:
             char = character["Name"]
-        char = char.replace(" - ", "")
-        char = char.replace("-", "")
         char = char.replace(" ", "_")
         pixmap = QPixmap("://icons/%s.png" % char)
         if not pixmap.isNull():
@@ -185,4 +182,3 @@ class AboutDialog(QDialog, Ui_AboutDialog):
         html = html.replace("APP_VERSION", APP_VERSION)
         self.textBrowser.setHtml(html)
         self.show()
-

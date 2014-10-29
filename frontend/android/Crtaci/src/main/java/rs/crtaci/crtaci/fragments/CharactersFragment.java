@@ -219,8 +219,6 @@ public class CharactersFragment extends Fragment {
 
         private String getName(Character character) {
             String ch = character.name;
-            ch = ch.replace(" - ", "");
-            ch = ch.replace("-", "");
             return Utils.toTitleCase(ch);
         }
 
@@ -231,8 +229,6 @@ public class CharactersFragment extends Fragment {
             } else {
                 ch = character.name;
             }
-            ch = ch.replace(" - ", "");
-            ch = ch.replace("-", "");
             ch = ch.replace(" ", "_");
 
             int resId = getResources().getIdentifier(ch, "drawable", getActivity().getPackageName());
