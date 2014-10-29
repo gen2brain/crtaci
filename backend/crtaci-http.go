@@ -64,91 +64,94 @@ type Character struct {
 	AltName  string
 	AltName2 string
 	Duration string
+	Query    string
 }
 
 var characters = []Character{
-	{"atomski mrav", "", "", "medium"},
-	{"a je to", "", "", "medium"},
-	{"bananamen", "", "", "medium"},
-	{"blinki bil", "", "блинки бил", "long"},
-	{"bombončići", "bomboncici", "", "medium"},
-	{"braća grim", "braca grim", "najlepse bajke", "long"},
-	{"brzi gonzales", "", "", "medium"},
-	{"čarli braun", "carli braun", "", "medium"},
-	{"čili vili", "cili vili", "", "medium"},
-	{"cipelići", "cipelici", "", "medium"},
-	{"denis napast", "", "", "long"},
-	{"droidi", "", "", "long"},
-	{"duško dugouško", "dusko dugousko", "dusko 20dugousko", "medium"},
-	{"džoni test", "dzoni test", "", "long"},
-	{"elmer", "", "", "medium"},
-	{"eustahije brzić", "eustahije brzic", "", "medium"},
-	{"evoksi", "", "", "long"},
-	{"generalova radnja", "", "", "medium"},
-	{"gustav", "gustavus", "", "medium"},
-	{"helo kiti", "", "", "medium"},
-	{"hi men i gospodari svemira", "himen i gospodari svemira", "", "long"},
-	{"inspektor radiša", "inspektor radisa", "", "medium"},
-	{"iznogud", "", "", "medium"},
-	{"kalimero-", "kalimero - ", "", "medium"},
-	{"kasper", "", "", "medium"},
-	{"kuče dragoljupče", "kuce dragoljupce", "", "medium"},
-	{"lale gator", "", "", "medium"},
-	{"la linea", "", "", "medium"},
-	{"legenda o tarzanu", "", "", "long"},
-	{"le piaf", "", "", "short"},
-	{"mali leteći medvjedići", "mali leteci medvjedici", "", "long"},
-	{"masa i medved", "masha i medved", "masa i medvjed", "medium"},
-	{"mačor mika", "macor mika", "", "long"},
-	{"mece dobrići", "mece dobrici", "", "medium"},
-	{"miki maus", "", "", "medium"},
-	{"mornar popaj", "", "", "medium"},
-	{"nindža kornjače", "nindza kornjace", "ninja kornjace", "long"},
-	{"ogi i žohari", "ogi i zohari", "", "long"},
-	{"otkrića bez granica", "otkrica bez granica", "", "long"},
-	{"paja patak", "", "", "medium"},
-	{"patak dača", "patak daca", "", "medium"},
-	{"pepa prase", "", "", "medium"},
-	{"pepe le tvor", "", "", "medium"},
-	{"pera detlić", "pera detlic", "", "medium"},
-	{"pera kojot", "", "", "medium"},
-	{"pink panter", "", "", "medium"},
-	{"plava princeza", "", "", "long"},
-	{"porodica kremenko", "", "", "long"},
-	{"poručnik draguljče", "porucnik draguljce", "", "medium"},
-	{"profesor baltazar", "", "", "medium"},
-	{"ptica trkačica", "ptica trkacica", "", "medium"},
-	{"rakuni", "", "", "long"},
-	{"ren i stimpi", "", "", "medium"},
-	{"robotech", "robotek", "", "long"},
-	{"šalabajzerići", "salabajzerici", "", "medium"},
-	{"silvester - ", "", "silvester i tviti", "medium"},
-	{"šilja", "silja", "", "medium"},
-	{"snorkijevci", "", "", "medium"},
-	{"sofronije", "", "", "medium"},
-	{"super miš", "super mis", "", "medium"},
-	{"supermen", "", "", "medium"},
-	{"sport bili", "", "", "medium"},
-	{"srle i pajče", "srle i pajce", "", "medium"},
-	{"stanlio i olio", "", "", "medium"},
-	{"stari crtaći", "stari crtaci", "stari sinhronizovani crtaci", "medium"},
-	{"stripi", "", "", "medium"},
-	{"štrumfovi", "strumpfovi", "strumfovi", "medium"},
-	{"sundjer bob kockalone", "sundjer bob", "sunđer bob", "medium"},
-	{"talični tom", "talicni tom", "", "long"},
-	{"tarzan gospodar džungle", "tarzan gospodar dzungle", "", "long"},
-	{"tom i džeri", "tom i dzeri", "", "medium"},
-	{"transformersi", "", "", "long"},
-	{"vitez koja", "", "", "medium"},
-	{"voltron force", "", "", "long"},
-	{"vuk vučko", "vuk vucko", "", "medium"},
-	{"zamenik boža", "zamenik boza", "", "medium"},
+	{"atomski mrav", "", "", "medium", ""},
+	{"a je to", "", "", "medium", "a je to crtani"},
+	{"bananamen", "", "", "medium", ""},
+	{"blinki bil", "", "блинки бил", "long", ""},
+	{"bombončići", "bomboncici", "", "medium", ""},
+	{"braća grim", "braca grim", "najlepse bajke", "long", ""},
+	{"brzi gonzales", "", "", "medium", ""},
+	{"čarli braun", "carli braun", "", "medium", ""},
+	{"čili vili", "cili vili", "", "medium", ""},
+	{"cipelići", "cipelici", "", "medium", ""},
+	{"denis napast", "", "", "long", ""},
+	{"droidi", "", "", "long", ""},
+	{"duško dugouško", "dusko dugousko", "dusko 20dugousko", "medium", ""},
+	{"džoni test", "dzoni test", "", "long", ""},
+	{"elmer", "", "", "medium", "elmer crtani"},
+	{"eustahije brzić", "eustahije brzic", "", "medium", ""},
+	{"evoksi", "", "", "long", ""},
+	{"generalova radnja", "", "", "medium", ""},
+	{"gustav", "gustavus", "", "medium", "gustavus crtani"},
+	{"helo kiti", "", "", "medium", ""},
+	{"hi men i gospodari svemira", "himen i gospodari svemira", "", "long", ""},
+	{"inspektor radiša", "inspektor radisa", "", "medium", ""},
+	{"iznogud", "", "", "medium", ""},
+	{"kalimero", "", "kalimero - ", "medium", "kalimero- crtani"},
+	{"kasper", "", "", "medium", "kasper crtani"},
+	{"kuče dragoljupče", "kuce dragoljupce", "", "medium", ""},
+	{"lale gator", "", "", "medium", ""},
+	{"la linea", "", "", "medium", ""},
+	{"legenda o tarzanu", "", "", "long", ""},
+	{"le piaf", "", "", "short", ""},
+	{"mali leteći medvjedići", "mali leteci medvjedici", "", "long", ""},
+	{"masa i medved", "masha i medved", "masa i medvjed", "medium", "masa i medved crtani"},
+	{"mačor mika", "macor mika", "", "long", ""},
+	{"mece dobrići", "mece dobrici", "", "medium", ""},
+	{"miki maus", "", "", "medium", ""},
+	{"mornar popaj", "", "", "medium", ""},
+	{"nindža kornjače", "nindza kornjace", "ninja kornjace", "long", ""},
+	{"ogi i žohari", "ogi i zohari", "", "long", ""},
+	{"otkrića bez granica", "otkrica bez granica", "", "long", ""},
+	{"paja patak", "", "", "medium", ""},
+	{"patak dača", "patak daca", "", "medium", ""},
+	{"pepa prase", "", "", "medium", ""},
+	{"pepe le tvor", "", "", "medium", ""},
+	{"pera detlić", "pera detlic", "", "medium", ""},
+	{"pera kojot", "", "", "medium", ""},
+	{"pink panter", "", "", "medium", ""},
+	{"plava princeza", "", "", "long", ""},
+	{"porodica kremenko", "", "", "long", ""},
+	{"poručnik draguljče", "porucnik draguljce", "", "medium", ""},
+	{"profesor baltazar", "", "", "medium", ""},
+	{"ptica trkačica", "ptica trkacica", "", "medium", ""},
+	{"rakuni", "", "", "long", ""},
+	{"ren i stimpi", "", "", "medium", ""},
+	{"robotech", "robotek", "", "long", ""},
+	{"šalabajzerići", "salabajzerici", "", "medium", ""},
+	{"silvester", "", "silvester i tviti", "medium", "silvester - crtani"},
+	{"šilja", "silja", "", "medium", "silja crtani"},
+	{"snorkijevci", "", "", "medium", ""},
+	{"sofronije", "", "", "medium", ""},
+	{"super miš", "super mis", "", "medium", "super mis crtani"},
+	{"supermen", "", "", "medium", "supermen crtani"},
+	{"sport bili", "", "", "medium", ""},
+	{"srle i pajče", "srle i pajce", "", "medium", ""},
+	{"stanlio i olio", "", "", "medium", ""},
+	{"stari crtaći", "stari crtaci", "stari sinhronizovani crtaci", "medium", ""},
+	{"stripi", "", "", "medium", ""},
+	{"štrumfovi", "strumpfovi", "strumfovi", "medium", "strumfovi crtani"},
+	{"sundjer bob kockalone", "sundjer bob", "sunđer bob", "medium", ""},
+	{"talični tom", "talicni tom", "", "long", ""},
+	{"tarzan gospodar džungle", "tarzan gospodar dzungle", "", "long", ""},
+	{"tom i džeri", "tom i dzeri", "", "medium", ""},
+	{"transformersi", "", "", "long", ""},
+	{"vitez koja", "", "", "medium", ""},
+	{"voltron force", "", "", "long", "voltron force crtani"},
+	{"vuk vučko", "vuk vucko", "", "medium", ""},
+	{"zamenik boža", "zamenik boza", "", "medium", ""},
+	{"zmajeva kugla z", "zmajeva kugla", "zmajeva kugla z", "long", ""},
 }
 
 var filters = []string{
 	"najbolji crtaci",
 	"www.crtani-filmovi.org",
 	"by crtani svijet",
+	"crtanifilmonline",
 	"crtani filmovi",
 	"crtani film",
 	"stari crtani",
@@ -187,14 +190,16 @@ var filters = []string{
 	"mashini skazki",
 	"the cartooner 100",
 	"iz 60-70-80-tih",
+	"mpeg4",
 	"144p h 264 aac",
 	"sihroni fll 2",
 	"zlekedik",
 	"gusztav allast keres",
 	"guszt v k",
-    "rtb",
+	"rtb",
 	"djuza stoiljkovic",
 	"okrenite preko smplayer-a",
+	"new episodes",
 }
 
 var censoredWords = []string{
@@ -205,6 +210,8 @@ var censoredWords = []string{
 	"govna",
 	"govno",
 	"picka",
+	"picke",
+	"peder",
 	"uzivo",
 	"parodija",
 	"tretmen",
@@ -238,6 +245,9 @@ var censoredWords = []string{
 	"remix",
 	"tour",
 	"bjorke",
+	"tweety",
+	"revolution",
+	"halloween",
 	"remastered",
 	"celebration",
 	"experiments",
@@ -264,7 +274,7 @@ var censoredWords = []string{
 	"deutsch",
 	"remue",
 	"kespar",
-    "splitter",
+	"splitter",
 	"desierto",
 	"pelicula",
 	"episodio",
@@ -277,14 +287,17 @@ var censoredWords = []string{
 	"schweiz",
 	"verkackt",
 	"sottile",
+	"goldene",
 	"elasmosaurio",
 	"ombra",
-    "ehlers",
+	"ehlers",
 	"dejas",
+	"capitulo",
 	"et ses",
 	"tu sais",
 	"ma vision",
 	"how could",
+	"new year",
 	" del ",
 }
 
@@ -324,6 +337,9 @@ var censoredIds = []string{
 	"xuGex-B3GbQ",
 	"drEJEbHDgIA",
 	"JF4qkkgQsO4",
+	"Y4r7m-Payv8",
+	"0HDbPXN-HaE",
+	"yONB3IwxtlQ",
 	"xy53o1",
 	"xy53q1",
 	"x3osiz",
@@ -332,6 +348,10 @@ var censoredIds = []string{
 	"x7k5hx",
 	"x60rr7",
 	"x7k5ko",
+	"x4e7mn",
+	"xs4jyr",
+	"x7wviw",
+	"x5nyjf",
 	"4562474",
 	"21508130",
 	"14072389",
@@ -342,15 +362,15 @@ var (
 	reAlpha = regexp.MustCompile(`[A-Za-zžćčšđ]+`)
 	reDesc  = regexp.MustCompile(`(?U)(\(|\[).*(\)|\])`)
 	reYear  = regexp.MustCompile(`(19\d{2}|20\d{2})`)
-    reExt   = regexp.MustCompile(`\.(?i:avi|mp4|flv|wmv|mpg|mpeg)$`)
+	reExt   = regexp.MustCompile(`\.(?i:avi|mp4|flv|wmv|mpg|mpeg|mpeg4)$`)
 	reRip   = regexp.MustCompile(`(?i:xvid)?(tv|dvd)?(-|\s)(rip)(bg)?(audio)?`)
 	reChars = regexp.MustCompile(`(?i:braca grimm|i snupi [sš]ou|i snupi|charlie brown and snoopy|brzi gonzales i patak da[cč]a|patak da[cč]a i brzi gonzales|patak da[cč]a i elmer|patak da[cč]a i gicko prasi[cć]|i hello kitty|tom and jerry|tom i d[zž]eri [sš]ou|spongebob squarepants|paja patak i [sš]ilja|bini i sesil|masha i medved|elmer fudd|blinkibil|kockalone|najlepse bajke|stari sinhronizovani crtaci|popeye the sailor|kasper i drugari,)`)
 	reTime  = regexp.MustCompile(`(\d{2})h(\d{2})m(\d{2})s`)
 	rePart  = regexp.MustCompile(`\s([\diI]{1,2})\.?\s?(?i:/|deo|od|part)\s?([\diI]{1,2})?\s*(?i:deo)?`)
 
-	reTitleR = regexp.MustCompile(`^(\d{1,2}\.?)\s?(\d{1,})?(.*)$`)
+	reTitleR     = regexp.MustCompile(`^(\d{1,2}\.?)\s?(\d{1,})?(.*)$`)
 	reTitleNotEp = regexp.MustCompile(`\d{2,}\s(?i:razbojnika|sati|malih|pljeskavica)`)
-	reTitle20 = regexp.MustCompile(`(\s20)`)
+	reTitle20    = regexp.MustCompile(`(\s20)`)
 
 	reE1 = regexp.MustCompile(`(?i:epizoda|epizida|epzioda|episode|epizodas|episoda|Эпизод)\s?(\d{1,3})`)
 	reE2 = regexp.MustCompile(`(\d{1,3})\.?-?\s?(?i:epizoda|epizida|epzioda|episode|epizodas|episoda)`)
@@ -437,7 +457,7 @@ func YouTube(character Character) {
 
 	getResponse := func(token string) *youtube.SearchListResponse {
 		apiCall := yt.Search.List("id,snippet").
-			Q(getQuery(name, altname, false, true)).
+			Q(getQuery(character, false)).
 			MaxResults(50).
 			VideoDuration(character.Duration).
 			Type("video").
@@ -519,7 +539,7 @@ func DailyMotion(character Character) {
 	}
 
 	getResponse := func(page string) ([]interface{}, bool) {
-		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(name, altname, true, true), page))
+		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(character, true), page))
 		if err != nil {
 			log.Print("Error making DailyMotion API call: %v", err.Error())
 			return nil, false
@@ -627,8 +647,8 @@ func Vimeo(character Character) {
 		Transport: &transport,
 	}
 
-	getResponse := func(page string) ([]interface{}) {
-		req, err := http.NewRequest("GET", fmt.Sprintf(uri, getQuery(name, altname, true, false), page), nil)
+	getResponse := func(page string) []interface{} {
+		req, err := http.NewRequest("GET", fmt.Sprintf(uri, getQuery(character, true), page), nil)
 		if err != nil {
 			log.Print("Error making Vimeo API call: %v", err.Error())
 			return nil
@@ -742,7 +762,7 @@ func getFormattedTitle(videoTitle string, name string, altname string, altname2 
 		part = p[0][1]
 	}
 
-    title = reYear.ReplaceAllString(title, "")
+	title = reYear.ReplaceAllString(title, "")
 
 	re20 := reTitle20.FindAllStringSubmatch(title, -1)
 	if len(re20) > 1 {
@@ -797,7 +817,7 @@ func getFormattedTitle(videoTitle string, name string, altname string, altname2 
 func getEpisode(videoTitle string) int {
 	title := videoTitle
 
-    title = reYear.ReplaceAllString(title, "")
+	title = reYear.ReplaceAllString(title, "")
 
 	re20 := reTitle20.FindAllStringSubmatch(title, -1)
 	if len(re20) > 1 {
@@ -858,7 +878,7 @@ func getEpisode(videoTitle string) int {
 func getSeason(videoTitle string) int {
 	title := videoTitle
 
-    title = reYear.ReplaceAllString(title, "")
+	title = reYear.ReplaceAllString(title, "")
 
 	re20 := reTitle20.FindAllStringSubmatch(title, -1)
 	if len(re20) > 1 {
@@ -894,15 +914,14 @@ func getSeason(videoTitle string) int {
 	return s
 }
 
-func getQuery(name string, altname string, escape bool, crtani bool) string {
+func getQuery(char Character, escape bool) string {
 	query := ""
-	if altname != "" {
-		query = altname
+	if char.Query != "" {
+		query = char.Query
+	} else if char.AltName != "" {
+		query = char.AltName
 	} else {
-		query = name
-	}
-	if crtani {
-		query = query + " crtani"
+		query = char.Name
 	}
 	if escape {
 		query = url.QueryEscape(query)
@@ -1039,8 +1058,8 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 	paths := strings.Split(path, "/")
 
 	if len(paths) == 3 {
-		var url string;
-		var err error;
+		var url string
+		var err error
 		service := paths[1]
 		videoId := paths[2]
 
@@ -1078,9 +1097,9 @@ func main() {
 	http.HandleFunc("/search/", handleSearch)
 	http.HandleFunc("/extract/", handleExtract)
 
-    l, err := net.Listen("tcp4", *bind)
-    if err != nil {
-        log.Fatal(err)
-    }
-    http.Serve(l, nil)
+	l, err := net.Listen("tcp4", *bind)
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.Serve(l, nil)
 }
