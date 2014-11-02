@@ -38,33 +38,33 @@ import (
 
 var (
 	appName    = "crtaci-http"
-	appVersion = "1.2"
+	appVersion = "1.3"
 )
 
 type Cartoon struct {
-	Id             string
-	Character      string
-	Title          string
-	FormattedTitle string
-	Episode        int
-	Season         int
-	Service        string
-	Url            string
-	Thumbnails     Thumbnail
+	Id             string    `json:"id"`
+	Character      string    `json:"character"`
+	Title          string    `json:"title"`
+	FormattedTitle string    `json:"formattedTitle"`
+	Episode        int       `json:"episode"`
+	Season         int       `json:"season"`
+	Service        string    `json:"service"`
+	Url            string    `json:"url"`
+	Thumbnails     Thumbnail `json:"thumbnails"`
 }
 
 type Thumbnail struct {
-	Small  string
-	Medium string
-	Large  string
+	Small  string `json:"small"`
+	Medium string `json:"medium"`
+	Large  string `json:"large"`
 }
 
 type Character struct {
-	Name     string
-	AltName  string
-	AltName2 string
-	Duration string
-	Query    string
+	Name     string `json:"name"`
+	AltName  string `json:"altname"`
+	AltName2 string `json:"altname2"`
+	Duration string `json:"duration"`
+	Query    string `json:"query"`
 }
 
 var characters = []Character{
@@ -72,6 +72,7 @@ var characters = []Character{
 	{"a je to", "", "", "medium", "a je to crtani"},
 	{"bananamen", "", "", "medium", ""},
 	{"blinki bil", "", "блинки бил", "long", ""},
+	{"blufonci", "", "", "medium", ""},
 	{"bombončići", "bomboncici", "", "medium", ""},
 	{"braća grim", "braca grim", "najlepse bajke", "long", ""},
 	{"brzi gonzales", "", "", "medium", ""},
@@ -121,9 +122,9 @@ var characters = []Character{
 	{"ptica trkačica", "ptica trkacica", "", "medium", ""},
 	{"rakuni", "", "", "long", ""},
 	{"ren i stimpi", "", "", "medium", ""},
-	{"robotech", "robotek", "", "long", ""},
+	{"robotek", "", "robotech", "long", ""},
 	{"šalabajzerići", "salabajzerici", "", "medium", ""},
-	{"silvester", "", "silvester i tviti", "medium", "silvester - crtani"},
+	{"silvester", "", "silvester i tviti", "medium", "silvester crtani"},
 	{"šilja", "silja", "", "medium", "silja crtani"},
 	{"snorkijevci", "", "", "medium", ""},
 	{"sofronije", "", "", "medium", ""},
@@ -143,8 +144,9 @@ var characters = []Character{
 	{"vitez koja", "", "", "medium", ""},
 	{"voltron force", "", "", "long", "voltron force crtani"},
 	{"vuk vučko", "vuk vucko", "", "medium", ""},
+	{"wumi", "", "wummi", "short", "wumi crtani"},
 	{"zamenik boža", "zamenik boza", "", "medium", ""},
-	{"zmajeva kugla z", "zmajeva kugla", "zmajeva kugla z", "long", ""},
+	{"zmajeva kugla", "zmajeva kugla", "zmajeva kugla z", "long", ""},
 }
 
 var filters = []string{
@@ -244,6 +246,7 @@ var censoredWords = []string{
 	"gamer",
 	"remix",
 	"tour",
+	"party",
 	"bjorke",
 	"tweety",
 	"revolution",
@@ -267,6 +270,7 @@ var censoredWords = []string{
 	"lovers",
 	"lubochka",
 	"tobbe",
+	"sushi",
 	"prikljuchenija",
 	"slovenska",
 	"aakerhus",
@@ -340,6 +344,11 @@ var censoredIds = []string{
 	"Y4r7m-Payv8",
 	"0HDbPXN-HaE",
 	"yONB3IwxtlQ",
+	"BjtFDLOmEu8",
+	"cpF73znG7UM",
+	"2onSjJVgtpg",
+	"gRLppbNNCLI",
+	"smKnRR0ouds",
 	"xy53o1",
 	"xy53q1",
 	"x3osiz",
@@ -355,6 +364,10 @@ var censoredIds = []string{
 	"4562474",
 	"21508130",
 	"14072389",
+	"145041047",
+	"163980203",
+	"165572645",
+	"168855693",
 }
 
 var (
@@ -364,9 +377,10 @@ var (
 	reYear  = regexp.MustCompile(`(19\d{2}|20\d{2})`)
 	reExt   = regexp.MustCompile(`\.(?i:avi|mp4|flv|wmv|mpg|mpeg|mpeg4)$`)
 	reRip   = regexp.MustCompile(`(?i:xvid)?(tv|dvd)?(-|\s)(rip)(bg)?(audio)?`)
-	reChars = regexp.MustCompile(`(?i:braca grimm|i snupi [sš]ou|i snupi|charlie brown and snoopy|brzi gonzales i patak da[cč]a|patak da[cč]a i brzi gonzales|patak da[cč]a i elmer|patak da[cč]a i gicko prasi[cć]|i hello kitty|tom and jerry|tom i d[zž]eri [sš]ou|spongebob squarepants|paja patak i [sš]ilja|bini i sesil|masha i medved|elmer fudd|blinkibil|kockalone|najlepse bajke|stari sinhronizovani crtaci|popeye the sailor|kasper i drugari,)`)
+	reChars = regexp.MustCompile(`(?i:braca grimm|i snupi [sš]ou|i snupi|charlie brown and snoopy|brzi gonzales i patak da[cč]a|patak da[cč]a i brzi gonzales|patak da[cč]a i elmer|patak da[cč]a i gicko prasi[cć]|i hello kitty|tom and jerry|tom i d[zž]eri [sš]ou|spongebob squarepants|paja patak i [sš]ilja|bini i sesil|masha i medved|elmer fudd|blinkibil|kockalone|najlepse bajke|stari sinhronizovani crtaci|popeye the sailor|kasper i drugari,|leghorn)`)
 	reTime  = regexp.MustCompile(`(\d{2})h(\d{2})m(\d{2})s`)
 	rePart  = regexp.MustCompile(`\s([\diI]{1,2})\.?\s?(?i:/|deo|od|part)\s?([\diI]{1,2})?\s*(?i:deo)?`)
+	rePart2 = regexp.MustCompile(`\s(?i:pt)\s?(\d{1,2})\s*`)
 
 	reTitleR     = regexp.MustCompile(`^(\d{1,2}\.?)\s?(\d{1,})?(.*)$`)
 	reTitleNotEp = regexp.MustCompile(`\d{2,}\s(?i:razbojnika|sati|malih|pljeskavica)`)
@@ -382,6 +396,7 @@ var (
 	reS1 = regexp.MustCompile(`(?i:sezona|sezon)\s?(\d{1,2})`)
 	reS2 = regexp.MustCompile(`(\d{1,2})\.?\s?(?i:sezona|sezon)`)
 	reS3 = regexp.MustCompile(`(?i:s)\s?(\d{1,2})`)
+	reS4 = regexp.MustCompile(`(\d{1,2})(?i:x)`)
 )
 
 var (
@@ -738,6 +753,116 @@ func Vimeo(character Character) {
 
 }
 
+func VK(character Character) {
+
+	defer wg.Done()
+	defer func() {
+		if r := recover(); r != nil {
+			log.Print("Recovered in VK: ", r)
+		}
+	}()
+
+	const apiKey = "YOUR_API_KEY"
+	uri := "https://api.vk.com/method/video.search?q=%s&count=100&sort=2&access_token=%s&v=5.26"
+
+	name := strings.ToLower(character.Name)
+	altname := strings.ToLower(character.AltName)
+	altname2 := strings.ToLower(character.AltName2)
+
+	timeout := time.Duration(6 * time.Second)
+
+	dialTimeout := func(network, addr string) (net.Conn, error) {
+		return net.DialTimeout(network, addr, timeout)
+	}
+
+	transport := http.Transport{
+		Dial: dialTimeout,
+	}
+
+	httpClient := http.Client{
+		Transport: &transport,
+	}
+
+	getResponse := func() []interface{} {
+		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(character, true), apiKey))
+		if err != nil {
+			log.Print("Error making VK API call: %v", err.Error())
+			return nil
+		}
+		body, _ := ioutil.ReadAll(res.Body)
+		res.Body.Close()
+
+		var data map[string]interface{}
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			log.Print("Error unmarshaling json: %v", err.Error())
+			return nil
+		}
+
+		response, ok := data["response"].(map[string]interface{})
+		if !ok {
+			return nil
+		}
+
+		items, ok := response["items"].([]interface{})
+		if !ok {
+			return nil
+		}
+
+		if len(items) == 0 {
+			return nil
+		}
+
+		return items
+	}
+
+	parseResponse := func(response []interface{}) {
+		for _, obj := range response {
+			video, ok := obj.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			videoId := fmt.Sprintf("%.0f", video["id"].(float64))
+			videoTitle := strings.ToLower(video["title"].(string))
+			videoUrl := video["player"].(string)
+			videoThumbSmall := video["photo_130"].(string)
+			videoThumbMedium := video["photo_320"].(string)
+			videoThumbLarge := video["photo_320"].(string)
+
+			videoDuration := getDuration(video["duration"].(float64))
+
+			if strings.Contains(videoUrl, "youtube") || strings.Contains(videoUrl, "vimeo") {
+				continue
+			}
+
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && character.Duration == videoDuration {
+				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
+
+				cartoon := Cartoon{
+					videoId,
+					name,
+					videoTitle,
+					formattedTitle,
+					getEpisode(videoTitle),
+					getSeason(videoTitle),
+					"vk",
+					videoUrl,
+					Thumbnail{videoThumbSmall, videoThumbMedium, videoThumbLarge},
+				}
+
+				cartoons = append(cartoons, cartoon)
+			}
+		}
+	}
+
+	response := getResponse()
+	if response != nil {
+		parseResponse(response)
+	}
+
+}
+
 func getDuration(videoDuration float64) string {
 	minutes := videoDuration / 60
 	switch {
@@ -762,6 +887,11 @@ func getFormattedTitle(videoTitle string, name string, altname string, altname2 
 		part = p[0][1]
 	}
 
+	p2 := rePart2.FindAllStringSubmatch(title, -1)
+	if len(p2) > 0 {
+		part = p2[0][1]
+	}
+
 	title = reYear.ReplaceAllString(title, "")
 
 	re20 := reTitle20.FindAllStringSubmatch(title, -1)
@@ -774,8 +904,8 @@ func getFormattedTitle(videoTitle string, name string, altname string, altname2 
 	}
 
 	for _, re := range []*regexp.Regexp{
-		reDesc, reExt, reRip, reChars, reTime, rePart,
-		reE1, reS1, reE2, reE5, reE6, reE3, reS2, reS3} {
+		reDesc, reExt, reRip, reChars, reTime, rePart, rePart2,
+		reE1, reS1, reS4, reE2, reE5, reE6, reE3, reS2, reS3} {
 		title = re.ReplaceAllString(title, "")
 	}
 
@@ -827,7 +957,7 @@ func getEpisode(videoTitle string) int {
 	for _, filter := range filters {
 		title = strings.Replace(title, filter, " ", -1)
 	}
-	for _, re := range []*regexp.Regexp{reDesc, reYear, reTime, rePart, reS1} {
+	for _, re := range []*regexp.Regexp{reDesc, reYear, reTime, rePart, rePart2, reS1, reS4} {
 		title = re.ReplaceAllString(title, "")
 	}
 
@@ -885,7 +1015,7 @@ func getSeason(videoTitle string) int {
 		title = reTitle20.ReplaceAllString(title, " ")
 	}
 
-	for _, re := range []*regexp.Regexp{reDesc, reYear, reTime, rePart, reE1} {
+	for _, re := range []*regexp.Regexp{reDesc, reYear, reTime, rePart, rePart2, reE1} {
 		title = re.ReplaceAllString(title, "")
 	}
 
@@ -905,6 +1035,15 @@ func getSeason(videoTitle string) int {
 	s3 := reS3.FindAllStringSubmatch(title, -1)
 	if len(s3) > 0 {
 		s, _ = strconv.Atoi(s3[0][1])
+		if s >= 20 || s == 0 {
+			return -1
+		}
+		return s
+	}
+
+	s4 := reS4.FindAllStringSubmatch(title, -1)
+	if len(s4) > 0 {
+		s, _ = strconv.Atoi(s4[0][1])
 		if s >= 20 || s == 0 {
 			return -1
 		}
@@ -945,6 +1084,8 @@ func isCensored(videoTitle string, videoId string) bool {
 
 func isValidTitle(videoTitle string, name string, altname string, altname2 string, videoId string) bool {
 	videoTitle = reTitleR.ReplaceAllString(videoTitle, "$3")
+	videoTitle = strings.TrimLeft(videoTitle, " ")
+
 	if strings.HasPrefix(videoTitle, name) {
 		if !isCensored(videoTitle, videoId) {
 			return true
@@ -1028,6 +1169,7 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 			go YouTube(*char)
 			go DailyMotion(*char)
 			go Vimeo(*char)
+			//go VK(*char)
 			wg.Wait()
 
 			sortCartoons(cartoons)
@@ -1070,6 +1212,8 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 			url, err = vidextr.DailyMotion(videoId)
 		case service == "vimeo":
 			url, err = vidextr.Vimeo(videoId)
+		case service == "vk":
+			url, err = vidextr.VK(videoId)
 		}
 
 		if err != nil {
