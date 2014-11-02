@@ -1,10 +1,10 @@
 <?php
 
 function get_icon($character) {
-    if(!empty($character["AltName"])) {
-        $char = $character["AltName"];
+    if(!empty($character["altname"])) {
+        $char = $character["altname"];
     } else {
-        $char = $character["Name"];
+        $char = $character["name"];
     }
     $char = str_replace(" ", "_", $char);
     return sprintf("assets/icons/%s.png", $char);
@@ -12,11 +12,11 @@ function get_icon($character) {
 
 function get_season($cartoon) {
     $se = "";
-    if($cartoon["Season"] != -1) {
-        $se .= sprintf("S%02d", $cartoon["Season"]);
+    if($cartoon["season"] != -1) {
+        $se .= sprintf("S%02d", $cartoon["season"]);
     }
-    if($cartoon["Episode"] != -1) {
-        $se .= sprintf("E%02d", $cartoon["Episode"]);
+    if($cartoon["episode"] != -1) {
+        $se .= sprintf("E%02d", $cartoon["episode"]);
     }
     if(!empty($se)) {
         $se = " - " . $se;
@@ -30,10 +30,10 @@ function get_html($query, $characters, $cartoons) {
 
     $c = true;
     foreach($characters as $character) {
-        if(!empty($character["AltName"])) {
-            $name = $character["AltName"];
+        if(!empty($character["altname"])) {
+            $name = $character["altname"];
         } else {
-            $name = $character["Name"];
+            $name = $character["name"];
         }
         $a = urlencode($name);
 
@@ -48,14 +48,14 @@ function get_html($query, $characters, $cartoons) {
             </li>\n
 EOF;
 
-        $ch .= sprintf($li, $class, get_icon($character), $a, ucwords($n), $character["Name"]);
+        $ch .= sprintf($li, $class, get_icon($character), $a, ucwords($n), $character["name"]);
     }
 
     foreach($cartoons as $cartoon) {
-        if($cartoon["Service"] == "youtube") {
-            $image = $cartoon["Thumbnails"]["Large"];
+        if($cartoon["service"] == "youtube") {
+            $image = $cartoon["thumbnails"]["large"];
         } else {
-            $image = $cartoon["Thumbnails"]["Medium"];
+            $image = $cartoon["thumbnails"]["medium"];
         }
 
         $se = get_season($cartoon);
@@ -65,7 +65,7 @@ EOF;
                 <div class="text">%s%s</div>
             </li>\n
 EOF;
-        $ca .= sprintf($li, $cartoon["Url"], $image, $cartoon["FormattedTitle"], $se);
+        $ca .= sprintf($li, $cartoon["url"], $image, $cartoon["formattedTitle"], $se);
     }
 
     $tpl = str_replace("{TITLE}", "Crtaći / " . ucwords($query), $tpl);

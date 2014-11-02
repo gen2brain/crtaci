@@ -4,6 +4,7 @@
     <file>icons/atomski_mrav.png</file>
     <file>icons/bananamen.png</file>
     <file>icons/blinki_bil.png</file>
+    <file>icons/blufonci.png</file>
     <file>icons/bomboncici.png</file>
     <file>icons/braca_grim.png</file>
     <file>icons/brzi_gonzales.png</file>
@@ -75,6 +76,8 @@
     <file>icons/vitez_koja.png</file>
     <file>icons/voltron_force.png</file>
     <file>icons/vuk_vucko.png</file>
+    <file>icons/wumi.png</file>
     <file>icons/zamenik_boza.png</file>
+    <file>icons/zmajeva_kugla.png</file>
   </qresource>
 </RCC>

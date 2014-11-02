@@ -1,37 +1,26 @@
 package rs.crtaci.crtaci.entities;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.io.Serializable;
 
 
 public class Cartoon implements Serializable {
 
-    @SerializedName("Id")
     public String id;
 
-    @SerializedName("Character")
     public String character;
 
-    @SerializedName("Title")
     public String title;
 
-    @SerializedName("FormattedTitle")
     public String formattedTitle;
 
-    @SerializedName("Episode")
     public Integer episode;
 
-    @SerializedName("Season")
     public Integer season;
 
-    @SerializedName("Service")
     public String service;
 
-    @SerializedName("Url")
     public String url;
 
-    @SerializedName("Thumbnails")
     public Thumbnails thumbnails;
 
     @Override

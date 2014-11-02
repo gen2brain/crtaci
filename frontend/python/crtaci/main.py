@@ -61,7 +61,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
     def add_items(self):
         characters = self.client.results
         for character in characters:
-            item = QListWidgetItem(self.get_name(character["Name"]))
+            item = QListWidgetItem(self.get_name(character["name"]))
             item.setData(Qt.UserRole, character)
             item.setSizeHint(QSize(48, 48))
             icon = self.get_icon(character)
@@ -83,7 +83,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
             self.add_items()
         elif self.client.mode == "search":
             try:
-                character =  self.get_name(self.client.results[0]["Character"])
+                character =  self.get_name(self.client.results[0]["character"])
                 title = "%s / %s" % (u"Crtaći", character)
             except Exception:
                 title = u"Crtaći"
@@ -136,10 +136,10 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
     @staticmethod
     def get_icon(character):
-        if character["AltName"]:
-            char = character["AltName"]
+        if character["altname"]:
+            char = character["altname"]
         else:
-            char = character["Name"]
+            char = character["name"]
         char = char.replace(" ", "_")
         pixmap = QPixmap("://icons/%s.png" % char)
         if not pixmap.isNull():
@@ -152,24 +152,28 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         html = ""
         template = readrc("://assets/view.html")
         for cartoon in cartoons:
-            if cartoon["Service"] == "youtube":
-                image = cartoon["Thumbnails"]["Large"]
-            elif cartoon["Service"] == "dailymotion":
-                image = cartoon["Thumbnails"]["Medium"]
-            elif cartoon["Service"] == "vimeo":
-                image = cartoon["Thumbnails"]["Medium"]
-            se = ""
-            if cartoon["Season"] != -1:
-                se += "S%02d" % cartoon["Season"]
-            if cartoon["Episode"] != -1:
-                se += "E%02d" % cartoon["Episode"]
-            if se:
-                se = " - " + se
+            if cartoon["service"] == "youtube":
+                image = cartoon["thumbnails"]["large"]
+            else:
+                image = cartoon["thumbnails"]["medium"]
+
+            s, e = "", ""
+            if cartoon["season"] != -1:
+                s = "S%02d" % cartoon["season"]
+            if cartoon["episode"] != -1:
+                e = "E%02d" % cartoon["episode"]
+            if s and e:
+                se = " - " + s + e
+            elif e:
+                se = " - " + e
+            else:
+                se = ""
+
             html += '''
         <li>
             <div class="image"><a href="%s"><img data-original="%s" width="240" height="180"/><div class="play"></div></a></div>
             <div class="text">%s%s</div>
-        </li>''' % (cartoon["Url"], image, cartoon["FormattedTitle"], se)
+        </li>''' % (cartoon["url"], image, cartoon["formattedTitle"], se)
         return template.replace("{HTML}", html)
 
 

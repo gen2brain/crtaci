@@ -4,14 +4,15 @@ import android.content.Intent;
 import android.os.AsyncTask;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NavUtils;
-import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.gson.Gson;
@@ -39,14 +40,16 @@ public class CartoonsActivity extends ActionBarActivity {
     private Character character;
     private ArrayList<Cartoon> cartoons;
     private CartoonsTask cartoonsTask;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
-        supportRequestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_cartoons);
+
+        progressBar = (ProgressBar) findViewById(R.id.progressbar);
 
         if(findViewById(R.id.cartoons_container) != null) {
             twoPane = true;
@@ -54,17 +57,18 @@ public class CartoonsActivity extends ActionBarActivity {
             twoPane = false;
         }
 
-        final ActionBar actionBar = getSupportActionBar();
-        actionBar.setDisplayShowTitleEnabled(true);
-        actionBar.setDisplayHomeAsUpEnabled(true);
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
 
         Bundle bundle = getIntent().getExtras();
         character = (Character) bundle.get("character");
 
         String title = character.name;
-        title = title.replace(" - ", "").replace("-", "");
-        title = String.format("%s / %s", getResources().getString(R.string.app_name), Utils.toTitleCase(title));
-        actionBar.setTitle(title);
+        title = String.format(Utils.toTitleCase(title));
+
+        toolbar.setSubtitle(title);
+        toolbar.setLogo(R.drawable.ic_launcher);
+        toolbar.setNavigationIcon(R.drawable.ic_chevron_left);
 
         if(savedInstanceState != null) {
             cartoons = (ArrayList<Cartoon>) savedInstanceState.getSerializable("cartoons");
@@ -112,7 +116,7 @@ public class CartoonsActivity extends ActionBarActivity {
             return true;
         } else if(id == R.id.action_rate) {
             Utils.rateThisApp(this);
-        } else if(id == R.id.action_reload) {
+        } else if(id == R.id.action_refresh) {
             cancelCartoonsTask();
             startCartoonsTask();
         }
@@ -164,7 +168,9 @@ public class CartoonsActivity extends ActionBarActivity {
 
         protected void onPreExecute() {
             super.onPreExecute();
-            setSupportProgressBarIndeterminateVisibility(true);
+            if(progressBar != null) {
+                progressBar.setVisibility(View.VISIBLE);
+            }
         }
 
         protected ArrayList<Cartoon> doInBackground(String... params) {
@@ -223,7 +229,9 @@ public class CartoonsActivity extends ActionBarActivity {
 
         protected void onPostExecute(ArrayList<Cartoon> results) {
             Log.d(TAG, "onPostExecute");
-            setSupportProgressBarIndeterminateVisibility(false);
+            if(progressBar != null) {
+                progressBar.setVisibility(View.GONE);
+            }
             if(results != null && !results.isEmpty()) {
                 cartoons = results;
                 try {

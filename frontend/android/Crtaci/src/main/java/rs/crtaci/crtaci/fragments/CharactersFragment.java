@@ -1,6 +1,5 @@
 package rs.crtaci.crtaci.fragments;
 
-
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -18,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,6 +46,7 @@ public class CharactersFragment extends Fragment {
     private ArrayList<Character> characters;
     private CartoonsTask cartoonsTask;
     private int selectedListItem = -1;
+    private ProgressBar progressBar;
 
     public static CharactersFragment newInstance(ArrayList<Character> characters, boolean twoPane) {
         CharactersFragment fragment = new CharactersFragment();
@@ -59,7 +60,6 @@ public class CharactersFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
-        getActivity().setProgressBarIndeterminateVisibility(false);
 
         if(savedInstanceState != null) {
             characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
@@ -69,11 +69,16 @@ public class CharactersFragment extends Fragment {
 
         twoPane = getArguments().getBoolean("twoPane");
 
-        View rootView = inflater.inflate(R.layout.fragment_characters, container, false);
+        View view = inflater.inflate(R.layout.fragment_characters, container, false);
 
-        createListView(rootView);
+        return view;
+    }
 
-        return rootView;
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        progressBar = (ProgressBar) view.getRootView().findViewById(R.id.progressbar);
+        createListView(view);
     }
 
     @Override
@@ -93,7 +98,11 @@ public class CharactersFragment extends Fragment {
     }
 
     public void startCartoonsTask() {
-        Character character = characters.get(selectedListItem);
+        Character character = null;
+        if(characters != null && !characters.isEmpty()) {
+            character = characters.get(selectedListItem);
+        }
+
         if(character == null) {
             return;
         }
@@ -181,6 +190,8 @@ public class CharactersFragment extends Fragment {
             View view = convertView;
             final ViewHolder holder;
 
+            Character character = characters.get(position);
+
             if(convertView == null) {
                 LayoutInflater inflater = getLayoutInflater(null);
                 view = inflater.inflate(R.layout.item_list_character, parent, false);
@@ -188,10 +199,19 @@ public class CharactersFragment extends Fragment {
                 holder = new ViewHolder();
                 holder.name = (TextView) view.findViewById(R.id.name);
                 holder.icon = (ImageView) view.findViewById(R.id.icon);
+
+                Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/comic.ttf");
+                holder.name.setTypeface(tf);
+
                 view.setTag(holder);
             } else {
                 holder = (ViewHolder) view.getTag();
             }
+
+            SpannableString spanString = new SpannableString(getName(character));
+            spanString.setSpan(new StyleSpan(Typeface.BOLD), 0, spanString.length(), 0);
+
+            holder.name.setText(spanString);
 
             if(position % 2 == 0) {
                 view.setBackgroundResource(R.drawable.item_background);
@@ -203,15 +223,6 @@ public class CharactersFragment extends Fragment {
                 view.setBackgroundColor(getResources().getColor(R.color.item_selected));
             }
 
-            Character character = characters.get(position);
-
-            Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/comic.ttf");
-            holder.name.setTypeface(tf);
-
-            SpannableString spanString = new SpannableString(getName(character));
-            spanString.setSpan(new StyleSpan(Typeface.BOLD), 0, spanString.length(), 0);
-
-            holder.name.setText(spanString);
             holder.icon.setImageDrawable(getIcon(character));
 
             return view;
@@ -251,7 +262,9 @@ public class CharactersFragment extends Fragment {
 
         protected void onPreExecute() {
             super.onPreExecute();
-            getActivity().setProgressBarIndeterminateVisibility(true);
+            if(progressBar != null) {
+                progressBar.setVisibility(View.VISIBLE);
+            }
         }
 
         protected ArrayList<Cartoon> doInBackground(String... params) {
@@ -310,7 +323,9 @@ public class CharactersFragment extends Fragment {
 
         protected void onPostExecute(ArrayList<Cartoon> results) {
             Log.d(TAG, "onPostExecute");
-            getActivity().setProgressBarIndeterminateVisibility(false);
+            if(progressBar != null) {
+                progressBar.setVisibility(View.GONE);
+            }
             if(results != null && !results.isEmpty()) {
                 try {
                     replaceFragment(results);

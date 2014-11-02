@@ -34,7 +34,7 @@ class Player(QThread):
         self.proc_open()
 
     def get_cmd(self):
-        cmd = [MPV, "--fs", "--really-quiet", "--autofit", "60%"]
+        cmd = [MPV, "--fs", "--really-quiet", "--autofit", "60%", "--cache", "1024"]
         if self.rotate:
             cmd += ["--video-rotate", self.rotate]
         return cmd

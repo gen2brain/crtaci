@@ -1,7 +1,6 @@
 package rs.crtaci.crtaci.utils;
 
 import android.app.ActivityManager;
-import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
@@ -10,7 +9,8 @@ import android.os.Build;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.TextView;
+
+import com.alertdialogpro.AlertDialogPro;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -207,14 +207,10 @@ public class Utils {
     }
 
     public static void showAbout(Context ctx) {
-        LayoutInflater inflater = (LayoutInflater) ctx.getSystemService( Context.LAYOUT_INFLATER_SERVICE );
+        LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View messageView = inflater.inflate(R.layout.about_dialog, null, false);
 
-        TextView textView = (TextView) messageView.findViewById(R.id.about);
-        int defaultColor = textView.getTextColors().getDefaultColor();
-        textView.setTextColor(defaultColor);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(ctx);
+        AlertDialogPro.Builder builder = new AlertDialogPro.Builder(ctx);
         builder.setIcon(R.drawable.ic_launcher);
         builder.setTitle(R.string.app_name);
         builder.setView(messageView);

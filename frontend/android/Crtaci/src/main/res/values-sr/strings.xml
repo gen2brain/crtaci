@@ -5,5 +5,5 @@
     <string name="app_credits">http://crtaci.rs\nAutor: Milan Nikolić\n(gen2brain)\n\nZa Nayu i Noama &lt;3\n\nThis program is released under the terms of the GNU General Public License version 3\nhttp://www.gnu.org/licenses/gpl-3.0.txt</string>
     <string name="error_network">Proverite internet konekciju</string>
     <string name="action_rate">Oceni aplikaciju</string>
-    <string name="action_reload">Osveži</string>
+    <string name="action_refresh">Osveži</string>
 </resources>

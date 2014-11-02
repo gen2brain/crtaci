@@ -61,6 +61,12 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
             } else {
                 playVimeo();
             }
+        } else if(cartoon.service.equals("vk")) {
+            if(video != null && !video.isEmpty()) {
+                videoPlayer(video);
+            } else {
+                playVK();
+            }
         }
     }
 
@@ -80,6 +86,10 @@ public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer
         String params = "?autoplay=1&badge=0&byline=0&portrait=0&title=0";
         String url = "http://player.vimeo.com/video/" + cartoon.id + params;
         webViewPlayer(url);
+    }
+
+    public void playVK() {
+        webViewPlayer(cartoon.url);
     }
 
     public void webViewPlayer(String url) {

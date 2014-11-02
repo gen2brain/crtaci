@@ -11,7 +11,7 @@ function main() {
         $query = str_replace("/demo", "", $_GET["c"]);
         $query = str_replace("/", "", $query);
     } else {
-        $query = $characters[0]["Name"];
+        $query = $characters[0]["name"];
     }
 
     $cartoons = $crtaci->getCartoons($query);

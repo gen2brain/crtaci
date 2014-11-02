@@ -6,10 +6,12 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.Window;
+import android.view.View;
+import android.widget.ProgressBar;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -31,14 +33,21 @@ public class CharactersActivity extends ActionBarActivity {
     private boolean twoPane;
     private ArrayList<Character> characters;
     private CharactersTask charactersTask;
+    private ProgressBar progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
-        supportRequestWindowFeature(Window.FEATURE_INDETERMINATE_PROGRESS);
         setContentView(R.layout.activity_characters);
+
+        progressBar = (ProgressBar) findViewById(R.id.progressbar);
+
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        toolbar.setLogo(R.drawable.ic_launcher);
 
         if(findViewById(R.id.cartoons_container) != null) {
             twoPane = true;
@@ -92,7 +101,7 @@ public class CharactersActivity extends ActionBarActivity {
             return true;
         } else if(id == R.id.action_rate) {
             Utils.rateThisApp(this);
-        } else if(id == R.id.action_reload) {
+        } else if(id == R.id.action_refresh) {
             cancelCharactersTask();
             startCharactersTask();
         }
@@ -138,7 +147,9 @@ public class CharactersActivity extends ActionBarActivity {
 
         protected void onPreExecute() {
             super.onPreExecute();
-            setSupportProgressBarIndeterminateVisibility(true);
+            if(progressBar != null) {
+                progressBar.setVisibility(View.VISIBLE);
+            }
         }
 
         protected ArrayList<Character> doInBackground(Void... params) {
@@ -190,7 +201,9 @@ public class CharactersActivity extends ActionBarActivity {
 
         protected void onPostExecute(ArrayList<Character> results) {
             Log.d(TAG, "onPostExecute");
-            setSupportProgressBarIndeterminateVisibility(false);
+            if(progressBar != null) {
+                progressBar.setVisibility(View.GONE);
+            }
             if(results != null && !results.isEmpty()) {
                 characters = results;
                 try {

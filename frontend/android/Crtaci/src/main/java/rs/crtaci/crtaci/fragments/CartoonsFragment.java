@@ -19,6 +19,7 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -52,6 +53,7 @@ public class CartoonsFragment extends Fragment {
     private boolean twoPane;
     private ArrayList<Cartoon> cartoons;
     private Cartoon selectedCartoon;
+    private ProgressBar progressBar;
 
     protected ImageLoader imageLoader = ImageLoader.getInstance();
 
@@ -67,7 +69,6 @@ public class CartoonsFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         Log.d(TAG, "onCreateView");
-        getActivity().setProgressBarIndeterminateVisibility(false);
 
         if(savedInstanceState != null) {
             cartoons = (ArrayList<Cartoon>) savedInstanceState.getSerializable("cartoons");
@@ -77,20 +78,7 @@ public class CartoonsFragment extends Fragment {
 
         twoPane = getArguments().getBoolean("twoPane");
 
-        View rootView = inflater.inflate(R.layout.fragment_cartoons, container, false);
-
-        ListView listView = (ListView) rootView.findViewById(R.id.cartoons);
-        ListAdapter adapter = new ItemAdapter();
-        listView.setAdapter(adapter);
-        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
-
-        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectedCartoon = cartoons.get(position);
-                new ExtractTask().execute(selectedCartoon.service, selectedCartoon.id);
-            }
-        });
+        View view = inflater.inflate(R.layout.fragment_cartoons, container, false);
 
         if(!imageLoader.isInited()) {
             File cacheDir = new File(getActivity().getCacheDir().toString());
@@ -102,7 +90,14 @@ public class CartoonsFragment extends Fragment {
             imageLoader.init(config);
         }
 
-        return rootView;
+        return view;
+    }
+
+    @Override
+    public void onViewCreated(View view, Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        progressBar = (ProgressBar) view.getRootView().findViewById(R.id.progressbar);
+        createListView(view);
     }
 
     @Override
@@ -114,10 +109,39 @@ public class CartoonsFragment extends Fragment {
         }
     }
 
+    public void createListView(View view) {
+        ListView listView = (ListView) view.findViewById(R.id.cartoons);
+        ListAdapter adapter = new ItemAdapter();
+        listView.setAdapter(adapter);
+        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectedCartoon = cartoons.get(position);
+                if(selectedCartoon.service.equals("vk")) {
+                    new ExtractTask().execute(selectedCartoon.service, selectedCartoon.url);
+                } else {
+                    new ExtractTask().execute(selectedCartoon.service, selectedCartoon.id);
+                }
+            }
+        });
+    }
+
 
     class ItemAdapter extends BaseAdapter {
 
         private ImageLoadingListener animateFirstListener = new AnimateFirstDisplayListener();
+
+        DisplayImageOptions options = new DisplayImageOptions.Builder()
+                .showImageOnLoading(R.drawable.ic_stub)
+                .showImageForEmptyUri(R.drawable.ic_empty)
+                .showImageOnFail(R.drawable.ic_error)
+                .cacheInMemory(true)
+                .cacheOnDisk(true)
+                .considerExifParams(true)
+                .displayer(new SimpleBitmapDisplayer())
+                .build();
 
         private class ViewHolder {
             public TextView title;
@@ -144,6 +168,8 @@ public class CartoonsFragment extends Fragment {
             View view = convertView;
             final ViewHolder holder;
 
+            Cartoon cartoon = cartoons.get(position);
+
             if (convertView == null) {
                 LayoutInflater inflater = getLayoutInflater(null);
                 view = inflater.inflate(R.layout.item_list_cartoon, parent, false);
@@ -151,6 +177,10 @@ public class CartoonsFragment extends Fragment {
                 holder = new ViewHolder();
                 holder.title = (TextView) view.findViewById(R.id.title);
                 holder.thumbnail = (ImageView) view.findViewById(R.id.thumbnail);
+
+                Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/comic.ttf");
+                holder.title.setTypeface(tf);
+
                 view.setTag(holder);
             } else {
                 holder = (ViewHolder) view.getTag();
@@ -158,24 +188,9 @@ public class CartoonsFragment extends Fragment {
 
             view.setBackgroundResource(R.drawable.item_background_cartoon);
 
-            Cartoon cartoon = cartoons.get(position);
-
-            Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/comic.ttf");
-            holder.title.setTypeface(tf);
-
             SpannableString spanString = new SpannableString(getTitle(cartoon));
             spanString.setSpan(new StyleSpan(Typeface.BOLD), 0, spanString.length(), 0);
             holder.title.setText(spanString);
-
-            DisplayImageOptions options = new DisplayImageOptions.Builder()
-                    .showImageOnLoading(R.drawable.ic_stub)
-                    .showImageForEmptyUri(R.drawable.ic_empty)
-                    .showImageOnFail(R.drawable.ic_error)
-                    .cacheInMemory(true)
-                    .cacheOnDisc(true)
-                    .considerExifParams(true)
-                    .displayer(new SimpleBitmapDisplayer())
-                    .build();
 
             String thumb;
             if(twoPane) {
@@ -228,7 +243,9 @@ public class CartoonsFragment extends Fragment {
 
         protected void onPreExecute() {
             super.onPreExecute();
-            getActivity().setProgressBarIndeterminateVisibility(true);
+            if(progressBar != null) {
+                progressBar.setVisibility(View.VISIBLE);
+            }
         }
 
         protected String doInBackground(String... params) {
@@ -278,10 +295,11 @@ public class CartoonsFragment extends Fragment {
 
         protected void onPostExecute(String results) {
             Log.d(TAG, "onPostExecute");
+            if(progressBar != null) {
+                progressBar.setVisibility(View.GONE);
+            }
             Activity activity = getActivity();
             if(activity != null) {
-                activity.setProgressBarIndeterminateVisibility(false);
-
                 Intent intent = new Intent(activity, PlayerActivity.class);
                 intent.putExtra("video", results);
                 intent.putExtra("cartoon", selectedCartoon);

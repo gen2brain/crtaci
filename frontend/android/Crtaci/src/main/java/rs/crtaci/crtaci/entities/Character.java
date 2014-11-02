@@ -1,20 +1,19 @@
 package rs.crtaci.crtaci.entities;
 
-import com.google.gson.annotations.SerializedName;
-
 import java.io.Serializable;
 
 
 public class Character implements Serializable {
 
-    @SerializedName("Name")
     public String name;
 
-    @SerializedName("AltName")
     public String altname;
 
-    @SerializedName("Duration")
+    public String altname2;
+
     public String duration;
+
+    public String query;
 
     @Override
     public String toString() {
@@ -24,7 +23,9 @@ public class Character implements Serializable {
         result.append(((Object)this).getClass().getName() + " {" + NL);
         result.append("  name: " + this.name + NL);
         result.append("  altname: " + this.altname + NL);
+        result.append("  altname2: " + this.altname2 + NL);
         result.append("  duration: " + this.duration + NL);
+        result.append("  query: " + this.query + NL);
         result.append("}" + NL);
 
         return result.toString();
