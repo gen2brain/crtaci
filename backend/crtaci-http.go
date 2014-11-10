@@ -42,21 +42,17 @@ var (
 )
 
 type Cartoon struct {
-	Id             string    `json:"id"`
-	Character      string    `json:"character"`
-	Title          string    `json:"title"`
-	FormattedTitle string    `json:"formattedTitle"`
-	Episode        int       `json:"episode"`
-	Season         int       `json:"season"`
-	Service        string    `json:"service"`
-	Url            string    `json:"url"`
-	Thumbnails     Thumbnail `json:"thumbnails"`
-}
-
-type Thumbnail struct {
-	Small  string `json:"small"`
-	Medium string `json:"medium"`
-	Large  string `json:"large"`
+	Id             string `json:"id"`
+	Character      string `json:"character"`
+	Title          string `json:"title"`
+	FormattedTitle string `json:"formattedTitle"`
+	Episode        int    `json:"episode"`
+	Season         int    `json:"season"`
+	Service        string `json:"service"`
+	Url            string `json:"url"`
+	ThumbSmall     string `json:"thumbSmall"`
+	ThumbMedium    string `json:"thumbMedium"`
+	ThumbLarge     string `json:"thumbLarge"`
 }
 
 type Character struct {
@@ -105,6 +101,7 @@ var characters = []Character{
 	{"mece dobrići", "mece dobrici", "", "medium", ""},
 	{"miki maus", "", "", "medium", ""},
 	{"mornar popaj", "", "", "medium", ""},
+	{"mr. bean", "mr bean", "mr.bean", "medium", "mr bean animated"},
 	{"nindža kornjače", "nindza kornjace", "ninja kornjace", "long", ""},
 	{"ogi i žohari", "ogi i zohari", "", "long", ""},
 	{"otkrića bez granica", "otkrica bez granica", "", "long", ""},
@@ -186,7 +183,6 @@ var filters = []string{
 	"za decu",
 	"zadecu",
 	"youtube",
-	"you",
 	"youtube",
 	"full movie",
 	"mashini skazki",
@@ -202,6 +198,12 @@ var filters = []string{
 	"djuza stoiljkovic",
 	"okrenite preko smplayer-a",
 	"new episodes",
+	"new episode",
+	"animado",
+	"animad8",
+	"animated",
+	"cartoon",
+	"of 47",
 }
 
 var censoredWords = []string{
@@ -303,6 +305,9 @@ var censoredWords = []string{
 	"how could",
 	"new year",
 	" del ",
+	"maldicion",
+	"fernsehausstrahlung",
+	"the best bits of",
 }
 
 var censoredIds = []string{
@@ -361,6 +366,8 @@ var censoredIds = []string{
 	"xs4jyr",
 	"x7wviw",
 	"x5nyjf",
+	"x20uqv5",
+	"x20uvfy",
 	"4562474",
 	"21508130",
 	"14072389",
@@ -368,6 +375,8 @@ var censoredIds = []string{
 	"163980203",
 	"165572645",
 	"168855693",
+	"15376700",
+	"73551241",
 }
 
 var (
@@ -404,22 +413,13 @@ var (
 	cartoons []Cartoon
 )
 
-type lessFunc func(p1, p2 *Cartoon) bool
-
 type multiSorter struct {
 	cartoons []Cartoon
-	less     []lessFunc
 }
 
 func (ms *multiSorter) Sort(cartoons []Cartoon) {
 	ms.cartoons = cartoons
 	sort.Sort(ms)
-}
-
-func OrderedBy(less ...lessFunc) *multiSorter {
-	return &multiSorter{
-		less: less,
-	}
 }
 
 func (ms *multiSorter) Len() int {
@@ -432,20 +432,40 @@ func (ms *multiSorter) Swap(i, j int) {
 
 func (ms *multiSorter) Less(i, j int) bool {
 	p, q := &ms.cartoons[i], &ms.cartoons[j]
-	var k int
-	for k = 0; k < len(ms.less)-1; k++ {
-		less := ms.less[k]
-		switch {
-		case less(p, q):
-			return true
-		case less(q, p):
+
+	episode := func(c1, c2 *Cartoon) bool {
+		if c1.Episode == -1 {
 			return false
+		} else if c2.Episode == -1 {
+			return true
 		}
+		return c1.Episode < c2.Episode
 	}
-	return ms.less[k](p, q)
+
+	season := func(c1, c2 *Cartoon) bool {
+		if c1.Season == -1 {
+			return false
+		} else if c2.Season == -1 {
+			return true
+		}
+		return c1.Season < c2.Season
+	}
+
+	switch {
+	case season(p, q):
+		return true
+	case season(q, p):
+		return false
+	case episode(p, q):
+		return true
+	case episode(q, p):
+		return false
+	}
+
+	return episode(p, q)
 }
 
-func YouTube(character Character) {
+func youTube(character Character) {
 
 	defer wg.Done()
 	defer func() {
@@ -506,7 +526,9 @@ func YouTube(character Character) {
 					getSeason(videoTitle),
 					"youtube",
 					"https://www.youtube.com/watch?v=" + videoId,
-					Thumbnail{videoThumbSmall, videoThumbMedium, videoThumbLarge},
+					videoThumbSmall,
+					videoThumbMedium,
+					videoThumbLarge,
 				}
 
 				cartoons = append(cartoons, cartoon)
@@ -524,7 +546,7 @@ func YouTube(character Character) {
 
 }
 
-func DailyMotion(character Character) {
+func dailyMotion(character Character) {
 
 	defer wg.Done()
 	defer func() {
@@ -610,7 +632,9 @@ func DailyMotion(character Character) {
 					getSeason(videoTitle),
 					"dailymotion",
 					videoUrl,
-					Thumbnail{videoThumbSmall, videoThumbMedium, videoThumbLarge},
+					videoThumbSmall,
+					videoThumbMedium,
+					videoThumbLarge,
 				}
 
 				cartoons = append(cartoons, cartoon)
@@ -632,7 +656,7 @@ func DailyMotion(character Character) {
 
 }
 
-func Vimeo(character Character) {
+func vimeo(character Character) {
 
 	defer wg.Done()
 	defer func() {
@@ -738,7 +762,9 @@ func Vimeo(character Character) {
 					getSeason(videoTitle),
 					"vimeo",
 					videoUrl,
-					Thumbnail{videoThumbSmall, videoThumbMedium, videoThumbLarge},
+					videoThumbSmall,
+					videoThumbMedium,
+					videoThumbLarge,
 				}
 
 				cartoons = append(cartoons, cartoon)
@@ -747,116 +773,6 @@ func Vimeo(character Character) {
 	}
 
 	response := getResponse("1")
-	if response != nil {
-		parseResponse(response)
-	}
-
-}
-
-func VK(character Character) {
-
-	defer wg.Done()
-	defer func() {
-		if r := recover(); r != nil {
-			log.Print("Recovered in VK: ", r)
-		}
-	}()
-
-	const apiKey = "YOUR_API_KEY"
-	uri := "https://api.vk.com/method/video.search?q=%s&count=100&sort=2&access_token=%s&v=5.26"
-
-	name := strings.ToLower(character.Name)
-	altname := strings.ToLower(character.AltName)
-	altname2 := strings.ToLower(character.AltName2)
-
-	timeout := time.Duration(6 * time.Second)
-
-	dialTimeout := func(network, addr string) (net.Conn, error) {
-		return net.DialTimeout(network, addr, timeout)
-	}
-
-	transport := http.Transport{
-		Dial: dialTimeout,
-	}
-
-	httpClient := http.Client{
-		Transport: &transport,
-	}
-
-	getResponse := func() []interface{} {
-		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(character, true), apiKey))
-		if err != nil {
-			log.Print("Error making VK API call: %v", err.Error())
-			return nil
-		}
-		body, _ := ioutil.ReadAll(res.Body)
-		res.Body.Close()
-
-		var data map[string]interface{}
-		err = json.Unmarshal(body, &data)
-		if err != nil {
-			log.Print("Error unmarshaling json: %v", err.Error())
-			return nil
-		}
-
-		response, ok := data["response"].(map[string]interface{})
-		if !ok {
-			return nil
-		}
-
-		items, ok := response["items"].([]interface{})
-		if !ok {
-			return nil
-		}
-
-		if len(items) == 0 {
-			return nil
-		}
-
-		return items
-	}
-
-	parseResponse := func(response []interface{}) {
-		for _, obj := range response {
-			video, ok := obj.(map[string]interface{})
-			if !ok {
-				continue
-			}
-
-			videoId := fmt.Sprintf("%.0f", video["id"].(float64))
-			videoTitle := strings.ToLower(video["title"].(string))
-			videoUrl := video["player"].(string)
-			videoThumbSmall := video["photo_130"].(string)
-			videoThumbMedium := video["photo_320"].(string)
-			videoThumbLarge := video["photo_320"].(string)
-
-			videoDuration := getDuration(video["duration"].(float64))
-
-			if strings.Contains(videoUrl, "youtube") || strings.Contains(videoUrl, "vimeo") {
-				continue
-			}
-
-			if isValidTitle(videoTitle, name, altname, altname2, videoId) && character.Duration == videoDuration {
-				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
-
-				cartoon := Cartoon{
-					videoId,
-					name,
-					videoTitle,
-					formattedTitle,
-					getEpisode(videoTitle),
-					getSeason(videoTitle),
-					"vk",
-					videoUrl,
-					Thumbnail{videoThumbSmall, videoThumbMedium, videoThumbLarge},
-				}
-
-				cartoons = append(cartoons, cartoon)
-			}
-		}
-	}
-
-	response := getResponse()
 	if response != nil {
 		parseResponse(response)
 	}
@@ -1108,24 +1024,66 @@ func isValidTitle(videoTitle string, name string, altname string, altname2 strin
 	return false
 }
 
-func sortCartoons(cartoons []Cartoon) {
-	episode := func(c1, c2 *Cartoon) bool {
-		if c1.Episode == -1 {
-			return false
-		} else if c2.Episode == -1 {
-			return true
-		}
-		return c1.Episode < c2.Episode
+func List() (string, error) {
+	js, err := json.MarshalIndent(characters, "", "    ")
+	if err != nil {
+		return "", err
 	}
-	season := func(c1, c2 *Cartoon) bool {
-		if c1.Season == -1 {
-			return false
-		} else if c2.Season == -1 {
-			return true
+	return string(js[:]), nil
+}
+
+func Search(query string) (string, error) {
+	char := new(Character)
+	for _, character := range characters {
+		if query == character.Name || query == character.AltName {
+			char = &character
+			break
 		}
-		return c1.Season < c2.Season
 	}
-	OrderedBy(season, episode).Sort(cartoons)
+
+	if char.Name != "" {
+		wg.Add(3)
+		cartoons = make([]Cartoon, 0)
+		go youTube(*char)
+		go dailyMotion(*char)
+		go vimeo(*char)
+		wg.Wait()
+
+		ms := multiSorter{}
+		ms.Sort(cartoons)
+
+		js, err := json.MarshalIndent(cartoons, "", "    ")
+		if err != nil {
+			return "", err
+		}
+
+		return string(js[:]), nil
+	} else {
+		return "", nil
+	}
+}
+
+func Extract(service string, videoId string) (string, error) {
+	var url string
+	var err error
+	switch {
+	case service == "youtube":
+		url, err = vidextr.YouTube(videoId)
+	case service == "dailymotion":
+		url, err = vidextr.DailyMotion(videoId)
+	case service == "vimeo":
+		url, err = vidextr.Vimeo(videoId)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	js, err := json.Marshal(url)
+	if err != nil {
+		return "", err
+	}
+	return string(js[:]), nil
 }
 
 func setHeader(w http.ResponseWriter) {
@@ -1135,19 +1093,17 @@ func setHeader(w http.ResponseWriter) {
 
 func handleList(w http.ResponseWriter, r *http.Request) {
 	setHeader(w)
-
-	js, err := json.MarshalIndent(characters, "", "    ")
+	js, err := List()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	w.Write(js)
+	w.Write([]byte(js))
 }
 
 func handleSearch(w http.ResponseWriter, r *http.Request) {
 	setHeader(w)
 
-	//path := html.EscapeString(r.URL.Path[1:])
 	path := r.URL.Path[1:]
 	path = strings.TrimRight(path, "/")
 	paths := strings.Split(path, "/")
@@ -1155,36 +1111,17 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 	if len(paths) > 1 {
 		query := paths[1]
 
-		char := new(Character)
-		for _, character := range characters {
-			if query == character.Name || query == character.AltName {
-				char = &character
-				break
-			}
+		js, err := Search(query)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 
-		if char.Name != "" {
-			wg.Add(3)
-			cartoons = make([]Cartoon, 0)
-			go YouTube(*char)
-			go DailyMotion(*char)
-			go Vimeo(*char)
-			//go VK(*char)
-			wg.Wait()
-
-			sortCartoons(cartoons)
-
-			js, err := json.MarshalIndent(cartoons, "", "    ")
-			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
-				return
-			}
-
-			w.Write(js)
-		} else {
+		if js == "" {
 			http.Error(w, "404 Not Found", http.StatusNotFound)
 			return
 		}
+		w.Write([]byte(js))
 	} else {
 		http.Error(w, "403 Forbidden", http.StatusForbidden)
 		return
@@ -1194,39 +1131,20 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 func handleExtract(w http.ResponseWriter, r *http.Request) {
 	setHeader(w)
 
-	//path := html.EscapeString(r.URL.Path[1:])
 	path := r.URL.Path[1:]
 	path = strings.TrimRight(path, "/")
 	paths := strings.Split(path, "/")
 
 	if len(paths) == 3 {
-		var url string
-		var err error
 		service := paths[1]
 		videoId := paths[2]
 
-		switch {
-		case service == "youtube":
-			url, err = vidextr.YouTube(videoId)
-		case service == "dailymotion":
-			url, err = vidextr.DailyMotion(videoId)
-		case service == "vimeo":
-			url, err = vidextr.Vimeo(videoId)
-		case service == "vk":
-			url, err = vidextr.VK(videoId)
-		}
-
-		if err != nil {
-			log.Print(err.Error())
-			return
-		}
-
-		js, err := json.Marshal(url)
+		js, err := Extract(service, videoId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write(js)
+		w.Write([]byte(js))
 	} else {
 		http.Error(w, "403 Forbidden", http.StatusForbidden)
 		return
