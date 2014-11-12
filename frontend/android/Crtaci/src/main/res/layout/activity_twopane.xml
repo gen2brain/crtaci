@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context="rs.crtaci.crtaci.activities.CharactersActivity">
+    tools:context="com.github.gen2brain.crtaci.activities.CharactersActivity">
 
     <include layout="@layout/toolbar"/>
 
@@ -16,7 +16,7 @@
         android:baselineAligned="false"
         android:orientation="horizontal"
         android:showDividers="middle"
-        tools:context="rs.crtaci.crtaci.activities.CharactersActivity">
+        tools:context="com.github.gen2brain.crtaci.activities.CharactersActivity">
 
         <!--
         This layout is a two-pane layout for the Items

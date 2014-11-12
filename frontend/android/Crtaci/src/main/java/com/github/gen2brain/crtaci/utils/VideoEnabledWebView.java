@@ -1,4 +1,4 @@
-package rs.crtaci.crtaci.utils;
+package com.github.gen2brain.crtaci.utils;
 
 import android.annotation.SuppressLint;
 import android.content.Context;

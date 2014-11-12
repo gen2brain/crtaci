@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="rs.crtaci.crtaci"
+    package="com.github.gen2brain.crtaci"
     android:installLocation="auto" >
 
     <uses-permission android:name="android.permission.INTERNET" />
@@ -21,7 +21,7 @@
         android:theme="@style/Theme.App" >
 
         <activity
-            android:name=".activities.CharactersActivity"
+            android:name="com.github.gen2brain.crtaci.activities.CharactersActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -31,15 +31,15 @@
         </activity>
 
         <activity
-            android:name=".activities.CartoonsActivity"
+            android:name="com.github.gen2brain.crtaci.activities.CartoonsActivity"
             android:label="@string/app_name"
-            android:parentActivityName="rs.crtaci.crtaci.activities.CharactersActivity" >
+            android:parentActivityName="com.github.gen2brain.crtaci.activities.CharactersActivity" >
 
-            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value="rs.crtaci.crtaci.activities.CharactersActivity" />
+            <meta-data android:name="android.support.PARENT_ACTIVITY" android:value="com.github.gen2brain.crtaci.activities.CharactersActivity" />
         </activity>
 
         <activity
-            android:name=".activities.PlayerActivity"
+            android:name="com.github.gen2brain.crtaci.activities.PlayerActivity"
             android:theme="@android:style/Theme.Black.NoTitleBar.Fullscreen"
             android:configChanges="orientation|screenSize|keyboardHidden">
             <meta-data android:name="minVersion" android:value="8"/>
@@ -47,7 +47,7 @@
         </activity>
 
         <service
-            android:name=".services.CrtaciHttpService"
+            android:name="com.github.gen2brain.crtaci.services.CrtaciHttpService"
             android:enabled="true"
             android:exported="true" >
         </service>

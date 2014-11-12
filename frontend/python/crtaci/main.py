@@ -153,9 +153,9 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         template = readrc("://assets/view.html")
         for cartoon in cartoons:
             if cartoon["service"] == "youtube":
-                image = cartoon["thumbnails"]["large"]
+                image = cartoon["thumbLarge"]
             else:
-                image = cartoon["thumbnails"]["medium"]
+                image = cartoon["thumbMedium"]
 
             s, e = "", ""
             if cartoon["season"] != -1:

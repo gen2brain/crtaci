@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="rs.crtaci.crtaci.activities.CharactersActivity"
+    tools:context="com.github.gen2brain.crtaci.activities.CharactersActivity"
     android:orientation="vertical">
 
     <include layout="@layout/toolbar"/>

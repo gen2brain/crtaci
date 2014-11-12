@@ -1,7 +1,10 @@
-package rs.crtaci.crtaci.activities;
+package com.github.gen2brain.crtaci.activities;
 
-import android.content.Intent;
+import android.app.DownloadManager;
+import android.content.BroadcastReceiver;
+import android.content.IntentFilter;
 import android.os.AsyncTask;
+import android.os.Build;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
@@ -13,17 +16,22 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 
+import com.github.gen2brain.crtaci.utils.Update;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
-import rs.crtaci.crtaci.fragments.CharactersFragment;
-import rs.crtaci.crtaci.services.CrtaciHttpService;
-import rs.crtaci.crtaci.R;
-import rs.crtaci.crtaci.entities.Character;
-import rs.crtaci.crtaci.utils.Utils;
+import com.github.gen2brain.crtaci.fragments.CharactersFragment;
+import com.github.gen2brain.crtaci.R;
+import com.github.gen2brain.crtaci.entities.Character;
+import com.github.gen2brain.crtaci.utils.Utils;
+
+import go.Go;
+import go.main.Main;
 
 
 public class CharactersActivity extends ActionBarActivity {
@@ -34,6 +42,8 @@ public class CharactersActivity extends ActionBarActivity {
     private ArrayList<Character> characters;
     private CharactersTask charactersTask;
     private ProgressBar progressBar;
+    //private BroadcastReceiver downloadReceiver;
+    private Tracker tracker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,14 +65,27 @@ public class CharactersActivity extends ActionBarActivity {
             twoPane = false;
         }
 
+        Go.init(getApplicationContext());
+
+        tracker = Utils.getTracker(this);
+        tracker.setScreenName("Characters");
+        tracker.send(new HitBuilders.AppViewBuilder().build());
+
+        //if(Update.checkUpdate(this)) {
+        //    downloadReceiver = Update.getDownloadReceiver(this);
+        //    registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        //
+        //    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+        //        new UpdateTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+        //    } else {
+        //        new UpdateTask().execute();
+        //    }
+        //}
+
         if(savedInstanceState != null) {
             characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
             replaceFragment(characters);
         } else {
-            if(!Utils.isServiceRunning(this)) {
-                Intent intent = new Intent(this, CrtaciHttpService.class);
-                startService(intent);
-            }
             startCharactersTask();
         }
     }
@@ -70,12 +93,10 @@ public class CharactersActivity extends ActionBarActivity {
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
+        //if(downloadReceiver != null) {
+        //    unregisterReceiver(downloadReceiver);
+        //}
         super.onDestroy();
-        cancelCharactersTask();
-        if(Utils.isServiceRunning(this)) {
-            Intent intent = new Intent(getApplication(), CrtaciHttpService.class);
-            stopService(intent);
-        }
     }
 
     @Override
@@ -102,7 +123,6 @@ public class CharactersActivity extends ActionBarActivity {
         } else if(id == R.id.action_rate) {
             Utils.rateThisApp(this);
         } else if(id == R.id.action_refresh) {
-            cancelCharactersTask();
             startCharactersTask();
         }
         return super.onOptionsItemSelected(item);
@@ -111,15 +131,6 @@ public class CharactersActivity extends ActionBarActivity {
     public void startCharactersTask() {
         charactersTask = new CharactersTask();
         charactersTask.execute();
-    }
-
-    public void cancelCharactersTask() {
-        if(charactersTask != null) {
-            if(charactersTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
-                charactersTask.cancel(true);
-            }
-            charactersTask = null;
-        }
     }
 
     public void replaceFragment(ArrayList<Character> results) {
@@ -153,39 +164,10 @@ public class CharactersActivity extends ActionBarActivity {
         }
 
         protected ArrayList<Character> doInBackground(Void... params) {
-            String result;
-            try {
-                Thread.sleep(500);
-            } catch(InterruptedException e) {
-                e.printStackTrace();
-            }
 
-            if(isCancelled()) {
-                return null;
-            }
+            String result = Main.List();
 
-            result = Utils.httpGet(CrtaciHttpService.url + "list", getApplication());
-
-            if(result == null) {
-                if(Utils.portAvailable(7313)) {
-                    Intent intent = new Intent(getApplication(), CrtaciHttpService.class);
-                    stopService(intent);
-                    startService(intent);
-                }
-
-                try {
-                    Thread.sleep(1000);
-                } catch(InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                result = Utils.httpGet(CrtaciHttpService.url + "list", getApplication());
-                if(result == null) {
-                    return null;
-                }
-            }
-
-            if(isCancelled()) {
+            if(result == null || result.isEmpty()) {
                 return null;
             }
 
@@ -214,6 +196,24 @@ public class CharactersActivity extends ActionBarActivity {
             }
         }
 
+    }
+
+
+    private class UpdateTask extends AsyncTask<Void, Void, Boolean> {
+
+        protected void onPreExecute() {
+            super.onPreExecute();
+        }
+
+        protected Boolean doInBackground(Void... params) {
+            return Update.updateExists(getApplication());
+        }
+
+        protected void onPostExecute(Boolean result) {
+            if(result) {
+                Utils.showUpdate(CharactersActivity.this);
+            }
+        }
     }
 
 }

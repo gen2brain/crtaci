@@ -1,4 +1,4 @@
-package rs.crtaci.crtaci.fragments;
+package com.github.gen2brain.crtaci.fragments;
 
 import android.content.Intent;
 import android.graphics.Typeface;
@@ -24,18 +24,17 @@ import android.widget.Toast;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 
-import rs.crtaci.crtaci.R;
-import rs.crtaci.crtaci.activities.CartoonsActivity;
-import rs.crtaci.crtaci.entities.Cartoon;
-import rs.crtaci.crtaci.entities.Character;
-import rs.crtaci.crtaci.services.CrtaciHttpService;
-import rs.crtaci.crtaci.utils.Connectivity;
-import rs.crtaci.crtaci.utils.Utils;
+import com.github.gen2brain.crtaci.R;
+import com.github.gen2brain.crtaci.activities.CartoonsActivity;
+import com.github.gen2brain.crtaci.entities.Cartoon;
+import com.github.gen2brain.crtaci.entities.Character;
+import com.github.gen2brain.crtaci.utils.Connectivity;
+import com.github.gen2brain.crtaci.utils.Utils;
+
+import go.main.Main;
 
 
 public class CharactersFragment extends Fragment {
@@ -85,7 +84,6 @@ public class CharactersFragment extends Fragment {
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
         super.onDestroy();
-        cancelCartoonsTask();
     }
 
     @Override
@@ -119,15 +117,6 @@ public class CharactersFragment extends Fragment {
             cartoonsTask.execute(query);
         } else {
             Toast.makeText(getActivity(), getString(R.string.error_network), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    public void cancelCartoonsTask() {
-        if(cartoonsTask != null) {
-            if(cartoonsTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
-                cartoonsTask.cancel(true);
-            }
-            cartoonsTask = null;
         }
     }
 
@@ -200,7 +189,9 @@ public class CharactersFragment extends Fragment {
                 holder.name = (TextView) view.findViewById(R.id.name);
                 holder.icon = (ImageView) view.findViewById(R.id.icon);
 
-                Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/comic.ttf");
+                holder.icon.setImageDrawable(getResources().getDrawable(R.drawable.ic_label));
+
+                Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/ComicRelief.ttf");
                 holder.name.setTypeface(tf);
 
                 view.setTag(holder);
@@ -223,7 +214,7 @@ public class CharactersFragment extends Fragment {
                 view.setBackgroundColor(getResources().getColor(R.color.item_selected));
             }
 
-            holder.icon.setImageDrawable(getIcon(character));
+            //holder.icon.setImageDrawable(getIcon(character));
 
             return view;
         }
@@ -269,47 +260,8 @@ public class CharactersFragment extends Fragment {
 
         protected ArrayList<Cartoon> doInBackground(String... params) {
             String query = params[0];
-            try {
-                query = URLEncoder.encode(query, "utf-8");
-                query = query.replaceAll("\\+", "%20");
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-            String url = CrtaciHttpService.url + "search/" + query;
 
-            String result;
-            if(!Utils.isNetworkReachable()) {
-                return null;
-            }
-
-            if(isCancelled()) {
-                return null;
-            }
-
-            result = Utils.httpGet(url, getActivity());
-
-            if(result == null) {
-                if(Utils.portAvailable(7313)) {
-                    Intent intent = new Intent(getActivity(), CrtaciHttpService.class);
-                    getActivity().stopService(intent);
-                    getActivity().startService(intent);
-                }
-
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                result = Utils.httpGet(url, getActivity());
-                if(result == null) {
-                    return null;
-                }
-            }
-
-            if(isCancelled()) {
-                return null;
-            }
+            String result = Main.Search(query);
 
             Type listType = new TypeToken<ArrayList<Cartoon>>(){}.getType();
             try {

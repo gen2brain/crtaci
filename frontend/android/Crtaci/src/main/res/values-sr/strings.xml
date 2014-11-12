@@ -6,4 +6,6 @@
     <string name="error_network">Proverite internet konekciju</string>
     <string name="action_rate">Oceni aplikaciju</string>
     <string name="action_refresh">Osveži</string>
+    <string name="update_available">Nova verzija je dostupna</string>
+    <string name="update_download">Preuzmi novu verziju?</string>
 </resources>

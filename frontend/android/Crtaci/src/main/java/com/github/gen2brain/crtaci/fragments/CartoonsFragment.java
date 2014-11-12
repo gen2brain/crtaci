@@ -1,4 +1,4 @@
-package rs.crtaci.crtaci.fragments;
+package com.github.gen2brain.crtaci.fragments;
 
 
 import android.app.Activity;
@@ -22,6 +22,8 @@ import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
@@ -39,11 +41,12 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import rs.crtaci.crtaci.R;
-import rs.crtaci.crtaci.activities.PlayerActivity;
-import rs.crtaci.crtaci.entities.Cartoon;
-import rs.crtaci.crtaci.services.CrtaciHttpService;
-import rs.crtaci.crtaci.utils.Utils;
+import com.github.gen2brain.crtaci.R;
+import com.github.gen2brain.crtaci.activities.PlayerActivity;
+import com.github.gen2brain.crtaci.entities.Cartoon;
+import com.github.gen2brain.crtaci.utils.Utils;
+
+import go.main.Main;
 
 
 public class CartoonsFragment extends Fragment {
@@ -98,6 +101,10 @@ public class CartoonsFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
         progressBar = (ProgressBar) view.getRootView().findViewById(R.id.progressbar);
         createListView(view);
+
+        Tracker tracker = Utils.getTracker(getActivity());
+        tracker.setScreenName(cartoons.get(0).character);
+        tracker.send(new HitBuilders.AppViewBuilder().build());
     }
 
     @Override
@@ -178,7 +185,7 @@ public class CartoonsFragment extends Fragment {
                 holder.title = (TextView) view.findViewById(R.id.title);
                 holder.thumbnail = (ImageView) view.findViewById(R.id.thumbnail);
 
-                Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/comic.ttf");
+                Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/ComicRelief.ttf");
                 holder.title.setTypeface(tf);
 
                 view.setTag(holder);
@@ -194,9 +201,9 @@ public class CartoonsFragment extends Fragment {
 
             String thumb;
             if(twoPane) {
-                thumb = cartoon.thumbnails.large;
+                thumb = cartoon.thumbLarge;
             } else {
-                thumb = cartoon.thumbnails.small;
+                thumb = cartoon.thumbSmall;
             }
 
             imageLoader.displayImage(thumb, holder.thumbnail, options, animateFirstListener);
@@ -251,32 +258,11 @@ public class CartoonsFragment extends Fragment {
         protected String doInBackground(String... params) {
             String service = params[0];
             String videoId = params[1];
-            String url = String.format("%sextract/%s/%s", CrtaciHttpService.url, service, videoId);
 
-            String result;
-            if(!Utils.isNetworkReachable()) {
+            String result = Main.Extract(service, videoId);
+
+            if(result == null || result.isEmpty()) {
                 return null;
-            }
-
-            result = Utils.httpGet(url, getActivity());
-
-            if(result == null) {
-                if(Utils.portAvailable(7313)) {
-                    Intent intent = new Intent(getActivity(), CrtaciHttpService.class);
-                    getActivity().stopService(intent);
-                    getActivity().startService(intent);
-                }
-
-                try {
-                    Thread.sleep(500);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-                result = Utils.httpGet(url, getActivity());
-                if(result == null) {
-                    return null;
-                }
             }
 
             try {

@@ -1,4 +1,4 @@
-package rs.crtaci.crtaci.utils;
+package com.github.gen2brain.crtaci.utils;
 
 import android.content.Context;
 import android.net.ConnectivityManager;

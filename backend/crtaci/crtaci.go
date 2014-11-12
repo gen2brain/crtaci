@@ -31,9 +31,11 @@ import (
 	"sync"
 	"time"
 
+	"code.google.com/p/go.net/publicsuffix"
 	"code.google.com/p/google-api-go-client/googleapi/transport"
 	youtube "code.google.com/p/google-api-go-client/youtube/v3"
 	"github.com/gen2brain/vidextr"
+	"net/http/cookiejar"
 )
 
 var (
@@ -354,6 +356,7 @@ var censoredIds = []string{
 	"2onSjJVgtpg",
 	"gRLppbNNCLI",
 	"smKnRR0ouds",
+	"5nElGb8odmk",
 	"xy53o1",
 	"xy53q1",
 	"x3osiz",
@@ -368,6 +371,7 @@ var censoredIds = []string{
 	"x5nyjf",
 	"x20uqv5",
 	"x20uvfy",
+	"x29i8ae",
 	"4562474",
 	"21508130",
 	"14072389",
@@ -409,8 +413,10 @@ var (
 )
 
 var (
-	wg       sync.WaitGroup
-	cartoons []Cartoon
+	wg             sync.WaitGroup
+	cartoons       []Cartoon
+	vkToken        string
+	vkTokenExpires int64
 )
 
 type multiSorter struct {
@@ -470,7 +476,7 @@ func youTube(character Character) {
 	defer wg.Done()
 	defer func() {
 		if r := recover(); r != nil {
-			log.Print("Recovered in YouTube: ", r)
+			log.Print("Recovered in youTube:", r)
 		}
 	}()
 
@@ -482,7 +488,7 @@ func youTube(character Character) {
 
 	yt, err := youtube.New(httpClient)
 	if err != nil {
-		log.Print("Error creating YouTube client: %v", err)
+		log.Print("Error creating YouTube client:", err)
 		return
 	}
 
@@ -500,7 +506,7 @@ func youTube(character Character) {
 
 		response, err := apiCall.Do()
 		if err != nil {
-			log.Print("Error making YouTube API call: %v", err.Error())
+			log.Print("Error making YouTube API call:", err.Error())
 			return nil
 		}
 		return response
@@ -551,7 +557,7 @@ func dailyMotion(character Character) {
 	defer wg.Done()
 	defer func() {
 		if r := recover(); r != nil {
-			log.Print("Recovered in DailyMotion: ", r)
+			log.Print("Recovered in dailyMotion:", r)
 		}
 	}()
 
@@ -578,7 +584,7 @@ func dailyMotion(character Character) {
 	getResponse := func(page string) ([]interface{}, bool) {
 		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(character, true), page))
 		if err != nil {
-			log.Print("Error making DailyMotion API call: %v", err.Error())
+			log.Print("Error making DailyMotion API call:", err.Error())
 			return nil, false
 		}
 		body, _ := ioutil.ReadAll(res.Body)
@@ -587,7 +593,7 @@ func dailyMotion(character Character) {
 		var data map[string]interface{}
 		err = json.Unmarshal(body, &data)
 		if err != nil {
-			log.Print("Error unmarshaling json: %v", err.Error())
+			log.Print("Error unmarshaling json:", err.Error())
 			return nil, false
 		}
 
@@ -661,7 +667,7 @@ func vimeo(character Character) {
 	defer wg.Done()
 	defer func() {
 		if r := recover(); r != nil {
-			log.Print("Recovered in Vimeo: ", r)
+			log.Print("Recovered in vimeo:", r)
 		}
 	}()
 
@@ -697,7 +703,7 @@ func vimeo(character Character) {
 		req.Header.Set("Accept", "application/vnd.vimeo.video+json;version=3.2")
 		res, err := httpClient.Do(req)
 		if err != nil {
-			log.Print("Error making Vimeo API call: %v", err.Error())
+			log.Print("Error making Vimeo API call:", err.Error())
 			return nil
 		}
 		body, _ := ioutil.ReadAll(res.Body)
@@ -706,7 +712,7 @@ func vimeo(character Character) {
 		var data map[string]interface{}
 		err = json.Unmarshal(body, &data)
 		if err != nil {
-			log.Print("Error unmarshaling json: %v", err.Error())
+			log.Print("Error unmarshaling json:", err.Error())
 			return nil
 		}
 
@@ -773,6 +779,171 @@ func vimeo(character Character) {
 	}
 
 	response := getResponse("1")
+	if response != nil {
+		parseResponse(response)
+	}
+
+}
+
+func vk(character Character) {
+
+	defer wg.Done()
+	defer func() {
+		if r := recover(); r != nil {
+			log.Print("Recovered in vk:", r)
+		}
+	}()
+
+	const username = "YOUR_USERNAME"
+	const password = "YOUR_PASSWORD"
+	const clientId = "YOUR_CLIENTID"
+
+	uri := "https://api.vk.com/method/video.search?q=%s&count=100&sort=2&access_token=%s&v=5.26"
+
+	name := strings.ToLower(character.Name)
+	altname := strings.ToLower(character.AltName)
+	altname2 := strings.ToLower(character.AltName2)
+
+	timeout := time.Duration(6 * time.Second)
+
+	dialTimeout := func(network, addr string) (net.Conn, error) {
+		return net.DialTimeout(network, addr, timeout)
+	}
+
+	transport := http.Transport{
+		Dial: dialTimeout,
+	}
+
+	httpClient := http.Client{
+		Transport: &transport,
+	}
+
+	getToken := func() {
+		options := cookiejar.Options{
+			PublicSuffixList: publicsuffix.List,
+		}
+
+		jar, _ := cookiejar.New(&options)
+		client := http.Client{
+			Jar: jar,
+		}
+
+		resp, err := client.PostForm("https://login.vk.com", url.Values{
+			"act":          {"login"},
+			"utf8":         {"1"},
+			"email":        {username},
+			"pass":         {password},
+			"redirect_uri": {"https://oauth.vk.com/blank.html"},
+		})
+		if err != nil {
+			log.Print("Error VK login: ", err.Error())
+		}
+
+		resp, err = client.PostForm("https://oauth.vk.com/authorize", url.Values{
+			"response_type": {"token"},
+			"client_id":     {clientId},
+			"scope":         {"video"},
+			"display":       {"mobile"},
+		})
+		if err != nil {
+			log.Print("Error VK authorize:", err.Error())
+		}
+
+		u, err := url.Parse(resp.Request.URL.String())
+		if err != nil {
+			log.Print("Error VK parse:", err.Error())
+		}
+
+		m, err := url.ParseQuery(u.Fragment)
+		if err != nil {
+			log.Print("Error VK parse query:", err.Error())
+		}
+
+		vkToken = m["access_token"][0]
+		expires_in, _ := strconv.ParseInt(m["expires_in"][0], 10, 64)
+		vkTokenExpires = time.Now().Unix() + expires_in
+	}
+
+	getResponse := func() []interface{} {
+		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(character, true), vkToken))
+		if err != nil {
+			log.Print("Error making VK API call:", err.Error())
+			return nil
+		}
+		body, _ := ioutil.ReadAll(res.Body)
+		res.Body.Close()
+
+		var data map[string]interface{}
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			log.Print("Error unmarshaling json:", err.Error())
+			return nil
+		}
+
+		response, ok := data["response"].(map[string]interface{})
+		if !ok {
+			return nil
+		}
+
+		items, ok := response["items"].([]interface{})
+		if !ok {
+			return nil
+		}
+
+		if len(items) == 0 {
+			return nil
+		}
+
+		return items
+	}
+
+	parseResponse := func(response []interface{}) {
+		for _, obj := range response {
+			video, ok := obj.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			videoId := fmt.Sprintf("%.0f", video["id"].(float64))
+			videoTitle := strings.ToLower(video["title"].(string))
+			videoUrl := video["player"].(string)
+			videoThumbSmall := video["photo_130"].(string)
+			videoThumbMedium := video["photo_320"].(string)
+			videoThumbLarge := video["photo_320"].(string)
+
+			videoDuration := getDuration(video["duration"].(float64))
+
+			if strings.Contains(videoUrl, "youtube") || strings.Contains(videoUrl, "vimeo") {
+				continue
+			}
+
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && character.Duration == videoDuration {
+				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
+
+				cartoon := Cartoon{
+					videoId,
+					name,
+					videoTitle,
+					formattedTitle,
+					getEpisode(videoTitle),
+					getSeason(videoTitle),
+					"vk",
+					videoUrl,
+					videoThumbSmall,
+					videoThumbMedium,
+					videoThumbLarge,
+				}
+
+				cartoons = append(cartoons, cartoon)
+			}
+		}
+	}
+
+	if vkToken == "" || vkTokenExpires < time.Now().Unix() {
+		getToken()
+	}
+
+	response := getResponse()
 	if response != nil {
 		parseResponse(response)
 	}
@@ -1042,11 +1213,12 @@ func Search(query string) (string, error) {
 	}
 
 	if char.Name != "" {
-		wg.Add(3)
+		wg.Add(4)
 		cartoons = make([]Cartoon, 0)
 		go youTube(*char)
 		go dailyMotion(*char)
 		go vimeo(*char)
+		go vk(*char)
 		wg.Wait()
 
 		ms := multiSorter{}
@@ -1073,6 +1245,8 @@ func Extract(service string, videoId string) (string, error) {
 		url, err = vidextr.DailyMotion(videoId)
 	case service == "vimeo":
 		url, err = vidextr.Vimeo(videoId)
+	case service == "vk":
+		url, err = vidextr.VK(videoId)
 	}
 
 	if err != nil {
@@ -1084,6 +1258,18 @@ func Extract(service string, videoId string) (string, error) {
 		return "", err
 	}
 	return string(js[:]), nil
+}
+
+func ListenAndServe(bind string) {
+	http.HandleFunc("/list", handleList)
+	http.HandleFunc("/search", handleSearch)
+	http.HandleFunc("/extract", handleExtract)
+
+	l, err := net.Listen("tcp4", bind)
+	if err != nil {
+		log.Fatal(err)
+	}
+	http.Serve(l, nil)
 }
 
 func setHeader(w http.ResponseWriter) {
@@ -1104,13 +1290,9 @@ func handleList(w http.ResponseWriter, r *http.Request) {
 func handleSearch(w http.ResponseWriter, r *http.Request) {
 	setHeader(w)
 
-	path := r.URL.Path[1:]
-	path = strings.TrimRight(path, "/")
-	paths := strings.Split(path, "/")
+	query := r.FormValue("q")
 
-	if len(paths) > 1 {
-		query := paths[1]
-
+	if query != "" {
 		js, err := Search(query)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -1131,14 +1313,10 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 func handleExtract(w http.ResponseWriter, r *http.Request) {
 	setHeader(w)
 
-	path := r.URL.Path[1:]
-	path = strings.TrimRight(path, "/")
-	paths := strings.Split(path, "/")
+	service := r.FormValue("srv")
+	videoId := r.FormValue("id")
 
-	if len(paths) == 3 {
-		service := paths[1]
-		videoId := paths[2]
-
+	if service != "" && videoId != "" {
 		js, err := Extract(service, videoId)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -1154,14 +1332,5 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 func main() {
 	bind := flag.String("bind", ":7313", "Bind address")
 	flag.Parse()
-
-	http.HandleFunc("/list", handleList)
-	http.HandleFunc("/search/", handleSearch)
-	http.HandleFunc("/extract/", handleExtract)
-
-	l, err := net.Listen("tcp4", *bind)
-	if err != nil {
-		log.Fatal(err)
-	}
-	http.Serve(l, nil)
+	ListenAndServe(*bind)
 }

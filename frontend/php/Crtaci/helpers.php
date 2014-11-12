@@ -53,9 +53,9 @@ EOF;
 
     foreach($cartoons as $cartoon) {
         if($cartoon["service"] == "youtube") {
-            $image = $cartoon["thumbnails"]["large"];
+            $image = $cartoon["thumbLarge"];
         } else {
-            $image = $cartoon["thumbnails"]["medium"];
+            $image = $cartoon["thumbMedium"];
         }
 
         $se = get_season($cartoon);

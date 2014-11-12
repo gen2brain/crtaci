@@ -1,4 +1,4 @@
-package rs.crtaci.crtaci.entities;
+package com.github.gen2brain.crtaci.entities;
 
 import java.io.Serializable;
 
@@ -21,7 +21,11 @@ public class Cartoon implements Serializable {
 
     public String url;
 
-    public Thumbnails thumbnails;
+    public String thumbSmall;
+
+    public String thumbMedium;
+
+    public String thumbLarge;
 
     @Override
     public String toString() {
@@ -37,7 +41,9 @@ public class Cartoon implements Serializable {
         result.append("  season: " + this.season + NL);
         result.append("  service: " + this.service + NL);
         result.append("  url: " + this.url + NL);
-        result.append("  thumbnail: " + this.thumbnails.large + NL);
+        result.append("  thumbSmall: " + this.thumbSmall + NL);
+        result.append("  thumbMedium: " + this.thumbMedium + NL);
+        result.append("  thumbLarge: " + this.thumbLarge + NL);
         result.append("}" + NL);
 
         return result.toString();

@@ -34,12 +34,12 @@ class Client(QThread):
             sys.stderr.write("%s\n" % err)
 
     def get_cartoons(self):
-        if self.character["AltName"]:
-            char = self.character["AltName"]
+        if self.character["altname"]:
+            char = self.character["altname"]
         else:
-            char = self.character["Name"]
+            char = self.character["name"]
         try:
-            response = requests.get("http://%s/search/%s" % (
+            response = requests.get("http://%s/search?q=%s" % (
                 self.server, urllib.quote(char)))
             cartoons = response.json()
             return cartoons

@@ -1,35 +1,40 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 20
-    buildToolsVersion '20.0.0'
+    compileSdkVersion 21
+    buildToolsVersion '21.1.0'
 
     defaultConfig {
-        applicationId "rs.crtaci.crtaci"
+        applicationId "com.github.gen2brain.crtaci"
         minSdkVersion 9
-        targetSdkVersion 20
+        targetSdkVersion 21
         versionCode 5
-        versionName "1.1"
+        versionName "1.5"
     }
 
     buildTypes {
         release {
-            runProguard false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            zipAlign true
-            signingConfig signingConfigs.release
+            minifyEnabled false
+            zipAlignEnabled true
             applicationVariants.all { variant ->
                 def file = variant.outputFile
                 variant.outputFile = new File(file.parent, file.name.replace(".apk", "-" + defaultConfig.versionName + ".apk"))
             }
         }
     }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_7
+        targetCompatibility JavaVersion.VERSION_1_7
+    }
 }
 
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
-    compile 'com.android.support:appcompat-v7:20.+'
+    compile 'com.android.support:appcompat-v7:21.0.+'
+    compile 'com.google.android.gms:play-services:6.1.71'
     compile files('libs/gson-2.3.jar')
-    compile files('libs/universal-image-loader-1.9.2.jar')
+    compile files('libs/universal-image-loader-1.9.3.jar')
     compile files('libs/YouTubeAndroidPlayerApi.jar')
+    compile project(':alertdialogpro-core')
+    compile project(':alertdialogpro-theme-material')
 }

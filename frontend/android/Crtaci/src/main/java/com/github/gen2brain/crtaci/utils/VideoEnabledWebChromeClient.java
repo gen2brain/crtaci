@@ -1,4 +1,4 @@
-package rs.crtaci.crtaci.utils;
+package com.github.gen2brain.crtaci.utils;
 
 import android.media.MediaPlayer;
         import android.media.MediaPlayer.OnCompletionListener;

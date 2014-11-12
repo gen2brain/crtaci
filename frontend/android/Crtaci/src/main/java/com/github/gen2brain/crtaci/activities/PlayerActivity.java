@@ -1,4 +1,4 @@
-package rs.crtaci.crtaci.activities;
+package com.github.gen2brain.crtaci.activities;
 
 import com.google.android.youtube.player.YouTubeBaseActivity;
 import com.google.android.youtube.player.YouTubeInitializationResult;
@@ -16,10 +16,10 @@ import android.widget.MediaController;
 import android.widget.ProgressBar;
 import android.widget.VideoView;
 
-import rs.crtaci.crtaci.R;
-import rs.crtaci.crtaci.entities.Cartoon;
-import rs.crtaci.crtaci.utils.VideoEnabledWebChromeClient;
-import rs.crtaci.crtaci.utils.VideoEnabledWebView;
+import com.github.gen2brain.crtaci.R;
+import com.github.gen2brain.crtaci.entities.Cartoon;
+import com.github.gen2brain.crtaci.utils.VideoEnabledWebChromeClient;
+import com.github.gen2brain.crtaci.utils.VideoEnabledWebView;
 
 
 public class PlayerActivity extends YouTubeBaseActivity implements YouTubePlayer.OnInitializedListener {

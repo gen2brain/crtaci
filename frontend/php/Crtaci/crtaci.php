@@ -14,7 +14,7 @@ class Crtaci {
     }
 
     public function getCartoons($character) {
-        $response = $this->httpGet("search/" . rawurlencode($character));
+        $response = $this->httpGet("search?q=" . rawurlencode($character));
         $json = json_decode($response, true);
         if(json_last_error() === JSON_ERROR_NONE) {
             return $json;

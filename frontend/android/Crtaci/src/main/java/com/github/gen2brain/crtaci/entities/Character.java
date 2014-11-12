@@ -1,4 +1,4 @@
-package rs.crtaci.crtaci.entities;
+package com.github.gen2brain.crtaci.entities;
 
 import java.io.Serializable;
 
