@@ -48,7 +48,7 @@ function get_html($query, $characters, $cartoons) {
             </li>\n
 EOF;
 
-        $ch .= sprintf($li, $class, get_icon($character), $a, ucwords($n), $character["name"]);
+        $ch .= sprintf($li, $class, get_icon($character), $a, ucwords($name), $character["name"]);
     }
 
     foreach($cartoons as $cartoon) {

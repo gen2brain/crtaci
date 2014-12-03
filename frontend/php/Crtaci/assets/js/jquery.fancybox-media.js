@@ -160,7 +160,12 @@
 				url  : function( rez ) {
 					return '//maps.google.' + rez[1] + '/' + rez[3] + '' + rez[4] + '&output=' + (rez[4].indexOf('layer=c') > 0 ? 'svembed' : 'embed');
 				}
-			}
+			},
+			vk : {
+				matcher : /vk\.com\/video_ext\.php\?(.*)/i,
+				type : 'iframe',
+				url  : '//vk.com/video_ext.php?$1&autoplay=1'
+			},
 		},
 
 		beforeLoad : function(opts, obj) {
