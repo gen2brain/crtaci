@@ -1,3 +1,8 @@
+v0.1.5 Dec 11, 2014:
+    * use vitamio player instead of default one (solves buffering issues)
+    * use java interface to go instead of http server (works much faster)
+    * new characters: Mr Bean, Carobni Skolski Autobus, Dozivljaji Sasave Druzine, Konanove Avanture, Mumijevi, Pingvini Sa Madagaskara
+
 v0.1.4  Nov 3, 2014:
     * new characters: Blufonci, Wumi, Zmajeva Kugla
     * switch to lollipop Toolbar
