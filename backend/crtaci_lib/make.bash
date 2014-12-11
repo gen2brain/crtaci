@@ -18,6 +18,6 @@ cp -f build/libgojni.so.7 ../../frontend/android/Crtaci/crtaci/src/main/jniLibs/
 
 #export CC=i686-linux-android-gcc
 
-#CGO_ENABLED=1 GOOS=android GOARCH=386 /temp/go/bin/go build -o libgojni.so.x86 -ldflags="-shared" .
-#$X86_CROSS_HOME/i686-linux-android/bin/strip libgojni.so.x86
-#mv -f libgojni.so.x86 ../../frontend/android/Crtaci/crtaci/src/main/jniLibs/x86/libgojni.so
+#CGO_ENABLED=1 GOOS=android GOARCH=386 go build -o build/libgojni.so.x86 -ldflags -extldflags="-shared" .
+#$X86_CROSS_HOME/i686-linux-android/bin/strip build/libgojni.so.x86
+#cp -f build/libgojni.so.x86 ../../frontend/android/Crtaci/crtaci/src/main/jniLibs/x86/libgojni.so

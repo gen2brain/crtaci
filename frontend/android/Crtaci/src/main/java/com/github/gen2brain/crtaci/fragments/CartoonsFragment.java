@@ -21,6 +21,7 @@ import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
@@ -259,10 +260,31 @@ public class CartoonsFragment extends Fragment {
             String service = params[0];
             String videoId = params[1];
 
-            String result = Main.Extract(service, videoId);
+            String result = null;
+            try {
+                result = Main.Extract(service, videoId);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
 
-            if(result == null || result.isEmpty()) {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            if(result == null || result.equals("empty")) {
+                try {
+                    result = Main.Extract(service, videoId);
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if(result == null) {
                 return null;
+            } else if(result.equals("empty")) {
+                return "empty";
             }
 
             try {
@@ -272,7 +294,6 @@ public class CartoonsFragment extends Fragment {
                 } else {
                     return null;
                 }
-
             } catch(Exception e) {
                 e.printStackTrace();
                 return null;
@@ -284,12 +305,17 @@ public class CartoonsFragment extends Fragment {
             if(progressBar != null) {
                 progressBar.setVisibility(View.GONE);
             }
+
             Activity activity = getActivity();
             if(activity != null) {
-                Intent intent = new Intent(activity, PlayerActivity.class);
-                intent.putExtra("video", results);
-                intent.putExtra("cartoon", selectedCartoon);
-                startActivity(intent);
+                if(results != null && !results.equals("empty")) {
+                    Intent intent = new Intent(activity, PlayerActivity.class);
+                    intent.putExtra("video", results);
+                    intent.putExtra("cartoon", selectedCartoon);
+                    startActivity(intent);
+                } else if(results.equals("empty")) {
+                    Toast.makeText(getActivity(), getString(R.string.error_video), Toast.LENGTH_LONG).show();
+                }
             }
         }
 

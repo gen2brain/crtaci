@@ -2,13 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 21
-    buildToolsVersion '21.1.0'
+    buildToolsVersion '21.1.1'
 
     defaultConfig {
         applicationId "com.github.gen2brain.crtaci"
-        minSdkVersion 9
+        minSdkVersion 11
         targetSdkVersion 21
-        versionCode 5
+        versionCode 10
         versionName "1.5"
     }
 
@@ -16,10 +16,6 @@ android {
         release {
             minifyEnabled false
             zipAlignEnabled true
-            applicationVariants.all { variant ->
-                def file = variant.outputFile
-                variant.outputFile = new File(file.parent, file.name.replace(".apk", "-" + defaultConfig.versionName + ".apk"))
-            }
         }
     }
     compileOptions {
@@ -31,10 +27,10 @@ android {
 dependencies {
     compile fileTree(include: ['*.jar'], dir: 'libs')
     compile 'com.android.support:appcompat-v7:21.0.+'
-    compile 'com.google.android.gms:play-services:6.1.71'
+    compile 'com.google.android.gms:play-services-base:6.5.87'
     compile files('libs/gson-2.3.jar')
     compile files('libs/universal-image-loader-1.9.3.jar')
-    compile files('libs/YouTubeAndroidPlayerApi.jar')
+    compile files('libs/vitamio.jar')
     compile project(':alertdialogpro-core')
     compile project(':alertdialogpro-theme-material')
 }

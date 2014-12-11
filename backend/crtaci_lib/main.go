@@ -1,10 +1,10 @@
 package main
 
 import (
-	"code.google.com/p/go.mobile/app"
+	"golang.org/x/mobile/app"
 
-	_ "code.google.com/p/go.mobile/bind/java"
 	_ "crtaci/go_crtaci"
+	_ "golang.org/x/mobile/bind/java"
 )
 
 func main() {

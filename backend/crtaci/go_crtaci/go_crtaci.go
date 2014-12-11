@@ -4,8 +4,8 @@
 package go_main
 
 import (
-	"code.google.com/p/go.mobile/bind/seq"
 	"crtaci"
+	"golang.org/x/mobile/bind/seq"
 )
 
 func proxy_Extract(out, in *seq.Buffer) {

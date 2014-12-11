@@ -32,6 +32,7 @@ import com.github.gen2brain.crtaci.utils.Utils;
 
 import go.Go;
 import go.main.Main;
+import io.vov.vitamio.LibsChecker;
 
 
 public class CharactersActivity extends ActionBarActivity {
@@ -42,13 +43,19 @@ public class CharactersActivity extends ActionBarActivity {
     private ArrayList<Character> characters;
     private CharactersTask charactersTask;
     private ProgressBar progressBar;
-    //private BroadcastReceiver downloadReceiver;
+    private BroadcastReceiver downloadReceiver;
     private Tracker tracker;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
+
+        if(!LibsChecker.checkVitamioLibs(this)) {
+            return;
+        }
+
+        Go.init(getApplicationContext());
 
         setContentView(R.layout.activity_characters);
 
@@ -65,22 +72,22 @@ public class CharactersActivity extends ActionBarActivity {
             twoPane = false;
         }
 
-        Go.init(getApplicationContext());
-
         tracker = Utils.getTracker(this);
         tracker.setScreenName("Characters");
         tracker.send(new HitBuilders.AppViewBuilder().build());
 
-        //if(Update.checkUpdate(this)) {
-        //    downloadReceiver = Update.getDownloadReceiver(this);
-        //    registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-        //
-        //    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-        //        new UpdateTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-        //    } else {
-        //        new UpdateTask().execute();
-        //    }
-        //}
+        if(!Utils.playStore) {
+            if (Update.checkUpdate(this)) {
+                downloadReceiver = Update.getDownloadReceiver(this);
+                registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                    new UpdateTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+                } else {
+                    new UpdateTask().execute();
+                }
+            }
+        }
 
         if(savedInstanceState != null) {
             characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
@@ -93,16 +100,18 @@ public class CharactersActivity extends ActionBarActivity {
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
-        //if(downloadReceiver != null) {
-        //    unregisterReceiver(downloadReceiver);
-        //}
+        if(!Utils.playStore) {
+            if(downloadReceiver != null) {
+                unregisterReceiver(downloadReceiver);
+            }
+        }
         super.onDestroy();
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         Log.d(TAG, "onSaveInstanceState");
-        //super.onSaveInstanceState(outState);
+        super.onSaveInstanceState(outState);
         if(characters != null && !characters.isEmpty()) {
             outState.putSerializable("characters", characters);
         }
@@ -165,9 +174,14 @@ public class CharactersActivity extends ActionBarActivity {
 
         protected ArrayList<Character> doInBackground(Void... params) {
 
-            String result = Main.List();
+            String result = null;
+            try {
+                result = Main.List();
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
 
-            if(result == null || result.isEmpty()) {
+            if(result == null || result.equals("empty")) {
                 return null;
             }
 
@@ -186,7 +200,7 @@ public class CharactersActivity extends ActionBarActivity {
             if(progressBar != null) {
                 progressBar.setVisibility(View.GONE);
             }
-            if(results != null && !results.isEmpty()) {
+            if(results != null) {
                 characters = results;
                 try {
                     replaceFragment(results);

@@ -135,6 +135,7 @@ public class CharactersFragment extends Fragment {
                     startCartoonsTask();
                     adapter.notifyDataSetChanged();
                 } else {
+                    Utils.saveLastCharacter(getActivity(), position);
                     Intent intent = new Intent(getActivity(), CartoonsActivity.class);
                     intent.putExtra("character", characters.get(position));
                     startActivity(intent);
@@ -144,6 +145,11 @@ public class CharactersFragment extends Fragment {
 
         if(twoPane) {
             listView.performItemClick(listView.getChildAt(0), 0, adapter.getItemId(0));
+        } else {
+            int last = Utils.getLastCharacter(getActivity());
+            if(last != -1) {
+                listView.setSelection(last);
+            }
         }
     }
 
@@ -214,7 +220,9 @@ public class CharactersFragment extends Fragment {
                 view.setBackgroundColor(getResources().getColor(R.color.item_selected));
             }
 
-            //holder.icon.setImageDrawable(getIcon(character));
+            if(!Utils.playStore) {
+                holder.icon.setImageDrawable(getIcon(character));
+            }
 
             return view;
         }
@@ -261,7 +269,16 @@ public class CharactersFragment extends Fragment {
         protected ArrayList<Cartoon> doInBackground(String... params) {
             String query = params[0];
 
-            String result = Main.Search(query);
+            String result = null;
+            try {
+                result = Main.Search(query);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+            if(result == null || result.equals("empty")) {
+                return null;
+            }
 
             Type listType = new TypeToken<ArrayList<Cartoon>>(){}.getType();
             try {
@@ -278,7 +295,7 @@ public class CharactersFragment extends Fragment {
             if(progressBar != null) {
                 progressBar.setVisibility(View.GONE);
             }
-            if(results != null && !results.isEmpty()) {
+            if(results != null) {
                 try {
                     replaceFragment(results);
                 } catch(Exception e) {

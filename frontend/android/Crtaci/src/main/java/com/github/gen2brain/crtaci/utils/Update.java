@@ -39,7 +39,7 @@ public class Update {
         long checked = prefs.getLong("checked", 0);
         long diff = now - checked;
 
-        if(diff > 3600) {
+        if(diff > 86400) {
             SharedPreferences.Editor edit = prefs.edit();
             edit.putLong("checked", now);
             edit.apply();

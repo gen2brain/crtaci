@@ -6,8 +6,13 @@
     <string name="action_about">About</string>
     <string name="action_rate">Rate this app</string>
     <string name="error_network">Check your network connection</string>
+    <string name="error_video">This video can not be played</string>
     <string name="action_refresh">Refresh</string>
     <string name="update_available">New version available</string>
     <string name="update_download">Download new version?</string>
+
+    <string name="vitamio_library_app_name">VitamioLibrary</string>
+    <string name="vitamio_init_decoders">Initializing decoders…</string>
+    <string name="mediacontroller_play_pause">Play/Pause</string>
 
 </resources>

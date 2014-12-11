@@ -23,6 +23,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"sort"
@@ -35,12 +36,11 @@ import (
 	"code.google.com/p/google-api-go-client/googleapi/transport"
 	youtube "code.google.com/p/google-api-go-client/youtube/v3"
 	"github.com/gen2brain/vidextr"
-	"net/http/cookiejar"
 )
 
 var (
 	appName    = "crtaci-http"
-	appVersion = "1.3"
+	appVersion = "1.4"
 )
 
 type Cartoon struct {
@@ -75,9 +75,11 @@ var characters = []Character{
 	{"braća grim", "braca grim", "najlepse bajke", "long", ""},
 	{"brzi gonzales", "", "", "medium", ""},
 	{"čarli braun", "carli braun", "", "medium", ""},
+	{"čarobni školski autobus", "carobni skolski autobus", "", "long", ""},
 	{"čili vili", "cili vili", "", "medium", ""},
 	{"cipelići", "cipelici", "", "medium", ""},
 	{"denis napast", "", "", "long", ""},
+	{"doživljaji šašave družine", "dozivljaji sasave druzine", "", "long", ""},
 	{"droidi", "", "", "long", ""},
 	{"duško dugouško", "dusko dugousko", "dusko 20dugousko", "medium", ""},
 	{"džoni test", "dzoni test", "", "long", ""},
@@ -92,6 +94,7 @@ var characters = []Character{
 	{"iznogud", "", "", "medium", ""},
 	{"kalimero", "", "kalimero - ", "medium", "kalimero- crtani"},
 	{"kasper", "", "", "medium", "kasper crtani"},
+	{"konanove avanture", "", "", "long", ""},
 	{"kuče dragoljupče", "kuce dragoljupce", "", "medium", ""},
 	{"lale gator", "", "", "medium", ""},
 	{"la linea", "", "", "medium", ""},
@@ -104,6 +107,7 @@ var characters = []Character{
 	{"miki maus", "", "", "medium", ""},
 	{"mornar popaj", "", "", "medium", ""},
 	{"mr. bean", "mr bean", "mr.bean", "medium", "mr bean animated"},
+	{"mumijevi", "", "", "medium", ""},
 	{"nindža kornjače", "nindza kornjace", "ninja kornjace", "long", ""},
 	{"ogi i žohari", "ogi i zohari", "", "long", ""},
 	{"otkrića bez granica", "otkrica bez granica", "", "long", ""},
@@ -113,6 +117,7 @@ var characters = []Character{
 	{"pepe le tvor", "", "", "medium", ""},
 	{"pera detlić", "pera detlic", "", "medium", ""},
 	{"pera kojot", "", "", "medium", ""},
+	{"pingvini sa madagaskara", "", "", "medium", ""},
 	{"pink panter", "", "", "medium", ""},
 	{"plava princeza", "", "", "long", ""},
 	{"porodica kremenko", "", "", "long", ""},
@@ -197,6 +202,7 @@ var filters = []string{
 	"gusztav allast keres",
 	"guszt v k",
 	"rtb",
+	"tvrip",
 	"djuza stoiljkovic",
 	"okrenite preko smplayer-a",
 	"new episodes",
@@ -296,6 +302,7 @@ var censoredWords = []string{
 	"verkackt",
 	"sottile",
 	"goldene",
+	"osterhase",
 	"elasmosaurio",
 	"ombra",
 	"ehlers",
@@ -304,6 +311,7 @@ var censoredWords = []string{
 	"et ses",
 	"tu sais",
 	"ma vision",
+	"v riti ",
 	"how could",
 	"new year",
 	" del ",
@@ -357,6 +365,8 @@ var censoredIds = []string{
 	"gRLppbNNCLI",
 	"smKnRR0ouds",
 	"5nElGb8odmk",
+	"xs_IiToWEEs",
+	"co4B3-BwcUY",
 	"xy53o1",
 	"xy53q1",
 	"x3osiz",
@@ -379,6 +389,7 @@ var censoredIds = []string{
 	"163980203",
 	"165572645",
 	"168855693",
+	"61534934",
 	"15376700",
 	"73551241",
 }
@@ -597,7 +608,11 @@ func dailyMotion(character Character) {
 			return nil, false
 		}
 
-		hasMore := data["has_more"].(bool)
+		hasMore, ok := data["has_more"].(bool)
+		if !ok {
+			return nil, false
+		}
+
 		response, ok := data["list"].([]interface{})
 		if !ok {
 			return nil, false
@@ -828,7 +843,7 @@ func vk(character Character) {
 			Jar: jar,
 		}
 
-		resp, err := client.PostForm("https://login.vk.com", url.Values{
+		res, err := client.PostForm("https://login.vk.com", url.Values{
 			"act":          {"login"},
 			"utf8":         {"1"},
 			"email":        {username},
@@ -839,7 +854,7 @@ func vk(character Character) {
 			log.Print("Error VK login: ", err.Error())
 		}
 
-		resp, err = client.PostForm("https://oauth.vk.com/authorize", url.Values{
+		res, err = client.PostForm("https://oauth.vk.com/authorize", url.Values{
 			"response_type": {"token"},
 			"client_id":     {clientId},
 			"scope":         {"video"},
@@ -849,7 +864,7 @@ func vk(character Character) {
 			log.Print("Error VK authorize:", err.Error())
 		}
 
-		u, err := url.Parse(resp.Request.URL.String())
+		u, err := url.Parse(res.Request.URL.String())
 		if err != nil {
 			log.Print("Error VK parse:", err.Error())
 		}
@@ -859,9 +874,11 @@ func vk(character Character) {
 			log.Print("Error VK parse query:", err.Error())
 		}
 
-		vkToken = m["access_token"][0]
-		expires_in, _ := strconv.ParseInt(m["expires_in"][0], 10, 64)
-		vkTokenExpires = time.Now().Unix() + expires_in
+		if len(m) > 0 {
+			vkToken = m["access_token"][0]
+			expires_in, _ := strconv.ParseInt(m["expires_in"][0], 10, 64)
+			vkTokenExpires = time.Now().Unix() + expires_in
+		}
 	}
 
 	getResponse := func() []interface{} {
@@ -904,6 +921,10 @@ func vk(character Character) {
 				continue
 			}
 
+			if len(video) == 0 {
+				continue
+			}
+
 			videoId := fmt.Sprintf("%.0f", video["id"].(float64))
 			videoTitle := strings.ToLower(video["title"].(string))
 			videoUrl := video["player"].(string)
@@ -943,9 +964,11 @@ func vk(character Character) {
 		getToken()
 	}
 
-	response := getResponse()
-	if response != nil {
-		parseResponse(response)
+	if vkToken != "" {
+		response := getResponse()
+		if response != nil {
+			parseResponse(response)
+		}
 	}
 
 }
@@ -1198,7 +1221,7 @@ func isValidTitle(videoTitle string, name string, altname string, altname2 strin
 func List() (string, error) {
 	js, err := json.MarshalIndent(characters, "", "    ")
 	if err != nil {
-		return "", err
+		return "empty", err
 	}
 	return string(js[:]), nil
 }
@@ -1213,12 +1236,12 @@ func Search(query string) (string, error) {
 	}
 
 	if char.Name != "" {
-		wg.Add(4)
+		wg.Add(3)
 		cartoons = make([]Cartoon, 0)
 		go youTube(*char)
 		go dailyMotion(*char)
 		go vimeo(*char)
-		go vk(*char)
+		//go vk(*char)
 		wg.Wait()
 
 		ms := multiSorter{}
@@ -1226,12 +1249,12 @@ func Search(query string) (string, error) {
 
 		js, err := json.MarshalIndent(cartoons, "", "    ")
 		if err != nil {
-			return "", err
+			return "empty", err
 		}
 
 		return string(js[:]), nil
 	} else {
-		return "", nil
+		return "empty", nil
 	}
 }
 
@@ -1250,12 +1273,16 @@ func Extract(service string, videoId string) (string, error) {
 	}
 
 	if err != nil {
-		return "", err
+		return "empty", err
+	}
+
+	if url == "" {
+		return "empty", nil
 	}
 
 	js, err := json.Marshal(url)
 	if err != nil {
-		return "", err
+		return "empty", err
 	}
 	return string(js[:]), nil
 }
@@ -1322,9 +1349,15 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.Write([]byte(js))
+		if js == "empty" {
+			http.Error(w, "", http.StatusNotFound)
+			return
+		} else {
+			w.Write([]byte(js))
+			return
+		}
 	} else {
-		http.Error(w, "403 Forbidden", http.StatusForbidden)
+		http.Error(w, "", http.StatusForbidden)
 		return
 	}
 }

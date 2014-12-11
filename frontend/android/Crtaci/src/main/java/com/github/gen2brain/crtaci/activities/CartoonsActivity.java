@@ -163,9 +163,14 @@ public class CartoonsActivity extends ActionBarActivity {
         protected ArrayList<Cartoon> doInBackground(String... params) {
             String query = params[0];
 
-            String result = Main.Search(query);
+            String result = null;
+            try {
+                result = Main.Search(query);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
 
-            if(result == null || result.isEmpty()) {
+            if(result == null || result.equals("empty")) {
                 return null;
             }
 
@@ -184,7 +189,7 @@ public class CartoonsActivity extends ActionBarActivity {
             if(progressBar != null) {
                 progressBar.setVisibility(View.GONE);
             }
-            if(results != null && !results.isEmpty()) {
+            if(results != null) {
                 cartoons = results;
                 try {
                     replaceFragment(results);

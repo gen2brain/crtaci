@@ -8,4 +8,8 @@
     <string name="action_refresh">Osveži</string>
     <string name="update_available">Nova verzija je dostupna</string>
     <string name="update_download">Preuzmi novu verziju?</string>
+    <string name="mediacontroller_play_pause">Play/Pause</string>
+    <string name="vitamio_init_decoders">Inicijalizacija dekodera…</string>
+    <string name="vitamio_library_app_name">VitamioLibrary</string>
+    <string name="error_video">Ovaj link ne može da se pusti</string>
 </resources>
