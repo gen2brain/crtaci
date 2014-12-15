@@ -41,6 +41,11 @@ header p {
     text-shadow: 1px 1px 1px rgba(0, 0, 0, 1)
 }
 
+footer p {
+    font-size: 12px;
+    text-align: center;
+}
+
 a:hover, a:visited, a:link, a:active {
     border: none;
     outline: none;
