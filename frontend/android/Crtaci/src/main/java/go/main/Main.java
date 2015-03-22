@@ -8,8 +8,8 @@ import go.Seq;
 
 public abstract class Main {
     private Main() {} // uninstantiable
-
-    public static String Extract(String service, String videoId) {
+    
+    public static String Extract(String service, String videoId) throws Exception {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
         String _result;
@@ -18,23 +18,21 @@ public abstract class Main {
         Seq.send(DESCRIPTOR, CALL_Extract, _in, _out);
         _result = _out.readUTF16();
         String _err = _out.readUTF16();
-        if (_err != null && ! _err.isEmpty()) {
-            System.out.println(_err);
-            return null;
+        if (_err != null) {
+            throw new Exception(_err);
         }
         return _result;
     }
     
-    public static String List() {
+    public static String List() throws Exception {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
         String _result;
         Seq.send(DESCRIPTOR, CALL_List, _in, _out);
         _result = _out.readUTF16();
         String _err = _out.readUTF16();
-        if (_err != null && ! _err.isEmpty()) {
-            System.out.println(_err);
-            return null;
+        if (_err != null) {
+            throw new Exception(_err);
         }
         return _result;
     }
@@ -46,7 +44,7 @@ public abstract class Main {
         Seq.send(DESCRIPTOR, CALL_ListenAndServe, _in, _out);
     }
     
-    public static String Search(String query) {
+    public static String Search(String query) throws Exception {
         go.Seq _in = new go.Seq();
         go.Seq _out = new go.Seq();
         String _result;
@@ -54,9 +52,8 @@ public abstract class Main {
         Seq.send(DESCRIPTOR, CALL_Search, _in, _out);
         _result = _out.readUTF16();
         String _err = _out.readUTF16();
-        if (_err != null && ! _err.isEmpty()) {
-            System.out.println(_err);
-            return null;
+        if (_err != null) {
+            throw new Exception(_err);
         }
         return _result;
     }

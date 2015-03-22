@@ -1,21 +1,33 @@
+v0.1.6 Mar 22, 2015:
+
+    * bring back support for android 2.3
+    * added option for vitamio/default player toggling
+    * new characters
+    * bug fixes
+
 v0.1.5 Dec 11, 2014:
+
     * use vitamio player instead of default one (solves buffering issues)
     * use java interface to go instead of http server (works much faster)
     * new characters: Mr Bean, Carobni Skolski Autobus, Dozivljaji Sasave Druzine, Konanove Avanture, Mumijevi, Pingvini Sa Madagaskara
 
 v0.1.4  Nov 3, 2014:
+
     * new characters: Blufonci, Wumi, Zmajeva Kugla
     * switch to lollipop Toolbar
 
 v0.1.3  Oct 11, 2014:
+
     * search backend improvements (more cartoons are matched)
     * new characters: Blinki Bil, Eustahije Brzić, Inspektor Radiša, Stari Crtaći
 
 v0.1.2  Oct 3, 2014:
+
     * autoplay videos
     * new characters: Elmer, Kasper, Mačor Mika, Šilja, Tarzan Gospodar Džungle
 
 v0.1.1  Sep 26, 2014:
+
     * Add Vimeo service
 
 v0.1.0  Sep 8, 2014:

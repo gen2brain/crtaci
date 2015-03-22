@@ -1,15 +1,15 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.github.gen2brain.crtaci.activities.CartoonsActivity" >
-
-    <item android:id="@+id/action_about"
-        android:title="@string/action_about"
-        android:orderInCategory="100"
-        app:showAsAction="never" />
+    tools:context=".CartoonsActivity" >
 
     <item android:id="@+id/action_rate"
         android:title="@string/action_rate"
+        android:orderInCategory="100"
+        app:showAsAction="never" />
+
+    <item android:id="@+id/action_about"
+        android:title="@string/action_about"
         android:orderInCategory="110"
         app:showAsAction="never" />
 
@@ -17,4 +17,17 @@
         android:title="@string/action_refresh"
         android:icon="@drawable/ic_refresh"
         app:showAsAction="collapseActionView|ifRoom" />
+
+    <group android:id="@+id/player_group"
+        android:checkableBehavior="single" >
+        <item android:id="@+id/action_vitamio_player"
+            android:title="@string/action_vitamio_player"
+            android:checkable="true"
+            app:showAsAction="never" />
+
+        <item android:id="@+id/action_default_player"
+            android:title="@string/action_default_player"
+            android:checkable="true"
+            app:showAsAction="never" />
+    </group>
 </menu>

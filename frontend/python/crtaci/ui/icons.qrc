@@ -1,6 +1,7 @@
 <RCC>
   <qresource prefix="/">
     <file>icons/a_je_to.png</file>
+    <file>icons/andjeoski_prijatelji.png</file>
     <file>icons/atomski_mrav.png</file>
     <file>icons/bananamen.png</file>
     <file>icons/blinki_bil.png</file>
@@ -21,11 +22,13 @@
     <file>icons/eustahije_brzic.png</file>
     <file>icons/evoksi.png</file>
     <file>icons/generalova_radnja.png</file>
+    <file>icons/grcka_mitologija.png</file>
     <file>icons/gustavus.png</file>
     <file>icons/helo_kiti.png</file>
     <file>icons/himen_i_gospodari_svemira.png</file>
     <file>icons/inspektor_radisa.png</file>
     <file>icons/iznogud.png</file>
+    <file>icons/jez_alfred_na_zadatku.png</file>
     <file>icons/kalimero.png</file>
     <file>icons/kasper.png</file>
     <file>icons/konanove_avanture.png</file>
@@ -34,7 +37,9 @@
     <file>icons/la_linea.png</file>
     <file>icons/le_piaf.png</file>
     <file>icons/legenda_o_tarzanu.png</file>
+    <file>icons/liga_super_zloca.png</file>
     <file>icons/macor_mika.png</file>
+    <file>icons/mali_detektivi.png</file>
     <file>icons/mali_leteci_medvjedici.png</file>
     <file>icons/masha_i_medved.png</file>
     <file>icons/mece_dobrici.png</file>
@@ -56,9 +61,12 @@
     <file>icons/plava_princeza.png</file>
     <file>icons/porodica_kremenko.png</file>
     <file>icons/porucnik_draguljce.png</file>
+    <file>icons/princeze_sirene.png</file>
     <file>icons/profesor_baltazar.png</file>
     <file>icons/ptica_trkacica.png</file>
+    <file>icons/pustolovine_sa_bracom_kret.png</file>
     <file>icons/rakuni.png</file>
+    <file>icons/ratnik_kisna_kap.png</file>
     <file>icons/ren_i_stimpi.png</file>
     <file>icons/robotek.png</file>
     <file>icons/salabajzerici.png</file>
@@ -75,6 +83,7 @@
     <file>icons/sundjer_bob.png</file>
     <file>icons/supermen.png</file>
     <file>icons/super_mis.png</file>
+    <file>icons/super_spijunke.png</file>
     <file>icons/talicni_tom.png</file>
     <file>icons/tarzan_gospodar_dzungle.png</file>
     <file>icons/tom_i_dzeri.png</file>
@@ -84,6 +93,7 @@
     <file>icons/vuk_vucko.png</file>
     <file>icons/wumi.png</file>
     <file>icons/zamenik_boza.png</file>
+    <file>icons/zemlja_konja.png</file>
     <file>icons/zmajeva_kugla.png</file>
   </qresource>
 </RCC>

@@ -16,14 +16,16 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
-	"net/http/cookiejar"
 	"net/url"
 	"regexp"
 	"sort"
@@ -32,18 +34,17 @@ import (
 	"sync"
 	"time"
 
-	"code.google.com/p/go.net/publicsuffix"
-	"code.google.com/p/google-api-go-client/googleapi/transport"
-	youtube "code.google.com/p/google-api-go-client/youtube/v3"
 	"github.com/gen2brain/vidextr"
+	"github.com/google/google-api-go-client/googleapi/transport"
+	youtube "github.com/google/google-api-go-client/youtube/v3"
 )
 
 var (
 	appName    = "crtaci-http"
-	appVersion = "1.4"
+	appVersion = "1.5"
 )
 
-type Cartoon struct {
+type cartoon struct {
 	Id             string `json:"id"`
 	Character      string `json:"character"`
 	Title          string `json:"title"`
@@ -57,7 +58,7 @@ type Cartoon struct {
 	ThumbLarge     string `json:"thumbLarge"`
 }
 
-type Character struct {
+type character struct {
 	Name     string `json:"name"`
 	AltName  string `json:"altname"`
 	AltName2 string `json:"altname2"`
@@ -65,9 +66,10 @@ type Character struct {
 	Query    string `json:"query"`
 }
 
-var characters = []Character{
+var characters = []character{
 	{"atomski mrav", "", "", "medium", ""},
 	{"a je to", "", "", "medium", "a je to crtani"},
+	{"anđeoski prijatelji", "andjeoski prijatelji", "", "medium", ""},
 	{"bananamen", "", "", "medium", ""},
 	{"blinki bil", "", "блинки бил", "long", ""},
 	{"blufonci", "", "", "medium", ""},
@@ -87,11 +89,13 @@ var characters = []Character{
 	{"eustahije brzić", "eustahije brzic", "", "medium", ""},
 	{"evoksi", "", "", "long", ""},
 	{"generalova radnja", "", "", "medium", ""},
+	{"grčka mitologija", "grcka mitologija", "", "long", "grcka mitologija crtani"},
 	{"gustav", "gustavus", "", "medium", "gustavus crtani"},
 	{"helo kiti", "", "", "medium", ""},
 	{"hi men i gospodari svemira", "himen i gospodari svemira", "", "long", ""},
 	{"inspektor radiša", "inspektor radisa", "", "medium", ""},
 	{"iznogud", "", "", "medium", ""},
+	{"jež alfred na zadatku", "jez alfred na zadatku", "", "medium", ""},
 	{"kalimero", "", "kalimero - ", "medium", "kalimero- crtani"},
 	{"kasper", "", "", "medium", "kasper crtani"},
 	{"konanove avanture", "", "", "long", ""},
@@ -100,6 +104,8 @@ var characters = []Character{
 	{"la linea", "", "", "medium", ""},
 	{"legenda o tarzanu", "", "", "long", ""},
 	{"le piaf", "", "", "short", ""},
+	{"liga super zloća", "liga super zloca", "", "medium", ""},
+	{"mali detektivi", "", "", "long", ""},
 	{"mali leteći medvjedići", "mali leteci medvjedici", "", "long", ""},
 	{"masa i medved", "masha i medved", "masa i medvjed", "medium", "masa i medved crtani"},
 	{"mačor mika", "macor mika", "", "long", ""},
@@ -118,13 +124,16 @@ var characters = []Character{
 	{"pera detlić", "pera detlic", "", "medium", ""},
 	{"pera kojot", "", "", "medium", ""},
 	{"pingvini sa madagaskara", "", "", "medium", ""},
-	{"pink panter", "", "", "medium", ""},
+	{"pink panter", "", "", "medium", "pink panter crtani"},
 	{"plava princeza", "", "", "long", ""},
 	{"porodica kremenko", "", "", "long", ""},
 	{"poručnik draguljče", "porucnik draguljce", "", "medium", ""},
+	{"princeze sirene", "", "", "long", ""},
 	{"profesor baltazar", "", "", "medium", ""},
 	{"ptica trkačica", "ptica trkacica", "", "medium", ""},
+	{"pustolovine sa braćom kret", "pustolovine sa bracom kret", "", "long", ""},
 	{"rakuni", "", "", "long", ""},
+	{"ratnik kišna kap", "ratnik kisna kap", "", "long", ""},
 	{"ren i stimpi", "", "", "medium", ""},
 	{"robotek", "", "robotech", "long", ""},
 	{"šalabajzerići", "salabajzerici", "", "medium", ""},
@@ -134,6 +143,7 @@ var characters = []Character{
 	{"sofronije", "", "", "medium", ""},
 	{"super miš", "super mis", "", "medium", "super mis crtani"},
 	{"supermen", "", "", "medium", "supermen crtani"},
+	{"super špijunke", "super spijunke", "", "long", ""},
 	{"sport bili", "", "", "medium", ""},
 	{"srle i pajče", "srle i pajce", "", "medium", ""},
 	{"stanlio i olio", "", "", "medium", ""},
@@ -150,6 +160,7 @@ var characters = []Character{
 	{"vuk vučko", "vuk vucko", "", "medium", ""},
 	{"wumi", "", "wummi", "short", "wumi crtani"},
 	{"zamenik boža", "zamenik boza", "", "medium", ""},
+	{"zemlja konja", "", "", "medium", ""},
 	{"zmajeva kugla", "zmajeva kugla", "zmajeva kugla z", "long", ""},
 }
 
@@ -212,6 +223,10 @@ var filters = []string{
 	"animated",
 	"cartoon",
 	"of 47",
+	"dailymotion video",
+	"video dailymotion",
+	"ultra tv",
+	"happy tv",
 }
 
 var censoredWords = []string{
@@ -224,6 +239,7 @@ var censoredWords = []string{
 	"picka",
 	"picke",
 	"peder",
+	"jebač",
 	"uzivo",
 	"parodija",
 	"tretmen",
@@ -264,6 +280,7 @@ var censoredWords = []string{
 	"remastered",
 	"celebration",
 	"experiments",
+	"food",
 	"gameplay",
 	"surprise",
 	"batters",
@@ -318,6 +335,18 @@ var censoredWords = []string{
 	"maldicion",
 	"fernsehausstrahlung",
 	"the best bits of",
+	"jamella",
+	"kasper-sky",
+	"kasper internet",
+	"feiern",
+	"terpidana",
+	"borba za koralovo",
+	"sve pesme",
+	"minecraft",
+	"gasttoz",
+	"gastoz",
+	"batailles",
+	"maminka",
 }
 
 var censoredIds = []string{
@@ -367,6 +396,34 @@ var censoredIds = []string{
 	"5nElGb8odmk",
 	"xs_IiToWEEs",
 	"co4B3-BwcUY",
+	"QCHSP32z2nc",
+	"CRyDcmPHZy4",
+	"YyFNnHlDgP0",
+	"uVn9vpFlljE",
+	"LuYPcHVsyow",
+	"6sPavaRoEA8",
+	"JpG72eCdmKo",
+	"XL4TZVlGc3o",
+	"bAeHz5miEJg",
+	"6zCKejl_1bY",
+	"Ragr70eHvQg",
+	"7nDvQPYJpMg",
+	"jYU_doi3Y7w",
+	"5FqM9elA3AY",
+	"3Wha_dlJ9G0",
+	"bTLVcWEtk-0",
+	"WIqCOdLvDBs",
+	"x5-SgQVUY-c",
+	"MQPLlgJkvLc",
+	"Fu88sn45nlE",
+	"0Uq52kdn-MA",
+	"9sMBmQNPFTA",
+	"AiUBMthSJ9I",
+	"jAsHYIyp9fY",
+	"8nWgj3tk0kg",
+	"2lD_oXT4ssA",
+	"iT4ZXYso2kA",
+	"fuYMMWpRjkM",
 	"xy53o1",
 	"xy53q1",
 	"x3osiz",
@@ -382,6 +439,11 @@ var censoredIds = []string{
 	"x20uqv5",
 	"x20uvfy",
 	"x29i8ae",
+	"x2k0tnk",
+	"x2etl16",
+	"x2dv1ec",
+	"x196m5x",
+	"x2cz5es",
 	"4562474",
 	"21508130",
 	"14072389",
@@ -392,7 +454,82 @@ var censoredIds = []string{
 	"61534934",
 	"15376700",
 	"73551241",
+	"80060489",
 }
+
+var chain = `-----BEGIN CERTIFICATE-----
+MIIDfTCCAuagAwIBAgIDErvmMA0GCSqGSIb3DQEBBQUAME4xCzAJBgNVBAYTAlVT
+MRAwDgYDVQQKEwdFcXVpZmF4MS0wKwYDVQQLEyRFcXVpZmF4IFNlY3VyZSBDZXJ0
+aWZpY2F0ZSBBdXRob3JpdHkwHhcNMDIwNTIxMDQwMDAwWhcNMTgwODIxMDQwMDAw
+WjBCMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNR2VvVHJ1c3QgSW5jLjEbMBkGA1UE
+AxMSR2VvVHJ1c3QgR2xvYmFsIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
+CgKCAQEA2swYYzD99BcjGlZ+W988bDjkcbd4kdS8odhM+KhDtgPpTSEHCIjaWC9m
+OSm9BXiLnTjoBbdqfnGk5sRgprDvgOSJKA+eJdbtg/OtppHHmMlCGDUUna2YRpIu
+T8rxh0PBFpVXLVDviS2Aelet8u5fa9IAjbkU+BQVNdnARqN7csiRv8lVK83Qlz6c
+JmTM386DGXHKTubU1XupGc1V3sjs0l44U+VcT4wt/lAjNvxm5suOpDkZALeVAjmR
+Cw7+OC7RHQWa9k0+bw8HHa8sHo9gOeL6NlMTOdReJivbPagUvTLrGAMoUgRx5asz
+PeE4uwc2hGKceeoWMPRfwCvocWvk+QIDAQABo4HwMIHtMB8GA1UdIwQYMBaAFEjm
+aPkr0rKV10fYIyAQTzOYkJ/UMB0GA1UdDgQWBBTAephojYn7qwVkDBF9qn1luMrM
+TjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjA6BgNVHR8EMzAxMC+g
+LaArhilodHRwOi8vY3JsLmdlb3RydXN0LmNvbS9jcmxzL3NlY3VyZWNhLmNybDBO
+BgNVHSAERzBFMEMGBFUdIAAwOzA5BggrBgEFBQcCARYtaHR0cHM6Ly93d3cuZ2Vv
+dHJ1c3QuY29tL3Jlc291cmNlcy9yZXBvc2l0b3J5MA0GCSqGSIb3DQEBBQUAA4GB
+AHbhEm5OSxYShjAGsoEIz/AIx8dxfmbuwu3UOx//8PDITtZDOLC5MH0Y0FWDomrL
+NhGc6Ehmo21/uBPUR/6LWlxz/K7ZGzIZOKuXNBSqltLroxwUCEm2u+WR74M26x1W
+b8ravHNjkOR/ez4iyz0H7V84dJzjA1BOoa+Y7mHyhD8S
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIEKjCCAxKgAwIBAgIEOGPe+DANBgkqhkiG9w0BAQUFADCBtDEUMBIGA1UEChML
+RW50cnVzdC5uZXQxQDA+BgNVBAsUN3d3dy5lbnRydXN0Lm5ldC9DUFNfMjA0OCBp
+bmNvcnAuIGJ5IHJlZi4gKGxpbWl0cyBsaWFiLikxJTAjBgNVBAsTHChjKSAxOTk5
+IEVudHJ1c3QubmV0IExpbWl0ZWQxMzAxBgNVBAMTKkVudHJ1c3QubmV0IENlcnRp
+ZmljYXRpb24gQXV0aG9yaXR5ICgyMDQ4KTAeFw05OTEyMjQxNzUwNTFaFw0yOTA3
+MjQxNDE1MTJaMIG0MRQwEgYDVQQKEwtFbnRydXN0Lm5ldDFAMD4GA1UECxQ3d3d3
+LmVudHJ1c3QubmV0L0NQU18yMDQ4IGluY29ycC4gYnkgcmVmLiAobGltaXRzIGxp
+YWIuKTElMCMGA1UECxMcKGMpIDE5OTkgRW50cnVzdC5uZXQgTGltaXRlZDEzMDEG
+A1UEAxMqRW50cnVzdC5uZXQgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgKDIwNDgp
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArU1LqRKGsuqjIAcVFmQq
+K0vRvwtKTY7tgHalZ7d4QMBzQshowNtTK91euHaYNZOLGp18EzoOH1u3Hs/lJBQe
+sYGpjX24zGtLA/ECDNyrpUAkAH90lKGdCCmziAv1h3edVc3kw37XamSrhRSGlVuX
+MlBvPci6Zgzj/L24ScF2iUkZ/cCovYmjZy/Gn7xxGWC4LeksyZB2ZnuU4q941mVT
+XTzWnLLPKQP5L6RQstRIzgUyVYr9smRMDuSYB3Xbf9+5CFVghTAp+XtIpGmG4zU/
+HoZdenoVve8AjhUiVBcAkCaTvA5JaJG/+EfTnZVCwQ5N328mz8MYIWJmQ3DW1cAH
+4QIDAQABo0IwQDAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNV
+HQ4EFgQUVeSB0RGAvtiJuQijMfmhJAkWuXAwDQYJKoZIhvcNAQEFBQADggEBADub
+j1abMOdTmXx6eadNl9cZlZD7Bh/KM3xGY4+WZiT6QBshJ8rmcnPyT/4xmf3IDExo
+U8aAghOY+rat2l098c5u9hURlIIM7j+VrxGrD9cv3h8Dj1csHsm7mhpElesYT6Yf
+zX1XEC+bBAlahLVu2B064dae0Wx5XnkcFMXj0EyTO2U87d89vqbllRrDtRnDvV5b
+u/8j72gZyxKTJ1wDLW8w0B62GqzeWvfRqqgnpv55gcR5mTNXuhKwqeBCbJPKVt7+
+bYQLCIt+jerXmCHG8+c8eS9enNFMFY3h7CI3zJpDC5fcgJCNs2ebb0gIFVbPv/Er
+fF6adulZkMV8gzURZVE=
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIElDCCA3ygAwIBAgIQAf2j627KdciIQ4tyS8+8kTANBgkqhkiG9w0BAQsFADBh
+MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
+d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD
+QTAeFw0xMzAzMDgxMjAwMDBaFw0yMzAzMDgxMjAwMDBaME0xCzAJBgNVBAYTAlVT
+MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxJzAlBgNVBAMTHkRpZ2lDZXJ0IFNIQTIg
+U2VjdXJlIFNlcnZlciBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+ANyuWJBNwcQwFZA1W248ghX1LFy949v/cUP6ZCWA1O4Yok3wZtAKc24RmDYXZK83
+nf36QYSvx6+M/hpzTc8zl5CilodTgyu5pnVILR1WN3vaMTIa16yrBvSqXUu3R0bd
+KpPDkC55gIDvEwRqFDu1m5K+wgdlTvza/P96rtxcflUxDOg5B6TXvi/TC2rSsd9f
+/ld0Uzs1gN2ujkSYs58O09rg1/RrKatEp0tYhG2SS4HD2nOLEpdIkARFdRrdNzGX
+kujNVA075ME/OV4uuPNcfhCOhkEAjUVmR7ChZc6gqikJTvOX6+guqw9ypzAO+sf0
+/RR3w6RbKFfCs/mC/bdFWJsCAwEAAaOCAVowggFWMBIGA1UdEwEB/wQIMAYBAf8C
+AQAwDgYDVR0PAQH/BAQDAgGGMDQGCCsGAQUFBwEBBCgwJjAkBggrBgEFBQcwAYYY
+aHR0cDovL29jc3AuZGlnaWNlcnQuY29tMHsGA1UdHwR0MHIwN6A1oDOGMWh0dHA6
+Ly9jcmwzLmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydEdsb2JhbFJvb3RDQS5jcmwwN6A1
+oDOGMWh0dHA6Ly9jcmw0LmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydEdsb2JhbFJvb3RD
+QS5jcmwwPQYDVR0gBDYwNDAyBgRVHSAAMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8v
+d3d3LmRpZ2ljZXJ0LmNvbS9DUFMwHQYDVR0OBBYEFA+AYRyCMWHVLyjnjUY4tCzh
+xtniMB8GA1UdIwQYMBaAFAPeUDVW0Uy7ZvCj4hsbw5eyPdFVMA0GCSqGSIb3DQEB
+CwUAA4IBAQAjPt9L0jFCpbZ+QlwaRMxp0Wi0XUvgBCFsS+JtzLHgl4+mUwnNqipl
+5TlPHoOlblyYoiQm5vuh7ZPHLgLGTUq/sELfeNqzqPlt/yGFUzZgTHbO7Djc1lGA
+8MXW5dRNJ2Srm8c+cftIl7gzbckTB+6WohsYFfZcTEDts8Ls/3HB40f/1LkAtDdC
+2iDJ6m6K7hQGrn2iWZiIqBtvLfTyyRRfJs8sjX7tN8Cp1Tm5gr8ZDOo0rwAhaPit
+c+LJMto4JQtV05od8GiG7S5BNO98pVAdvzr508EIDObtHopYJeS4d60tbvVS3bR0
+j6tJLp07kzQoH3jOlOrHvdPJbRzeXDLz
+-----END CERTIFICATE-----`
 
 var (
 	reTitle = regexp.MustCompile(`[0-9A-Za-zžćčšđ_,]+`)
@@ -424,17 +561,15 @@ var (
 )
 
 var (
-	wg             sync.WaitGroup
-	cartoons       []Cartoon
-	vkToken        string
-	vkTokenExpires int64
+	wg       sync.WaitGroup
+	cartoons []cartoon
 )
 
 type multiSorter struct {
-	cartoons []Cartoon
+	cartoons []cartoon
 }
 
-func (ms *multiSorter) Sort(cartoons []Cartoon) {
+func (ms *multiSorter) Sort(cartoons []cartoon) {
 	ms.cartoons = cartoons
 	sort.Sort(ms)
 }
@@ -450,7 +585,7 @@ func (ms *multiSorter) Swap(i, j int) {
 func (ms *multiSorter) Less(i, j int) bool {
 	p, q := &ms.cartoons[i], &ms.cartoons[j]
 
-	episode := func(c1, c2 *Cartoon) bool {
+	episode := func(c1, c2 *cartoon) bool {
 		if c1.Episode == -1 {
 			return false
 		} else if c2.Episode == -1 {
@@ -459,7 +594,7 @@ func (ms *multiSorter) Less(i, j int) bool {
 		return c1.Episode < c2.Episode
 	}
 
-	season := func(c1, c2 *Cartoon) bool {
+	season := func(c1, c2 *cartoon) bool {
 		if c1.Season == -1 {
 			return false
 		} else if c2.Season == -1 {
@@ -482,7 +617,38 @@ func (ms *multiSorter) Less(i, j int) bool {
 	return episode(p, q)
 }
 
-func youTube(character Character) {
+func decodePem(certInput string) tls.Certificate {
+	var cert tls.Certificate
+	certPEMBlock := []byte(certInput)
+	var certDERBlock *pem.Block
+	for {
+		certDERBlock, certPEMBlock = pem.Decode(certPEMBlock)
+		if certDERBlock == nil {
+			break
+		}
+		if certDERBlock.Type == "CERTIFICATE" {
+			cert.Certificate = append(cert.Certificate, certDERBlock.Bytes)
+		}
+	}
+	return cert
+}
+
+func getTLSConfig() tls.Config {
+	certChain := decodePem(chain)
+	conf := tls.Config{}
+	conf.RootCAs = x509.NewCertPool()
+	for _, cert := range certChain.Certificate {
+		x509Cert, err := x509.ParseCertificate(cert)
+		if err != nil {
+			panic(err)
+		}
+		conf.RootCAs.AddCert(x509Cert)
+	}
+	conf.BuildNameToCertificate()
+	return conf
+}
+
+func youTube(char character) {
 
 	defer wg.Done()
 	defer func() {
@@ -493,8 +659,11 @@ func youTube(character Character) {
 
 	const apiKey = "YOUR_API_KEY"
 
+	tlsConfig := getTLSConfig()
+	tr := http.Transport{TLSClientConfig: &tlsConfig}
+
 	httpClient := &http.Client{
-		Transport: &transport.APIKey{Key: apiKey},
+		Transport: &transport.APIKey{Key: apiKey, Transport: &tr},
 	}
 
 	yt, err := youtube.New(httpClient)
@@ -503,15 +672,15 @@ func youTube(character Character) {
 		return
 	}
 
-	name := strings.ToLower(character.Name)
-	altname := strings.ToLower(character.AltName)
-	altname2 := strings.ToLower(character.AltName2)
+	name := strings.ToLower(char.Name)
+	altname := strings.ToLower(char.AltName)
+	altname2 := strings.ToLower(char.AltName2)
 
 	getResponse := func(token string) *youtube.SearchListResponse {
 		apiCall := yt.Search.List("id,snippet").
-			Q(getQuery(character, false)).
+			Q(getQuery(char, false)).
 			MaxResults(50).
-			VideoDuration(character.Duration).
+			VideoDuration(char.Duration).
 			Type("video").
 			PageToken(token)
 
@@ -534,7 +703,7 @@ func youTube(character Character) {
 			if isValidTitle(videoTitle, name, altname, altname2, videoId) {
 				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
-				cartoon := Cartoon{
+				c := cartoon{
 					videoId,
 					name,
 					videoTitle,
@@ -548,7 +717,7 @@ func youTube(character Character) {
 					videoThumbLarge,
 				}
 
-				cartoons = append(cartoons, cartoon)
+				cartoons = append(cartoons, c)
 			}
 		}
 	}
@@ -563,7 +732,7 @@ func youTube(character Character) {
 
 }
 
-func dailyMotion(character Character) {
+func dailyMotion(char character) {
 
 	defer wg.Done()
 	defer func() {
@@ -574,9 +743,9 @@ func dailyMotion(character Character) {
 
 	uri := "https://api.dailymotion.com/videos?search=%s&fields=id,title,url,duration,thumbnail_120_url,thumbnail_360_url,thumbnail_480_url&limit=50&page=%s&sort=relevance"
 
-	name := strings.ToLower(character.Name)
-	altname := strings.ToLower(character.AltName)
-	altname2 := strings.ToLower(character.AltName2)
+	name := strings.ToLower(char.Name)
+	altname := strings.ToLower(char.AltName)
+	altname2 := strings.ToLower(char.AltName2)
 
 	timeout := time.Duration(6 * time.Second)
 
@@ -584,8 +753,11 @@ func dailyMotion(character Character) {
 		return net.DialTimeout(network, addr, timeout)
 	}
 
+	tlsConfig := getTLSConfig()
+
 	transport := http.Transport{
-		Dial: dialTimeout,
+		Dial:            dialTimeout,
+		TLSClientConfig: &tlsConfig,
 	}
 
 	httpClient := http.Client{
@@ -593,7 +765,7 @@ func dailyMotion(character Character) {
 	}
 
 	getResponse := func(page string) ([]interface{}, bool) {
-		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(character, true), page))
+		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(char, true), page))
 		if err != nil {
 			log.Print("Error making DailyMotion API call:", err.Error())
 			return nil, false
@@ -641,10 +813,10 @@ func dailyMotion(character Character) {
 
 			videoDuration := getDuration(video["duration"].(float64))
 
-			if isValidTitle(videoTitle, name, altname, altname2, videoId) && character.Duration == videoDuration {
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && char.Duration == videoDuration {
 				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
-				cartoon := Cartoon{
+				c := cartoon{
 					videoId,
 					name,
 					videoTitle,
@@ -658,7 +830,7 @@ func dailyMotion(character Character) {
 					videoThumbLarge,
 				}
 
-				cartoons = append(cartoons, cartoon)
+				cartoons = append(cartoons, c)
 			}
 		}
 	}
@@ -677,7 +849,7 @@ func dailyMotion(character Character) {
 
 }
 
-func vimeo(character Character) {
+func vimeo(char character) {
 
 	defer wg.Done()
 	defer func() {
@@ -689,9 +861,9 @@ func vimeo(character Character) {
 	const apiKey = "YOUR_API_KEY"
 	uri := "https://api.vimeo.com/videos?query=%s&page=%s&per_page=100&sort=relevant"
 
-	name := strings.ToLower(character.Name)
-	altname := strings.ToLower(character.AltName)
-	altname2 := strings.ToLower(character.AltName2)
+	name := strings.ToLower(char.Name)
+	altname := strings.ToLower(char.AltName)
+	altname2 := strings.ToLower(char.AltName2)
 
 	timeout := time.Duration(6 * time.Second)
 
@@ -699,8 +871,11 @@ func vimeo(character Character) {
 		return net.DialTimeout(network, addr, timeout)
 	}
 
+	tlsConfig := getTLSConfig()
+
 	transport := http.Transport{
-		Dial: dialTimeout,
+		Dial:            dialTimeout,
+		TLSClientConfig: &tlsConfig,
 	}
 
 	httpClient := http.Client{
@@ -708,7 +883,7 @@ func vimeo(character Character) {
 	}
 
 	getResponse := func(page string) []interface{} {
-		req, err := http.NewRequest("GET", fmt.Sprintf(uri, getQuery(character, true), page), nil)
+		req, err := http.NewRequest("GET", fmt.Sprintf(uri, getQuery(char, true), page), nil)
 		if err != nil {
 			log.Print("Error making Vimeo API call: %v", err.Error())
 			return nil
@@ -771,10 +946,10 @@ func vimeo(character Character) {
 
 			videoDuration := getDuration(video["duration"].(float64))
 
-			if isValidTitle(videoTitle, name, altname, altname2, videoId) && character.Duration == videoDuration {
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && char.Duration == videoDuration {
 				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
-				cartoon := Cartoon{
+				c := cartoon{
 					videoId,
 					name,
 					videoTitle,
@@ -788,7 +963,7 @@ func vimeo(character Character) {
 					videoThumbLarge,
 				}
 
-				cartoons = append(cartoons, cartoon)
+				cartoons = append(cartoons, c)
 			}
 		}
 	}
@@ -796,179 +971,6 @@ func vimeo(character Character) {
 	response := getResponse("1")
 	if response != nil {
 		parseResponse(response)
-	}
-
-}
-
-func vk(character Character) {
-
-	defer wg.Done()
-	defer func() {
-		if r := recover(); r != nil {
-			log.Print("Recovered in vk:", r)
-		}
-	}()
-
-	const username = "YOUR_USERNAME"
-	const password = "YOUR_PASSWORD"
-	const clientId = "YOUR_CLIENTID"
-
-	uri := "https://api.vk.com/method/video.search?q=%s&count=100&sort=2&access_token=%s&v=5.26"
-
-	name := strings.ToLower(character.Name)
-	altname := strings.ToLower(character.AltName)
-	altname2 := strings.ToLower(character.AltName2)
-
-	timeout := time.Duration(6 * time.Second)
-
-	dialTimeout := func(network, addr string) (net.Conn, error) {
-		return net.DialTimeout(network, addr, timeout)
-	}
-
-	transport := http.Transport{
-		Dial: dialTimeout,
-	}
-
-	httpClient := http.Client{
-		Transport: &transport,
-	}
-
-	getToken := func() {
-		options := cookiejar.Options{
-			PublicSuffixList: publicsuffix.List,
-		}
-
-		jar, _ := cookiejar.New(&options)
-		client := http.Client{
-			Jar: jar,
-		}
-
-		res, err := client.PostForm("https://login.vk.com", url.Values{
-			"act":          {"login"},
-			"utf8":         {"1"},
-			"email":        {username},
-			"pass":         {password},
-			"redirect_uri": {"https://oauth.vk.com/blank.html"},
-		})
-		if err != nil {
-			log.Print("Error VK login: ", err.Error())
-		}
-
-		res, err = client.PostForm("https://oauth.vk.com/authorize", url.Values{
-			"response_type": {"token"},
-			"client_id":     {clientId},
-			"scope":         {"video"},
-			"display":       {"mobile"},
-		})
-		if err != nil {
-			log.Print("Error VK authorize:", err.Error())
-		}
-
-		u, err := url.Parse(res.Request.URL.String())
-		if err != nil {
-			log.Print("Error VK parse:", err.Error())
-		}
-
-		m, err := url.ParseQuery(u.Fragment)
-		if err != nil {
-			log.Print("Error VK parse query:", err.Error())
-		}
-
-		if len(m) > 0 {
-			vkToken = m["access_token"][0]
-			expires_in, _ := strconv.ParseInt(m["expires_in"][0], 10, 64)
-			vkTokenExpires = time.Now().Unix() + expires_in
-		}
-	}
-
-	getResponse := func() []interface{} {
-		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(character, true), vkToken))
-		if err != nil {
-			log.Print("Error making VK API call:", err.Error())
-			return nil
-		}
-		body, _ := ioutil.ReadAll(res.Body)
-		res.Body.Close()
-
-		var data map[string]interface{}
-		err = json.Unmarshal(body, &data)
-		if err != nil {
-			log.Print("Error unmarshaling json:", err.Error())
-			return nil
-		}
-
-		response, ok := data["response"].(map[string]interface{})
-		if !ok {
-			return nil
-		}
-
-		items, ok := response["items"].([]interface{})
-		if !ok {
-			return nil
-		}
-
-		if len(items) == 0 {
-			return nil
-		}
-
-		return items
-	}
-
-	parseResponse := func(response []interface{}) {
-		for _, obj := range response {
-			video, ok := obj.(map[string]interface{})
-			if !ok {
-				continue
-			}
-
-			if len(video) == 0 {
-				continue
-			}
-
-			videoId := fmt.Sprintf("%.0f", video["id"].(float64))
-			videoTitle := strings.ToLower(video["title"].(string))
-			videoUrl := video["player"].(string)
-			videoThumbSmall := video["photo_130"].(string)
-			videoThumbMedium := video["photo_320"].(string)
-			videoThumbLarge := video["photo_320"].(string)
-
-			videoDuration := getDuration(video["duration"].(float64))
-
-			if strings.Contains(videoUrl, "youtube") || strings.Contains(videoUrl, "vimeo") {
-				continue
-			}
-
-			if isValidTitle(videoTitle, name, altname, altname2, videoId) && character.Duration == videoDuration {
-				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
-
-				cartoon := Cartoon{
-					videoId,
-					name,
-					videoTitle,
-					formattedTitle,
-					getEpisode(videoTitle),
-					getSeason(videoTitle),
-					"vk",
-					videoUrl,
-					videoThumbSmall,
-					videoThumbMedium,
-					videoThumbLarge,
-				}
-
-				cartoons = append(cartoons, cartoon)
-			}
-		}
-	}
-
-	if vkToken == "" || vkTokenExpires < time.Now().Unix() {
-		getToken()
-	}
-
-	if vkToken != "" {
-		response := getResponse()
-		if response != nil {
-			parseResponse(response)
-		}
 	}
 
 }
@@ -1163,7 +1165,7 @@ func getSeason(videoTitle string) int {
 	return s
 }
 
-func getQuery(char Character, escape bool) string {
+func getQuery(char character, escape bool) string {
 	query := ""
 	if char.Query != "" {
 		query = char.Query
@@ -1227,21 +1229,20 @@ func List() (string, error) {
 }
 
 func Search(query string) (string, error) {
-	char := new(Character)
-	for _, character := range characters {
-		if query == character.Name || query == character.AltName {
-			char = &character
+	char := new(character)
+	for _, c := range characters {
+		if query == c.Name || query == c.AltName {
+			char = &c
 			break
 		}
 	}
 
 	if char.Name != "" {
 		wg.Add(3)
-		cartoons = make([]Cartoon, 0)
+		cartoons = make([]cartoon, 0)
 		go youTube(*char)
 		go dailyMotion(*char)
 		go vimeo(*char)
-		//go vk(*char)
 		wg.Wait()
 
 		ms := multiSorter{}
@@ -1268,8 +1269,6 @@ func Extract(service string, videoId string) (string, error) {
 		url, err = vidextr.DailyMotion(videoId)
 	case service == "vimeo":
 		url, err = vidextr.Vimeo(videoId)
-	case service == "vk":
-		url, err = vidextr.VK(videoId)
 	}
 
 	if err != nil {

@@ -4,9 +4,9 @@ import (
 	"golang.org/x/mobile/app"
 
 	_ "crtaci/go_crtaci"
-	_ "golang.org/x/mobile/bind/java"
+	"golang.org/x/mobile/bind/java"
 )
 
 func main() {
-	app.Run(app.Callbacks{})
+	app.Run(app.Callbacks{Start: java.Init})
 }

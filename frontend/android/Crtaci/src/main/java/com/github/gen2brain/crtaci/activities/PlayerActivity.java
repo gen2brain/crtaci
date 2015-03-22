@@ -1,14 +1,19 @@
 package com.github.gen2brain.crtaci.activities;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.MediaController;
 import android.widget.ProgressBar;
+import android.widget.Toast;
+import android.widget.VideoView;
 
 import com.github.gen2brain.crtaci.R;
 import com.github.gen2brain.crtaci.entities.Cartoon;
@@ -17,6 +22,9 @@ import com.github.gen2brain.crtaci.utils.VideoEnabledWebView;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
+import java.util.HashMap;
+
+import go.Go;
 import go.main.Main;
 
 
@@ -38,33 +46,29 @@ public class PlayerActivity extends Activity {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
+        Go.init(getApplicationContext());
+
         Bundle bundle = getIntent().getExtras();
         cartoon = (Cartoon) bundle.get("cartoon");
         video = bundle.getString("video");
 
         if(cartoon.service.equals("youtube")) {
             if(video != null && !video.isEmpty()) {
-                vitamioPlayer(video);
+                player(video);
             } else {
                 playYouTube();
             }
         } else if(cartoon.service.equals("dailymotion")) {
             if(video != null && !video.isEmpty()) {
-                vitamioPlayer(video);
+                player(video);
             } else {
                 playDailyMotion();
             }
         } else if(cartoon.service.equals("vimeo")) {
             if(video != null && !video.isEmpty()) {
-                vitamioPlayer(video);
+                player(video);
             } else {
                 playVimeo();
-            }
-        } else if(cartoon.service.equals("vk")) {
-            if(video != null && !video.isEmpty()) {
-                vitamioPlayer(video);
-            } else {
-                playVK();
             }
         }
     }
@@ -74,6 +78,16 @@ public class PlayerActivity extends Activity {
         super.onConfigurationChanged(newConfig);
         if(vitamioView != null) {
             vitamioView.setVideoLayout(io.vov.vitamio.widget.VideoView.VIDEO_LAYOUT_SCALE, 0);
+        }
+    }
+
+    public void player(String url) {
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String player = prefs.getString("player", "vitamio");
+        if(player.equals("vitamio")) {
+            vitamioPlayer(url);
+        } else if(player.equals("default")) {
+            defaultPlayer(url);
         }
     }
 
@@ -93,10 +107,6 @@ public class PlayerActivity extends Activity {
         String params = "?autoplay=1&badge=0&byline=0&portrait=0&title=0";
         String url = "http://player.vimeo.com/video/" + cartoon.id + params;
         webViewPlayer(url);
-    }
-
-    public void playVK() {
-        webViewPlayer(cartoon.url);
     }
 
     public void webViewPlayer(String url) {
@@ -138,20 +148,14 @@ public class PlayerActivity extends Activity {
                     video = null;
                     if(cartoon.service.equals("youtube")) {
                         playYouTube();
-                    } else if(cartoon.service.equals("dailymotion")) {
+                    } else if (cartoon.service.equals("dailymotion")) {
                         playDailyMotion();
-                    } else if(cartoon.service.equals("vimeo")) {
+                    } else if (cartoon.service.equals("vimeo")) {
                         playVimeo();
-                    } else if(cartoon.service.equals("vk")) {
-                        playVK();
                     }
                 } else {
                     Log.d(TAG, "retry " + String.valueOf(retry));
-                    if(cartoon.service.equals("vk")) {
-                        new ExtractTask().execute(cartoon.service, cartoon.url);
-                    } else {
-                        new ExtractTask().execute(cartoon.service, cartoon.id);
-                    }
+                    new ExtractTask().execute(cartoon.service, cartoon.id);
                 }
                 return true;
             }
@@ -164,13 +168,67 @@ public class PlayerActivity extends Activity {
             }
         });
 
+        HashMap<String, String> options = new HashMap<>();
+        options.put("multiple_requests", "1");
+
         io.vov.vitamio.widget.MediaController mediaController = new io.vov.vitamio.widget.MediaController(this);
         mediaController.setAnchorView(vitamioView);
         mediaController.setMediaPlayer(vitamioView);
         vitamioView.setKeepScreenOn(true);
         vitamioView.setMediaController(mediaController);
-        vitamioView.setVideoURI(Uri.parse(url));
+        vitamioView.setVideoURI(Uri.parse(url), options);
         vitamioView.requestFocus();
+    }
+
+    public void defaultPlayer(String url) {
+        setContentView(R.layout.player);
+        final VideoView videoView = (VideoView) findViewById(R.id.video_view);
+        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        progressBar.setVisibility(View.VISIBLE);
+
+        videoView.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(android.media.MediaPlayer mp) {
+                progressBar.setVisibility(View.INVISIBLE);
+                videoView.start();
+            }
+        });
+
+        videoView.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(android.media.MediaPlayer mp, int what, int extra) {
+                Log.d(TAG, "onError");
+                if(retry >= 2) {
+                    video = null;
+                    if(cartoon.service.equals("youtube")) {
+                        playYouTube();
+                    } else if (cartoon.service.equals("dailymotion")) {
+                        playDailyMotion();
+                    } else if (cartoon.service.equals("vimeo")) {
+                        playVimeo();
+                    }
+                } else {
+                    Log.d(TAG, "retry " + String.valueOf(retry));
+                    new ExtractTask().execute(cartoon.service, cartoon.id);
+                }
+                return true;
+            }
+        });
+
+        videoView.setOnCompletionListener(new android.media.MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(android.media.MediaPlayer mediaPlayer) {
+                onBackPressed();
+            }
+        });
+
+        MediaController mediaController = new MediaController(this);
+        mediaController.setAnchorView(videoView);
+        mediaController.setMediaPlayer(videoView);
+        videoView.setKeepScreenOn(true);
+        videoView.setMediaController(mediaController);
+        videoView.setVideoURI(Uri.parse(url));
+        videoView.requestFocus();
     }
 
     @Override
@@ -217,7 +275,7 @@ public class PlayerActivity extends Activity {
             retry += 1;
             if(results != null) {
                 video = results;
-                vitamioPlayer(video);
+                player(video);
             }
         }
 

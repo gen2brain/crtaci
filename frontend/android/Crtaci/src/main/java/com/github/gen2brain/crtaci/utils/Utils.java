@@ -20,7 +20,7 @@ import com.google.android.gms.analytics.Tracker;
 
 public class Utils {
 
-    public static Boolean playStore = true;
+    public static Boolean playStore = false;
 
     public static String toTitleCase(String input) {
         StringBuilder titleCase = new StringBuilder();

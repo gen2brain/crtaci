@@ -103,9 +103,11 @@ public class CartoonsFragment extends Fragment {
         progressBar = (ProgressBar) view.getRootView().findViewById(R.id.progressbar);
         createListView(view);
 
-        Tracker tracker = Utils.getTracker(getActivity());
-        tracker.setScreenName(cartoons.get(0).character);
-        tracker.send(new HitBuilders.AppViewBuilder().build());
+        if(cartoons != null && !cartoons.isEmpty()) {
+            Tracker tracker = Utils.getTracker(getActivity());
+            tracker.setScreenName(cartoons.get(0).character);
+            tracker.send(new HitBuilders.AppViewBuilder().build());
+        }
     }
 
     @Override
@@ -127,11 +129,7 @@ public class CartoonsFragment extends Fragment {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 selectedCartoon = cartoons.get(position);
-                if(selectedCartoon.service.equals("vk")) {
-                    new ExtractTask().execute(selectedCartoon.service, selectedCartoon.url);
-                } else {
-                    new ExtractTask().execute(selectedCartoon.service, selectedCartoon.id);
-                }
+                new ExtractTask().execute(selectedCartoon.service, selectedCartoon.id);
             }
         });
     }
@@ -154,11 +152,16 @@ public class CartoonsFragment extends Fragment {
         private class ViewHolder {
             public TextView title;
             public ImageView thumbnail;
+            public ImageView logo;
         }
 
         @Override
         public int getCount() {
-            return cartoons.size();
+            if(cartoons != null) {
+                return cartoons.size();
+            } else {
+                return 0;
+            }
         }
 
         @Override
@@ -178,13 +181,14 @@ public class CartoonsFragment extends Fragment {
 
             Cartoon cartoon = cartoons.get(position);
 
-            if (convertView == null) {
+            if(convertView == null) {
                 LayoutInflater inflater = getLayoutInflater(null);
                 view = inflater.inflate(R.layout.item_list_cartoon, parent, false);
 
                 holder = new ViewHolder();
                 holder.title = (TextView) view.findViewById(R.id.title);
                 holder.thumbnail = (ImageView) view.findViewById(R.id.thumbnail);
+                holder.logo = (ImageView) view.findViewById(R.id.logo);
 
                 Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/ComicRelief.ttf");
                 holder.title.setTypeface(tf);
@@ -199,6 +203,16 @@ public class CartoonsFragment extends Fragment {
             SpannableString spanString = new SpannableString(getTitle(cartoon));
             spanString.setSpan(new StyleSpan(Typeface.BOLD), 0, spanString.length(), 0);
             holder.title.setText(spanString);
+
+            if(Utils.playStore) {
+                if (cartoon.service.equals("youtube")) {
+                    holder.logo.setImageDrawable(getResources().getDrawable(R.drawable.youtube));
+                } else if (cartoon.service.equals("dailymotion")) {
+                    holder.logo.setImageDrawable(getResources().getDrawable(R.drawable.dailymotion));
+                } else if (cartoon.service.equals("vimeo")) {
+                    holder.logo.setImageDrawable(getResources().getDrawable(R.drawable.vimeo));
+                }
+            }
 
             String thumb;
             if(twoPane) {

@@ -1,6 +1,9 @@
 package com.github.gen2brain.crtaci.activities;
 
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBarActivity;
@@ -8,6 +11,7 @@ import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -27,6 +31,7 @@ import com.github.gen2brain.crtaci.entities.Cartoon;
 import com.github.gen2brain.crtaci.utils.Connectivity;
 import com.github.gen2brain.crtaci.utils.Utils;
 
+import go.Go;
 import go.main.Main;
 
 
@@ -44,6 +49,8 @@ public class CartoonsActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
+
+        Go.init(getApplicationContext());
 
         setContentView(R.layout.activity_cartoons);
 
@@ -99,6 +106,18 @@ public class CartoonsActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.cartoons, menu);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String player = prefs.getString("player", "vitamio");
+
+        menu.setGroupCheckable(R.id.player_group, true, true);
+        if(player.equals("vitamio")) {
+            MenuItem menuItem = menu.findItem(R.id.action_vitamio_player);
+            menuItem.setChecked(true);
+        } else if(player.equals("default")) {
+            MenuItem menuItem = menu.findItem(R.id.action_default_player);
+            menuItem.setChecked(true);
+        }
         return true;
     }
 
@@ -115,6 +134,18 @@ public class CartoonsActivity extends ActionBarActivity {
             Utils.rateThisApp(this);
         } else if(id == R.id.action_refresh) {
             startCartoonsTask();
+        } else if(id == R.id.action_vitamio_player) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putString("player", "vitamio");
+            edit.apply();
+            item.setChecked(true);
+        } else if(id == R.id.action_default_player) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putString("player", "default");
+            edit.apply();
+            item.setChecked(true);
         }
         return super.onOptionsItemSelected(item);
     }
@@ -122,6 +153,23 @@ public class CartoonsActivity extends ActionBarActivity {
     @Override
     public void onBackPressed() {
         NavUtils.navigateUpFromSameTask(this);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_MENU && "LGE".equalsIgnoreCase(Build.BRAND)) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_MENU && "LGE".equalsIgnoreCase(Build.BRAND)) {
+            openOptionsMenu();
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
     }
 
     public void startCartoonsTask() {
@@ -143,9 +191,12 @@ public class CartoonsActivity extends ActionBarActivity {
     public void replaceFragment(ArrayList<Cartoon> results) {
         FragmentTransaction ft = getSupportFragmentManager().beginTransaction();
         Fragment prev = getSupportFragmentManager().findFragmentById(R.id.container);
-        if (prev != null) {
+        if(prev != null) {
             ft.remove(prev);
+            ft.commit();
+            getSupportFragmentManager().executePendingTransactions();
         }
+        ft = getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.container, CartoonsFragment.newInstance(results, twoPane));
         ft.commit();
     }

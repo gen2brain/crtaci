@@ -252,7 +252,10 @@ public class CharactersFragment extends Fragment {
         Fragment prev = getActivity().getSupportFragmentManager().findFragmentById(R.id.cartoons_container);
         if (prev != null) {
             ft.remove(prev);
+            ft.commit();
+            getActivity().getSupportFragmentManager().executePendingTransactions();
         }
+        ft = getActivity().getSupportFragmentManager().beginTransaction();
         ft.replace(R.id.cartoons_container, CartoonsFragment.newInstance(results, twoPane));
         ft.commit();
     }

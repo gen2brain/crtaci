@@ -1,16 +1,24 @@
 package com.github.gen2brain.crtaci.activities;
 
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
+import android.content.DialogInterface;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.preference.PreferenceManager;
+import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -77,7 +85,7 @@ public class CharactersActivity extends ActionBarActivity {
         tracker.send(new HitBuilders.AppViewBuilder().build());
 
         if(!Utils.playStore) {
-            if (Update.checkUpdate(this)) {
+            if(Update.checkUpdate(this)) {
                 downloadReceiver = Update.getDownloadReceiver(this);
                 registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
 
@@ -89,11 +97,27 @@ public class CharactersActivity extends ActionBarActivity {
             }
         }
 
-        if(savedInstanceState != null) {
-            characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
-            replaceFragment(characters);
+        if(Utils.playStore) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            Boolean eulaAccepted = prefs.getBoolean("eula_accepted", false);
+
+            if(!eulaAccepted) {
+                new EulaFragment().show(getSupportFragmentManager(), "Disclaimer");
+            } else {
+                if(savedInstanceState != null) {
+                    characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
+                    replaceFragment(characters);
+                } else {
+                    startCharactersTask();
+                }
+            }
         } else {
-            startCharactersTask();
+            if(savedInstanceState != null) {
+                characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
+                replaceFragment(characters);
+            } else {
+                startCharactersTask();
+            }
         }
     }
 
@@ -120,6 +144,19 @@ public class CharactersActivity extends ActionBarActivity {
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.characters, menu);
+
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        String player = prefs.getString("player", "vitamio");
+
+        menu.setGroupCheckable(R.id.player_group, true, true);
+        if(player.equals("vitamio")) {
+            MenuItem menuItem = menu.findItem(R.id.action_vitamio_player);
+            menuItem.setChecked(true);
+        } else if(player.equals("default")) {
+            MenuItem menuItem = menu.findItem(R.id.action_default_player);
+            menuItem.setChecked(true);
+        }
+
         return true;
     }
 
@@ -133,8 +170,37 @@ public class CharactersActivity extends ActionBarActivity {
             Utils.rateThisApp(this);
         } else if(id == R.id.action_refresh) {
             startCharactersTask();
+        } else if(id == R.id.action_vitamio_player) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putString("player", "vitamio");
+            edit.apply();
+            item.setChecked(true);
+        } else if(id == R.id.action_default_player) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor edit = prefs.edit();
+            edit.putString("player", "default");
+            edit.apply();
+            item.setChecked(true);
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_MENU && "LGE".equalsIgnoreCase(Build.BRAND)) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    @Override
+    public boolean onKeyUp(int keyCode, KeyEvent event) {
+        if(keyCode == KeyEvent.KEYCODE_MENU && "LGE".equalsIgnoreCase(Build.BRAND)) {
+            openOptionsMenu();
+            return true;
+        }
+        return super.onKeyUp(keyCode, event);
     }
 
     public void startCharactersTask() {
@@ -148,7 +214,10 @@ public class CharactersActivity extends ActionBarActivity {
             Fragment prev = getSupportFragmentManager().findFragmentById(R.id.characters_container);
             if (prev != null) {
                 ft.remove(prev);
+                ft.commit();
+                getSupportFragmentManager().executePendingTransactions();
             }
+            ft = getSupportFragmentManager().beginTransaction();
             ft.replace(R.id.characters_container, CharactersFragment.newInstance(results, twoPane));
             ft.commit();
         } else {
@@ -156,9 +225,45 @@ public class CharactersActivity extends ActionBarActivity {
             Fragment prev = getSupportFragmentManager().findFragmentById(R.id.container);
             if (prev != null) {
                 ft.remove(prev);
+                ft.commit();
+                getSupportFragmentManager().executePendingTransactions();
             }
+            ft = getSupportFragmentManager().beginTransaction();
             ft.replace(R.id.container, CharactersFragment.newInstance(results, twoPane));
             ft.commit();
+        }
+    }
+
+    @SuppressLint("ValidFragment")
+    public class EulaFragment extends DialogFragment {
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
+
+            alertDialogBuilder.setMessage(getString(R.string.eula_text));
+
+            alertDialogBuilder.setPositiveButton(getString(R.string.eula_positive_button), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                    SharedPreferences.Editor edit = prefs.edit();
+                    edit.putBoolean("eula_accepted", true);
+                    edit.commit();
+                    dialog.dismiss();
+
+                    startCharactersTask();
+                }
+            });
+
+            alertDialogBuilder.setNegativeButton(getString(R.string.eula_negative_button), new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                    getActivity().finish();
+                }
+            });
+
+            return alertDialogBuilder.create();
         }
     }
 

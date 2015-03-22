@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:layout_height="wrap_content" >
 
@@ -7,18 +7,37 @@
         android:id="@+id/thumbnail"
         android:layout_width="@dimen/thumbnail_width"
         android:layout_height="@dimen/thumbnail_height"
-        android:layout_margin="3dip"
+        android:layout_margin="5dip"
         android:adjustViewBounds="true"
-        android:scaleType="centerInside" />
+        android:scaleType="centerInside"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentLeft="true"
+        android:layout_centerVertical="true" />
 
     <TextView
         android:id="@+id/title"
-        android:layout_width="fill_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dip"
-        android:layout_marginRight="10dip"
-        android:layout_gravity="left|center_vertical"
+        android:layout_marginStart="5dip"
+        android:layout_marginLeft="5dip"
+        android:layout_marginRight="5dip"
         android:textColor="@color/item"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:layout_toStartOf="@+id/logo"
+        android:layout_toLeftOf="@+id/logo"
+        android:layout_toRightOf="@+id/thumbnail"
+        android:layout_toEndOf="@+id/thumbnail"
+        android:layout_centerVertical="true" />
 
-</LinearLayout>
+    <ImageView
+        android:id="@+id/logo"
+        android:layout_width="24dip"
+        android:layout_height="wrap_content"
+        android:layout_marginRight="5dip"
+        android:adjustViewBounds="true"
+        android:scaleType="centerInside"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true" />
+
+</RelativeLayout>
