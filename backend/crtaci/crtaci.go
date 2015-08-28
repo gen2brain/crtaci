@@ -13,14 +13,11 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package crtaci
 
 import (
 	"crypto/tls"
-	"crypto/x509"
 	"encoding/json"
-	"encoding/pem"
-	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -37,11 +34,6 @@ import (
 	"github.com/gen2brain/vidextr"
 	"github.com/google/google-api-go-client/googleapi/transport"
 	youtube "github.com/google/google-api-go-client/youtube/v3"
-)
-
-var (
-	appName    = "crtaci-http"
-	appVersion = "1.5"
 )
 
 type cartoon struct {
@@ -223,7 +215,7 @@ var filters = []string{
 	"animated",
 	"cartoon",
 	"of 47",
-	"dailymotion video",
+	"dailymotion-video",
 	"video dailymotion",
 	"ultra tv",
 	"happy tv",
@@ -242,6 +234,7 @@ var censoredWords = []string{
 	"jebač",
 	"uzivo",
 	"parodija",
+	"sprdnja",
 	"tretmen",
 	"ispaljotka",
 	"kinder jaja",
@@ -347,6 +340,16 @@ var censoredWords = []string{
 	"gastoz",
 	"batailles",
 	"maminka",
+	"adolphus",
+	"humaine",
+	"spain",
+	"michele",
+	"voulait",
+	"cekilis",
+	"igracke za decu",
+	"xperiene",
+	"show",
+	"symphony",
 }
 
 var censoredIds = []string{
@@ -424,6 +427,13 @@ var censoredIds = []string{
 	"2lD_oXT4ssA",
 	"iT4ZXYso2kA",
 	"fuYMMWpRjkM",
+	"qgSiTwWVRlQ",
+	"9CtO4IlBrtM",
+	"cD5nttAuRM",
+	"TzZ2e_CsbAg",
+	"z4pecRAGn3k",
+	"U8MqpWcX7m8",
+	"veag9KGlq2I",
 	"xy53o1",
 	"xy53q1",
 	"x3osiz",
@@ -444,6 +454,9 @@ var censoredIds = []string{
 	"x2dv1ec",
 	"x196m5x",
 	"x2cz5es",
+	"x2p0jt2",
+	"x2r0sas",
+	"x33bdoj",
 	"4562474",
 	"21508130",
 	"14072389",
@@ -456,80 +469,6 @@ var censoredIds = []string{
 	"73551241",
 	"80060489",
 }
-
-var chain = `-----BEGIN CERTIFICATE-----
-MIIDfTCCAuagAwIBAgIDErvmMA0GCSqGSIb3DQEBBQUAME4xCzAJBgNVBAYTAlVT
-MRAwDgYDVQQKEwdFcXVpZmF4MS0wKwYDVQQLEyRFcXVpZmF4IFNlY3VyZSBDZXJ0
-aWZpY2F0ZSBBdXRob3JpdHkwHhcNMDIwNTIxMDQwMDAwWhcNMTgwODIxMDQwMDAw
-WjBCMQswCQYDVQQGEwJVUzEWMBQGA1UEChMNR2VvVHJ1c3QgSW5jLjEbMBkGA1UE
-AxMSR2VvVHJ1c3QgR2xvYmFsIENBMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB
-CgKCAQEA2swYYzD99BcjGlZ+W988bDjkcbd4kdS8odhM+KhDtgPpTSEHCIjaWC9m
-OSm9BXiLnTjoBbdqfnGk5sRgprDvgOSJKA+eJdbtg/OtppHHmMlCGDUUna2YRpIu
-T8rxh0PBFpVXLVDviS2Aelet8u5fa9IAjbkU+BQVNdnARqN7csiRv8lVK83Qlz6c
-JmTM386DGXHKTubU1XupGc1V3sjs0l44U+VcT4wt/lAjNvxm5suOpDkZALeVAjmR
-Cw7+OC7RHQWa9k0+bw8HHa8sHo9gOeL6NlMTOdReJivbPagUvTLrGAMoUgRx5asz
-PeE4uwc2hGKceeoWMPRfwCvocWvk+QIDAQABo4HwMIHtMB8GA1UdIwQYMBaAFEjm
-aPkr0rKV10fYIyAQTzOYkJ/UMB0GA1UdDgQWBBTAephojYn7qwVkDBF9qn1luMrM
-TjAPBgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBBjA6BgNVHR8EMzAxMC+g
-LaArhilodHRwOi8vY3JsLmdlb3RydXN0LmNvbS9jcmxzL3NlY3VyZWNhLmNybDBO
-BgNVHSAERzBFMEMGBFUdIAAwOzA5BggrBgEFBQcCARYtaHR0cHM6Ly93d3cuZ2Vv
-dHJ1c3QuY29tL3Jlc291cmNlcy9yZXBvc2l0b3J5MA0GCSqGSIb3DQEBBQUAA4GB
-AHbhEm5OSxYShjAGsoEIz/AIx8dxfmbuwu3UOx//8PDITtZDOLC5MH0Y0FWDomrL
-NhGc6Ehmo21/uBPUR/6LWlxz/K7ZGzIZOKuXNBSqltLroxwUCEm2u+WR74M26x1W
-b8ravHNjkOR/ez4iyz0H7V84dJzjA1BOoa+Y7mHyhD8S
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIEKjCCAxKgAwIBAgIEOGPe+DANBgkqhkiG9w0BAQUFADCBtDEUMBIGA1UEChML
-RW50cnVzdC5uZXQxQDA+BgNVBAsUN3d3dy5lbnRydXN0Lm5ldC9DUFNfMjA0OCBp
-bmNvcnAuIGJ5IHJlZi4gKGxpbWl0cyBsaWFiLikxJTAjBgNVBAsTHChjKSAxOTk5
-IEVudHJ1c3QubmV0IExpbWl0ZWQxMzAxBgNVBAMTKkVudHJ1c3QubmV0IENlcnRp
-ZmljYXRpb24gQXV0aG9yaXR5ICgyMDQ4KTAeFw05OTEyMjQxNzUwNTFaFw0yOTA3
-MjQxNDE1MTJaMIG0MRQwEgYDVQQKEwtFbnRydXN0Lm5ldDFAMD4GA1UECxQ3d3d3
-LmVudHJ1c3QubmV0L0NQU18yMDQ4IGluY29ycC4gYnkgcmVmLiAobGltaXRzIGxp
-YWIuKTElMCMGA1UECxMcKGMpIDE5OTkgRW50cnVzdC5uZXQgTGltaXRlZDEzMDEG
-A1UEAxMqRW50cnVzdC5uZXQgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkgKDIwNDgp
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArU1LqRKGsuqjIAcVFmQq
-K0vRvwtKTY7tgHalZ7d4QMBzQshowNtTK91euHaYNZOLGp18EzoOH1u3Hs/lJBQe
-sYGpjX24zGtLA/ECDNyrpUAkAH90lKGdCCmziAv1h3edVc3kw37XamSrhRSGlVuX
-MlBvPci6Zgzj/L24ScF2iUkZ/cCovYmjZy/Gn7xxGWC4LeksyZB2ZnuU4q941mVT
-XTzWnLLPKQP5L6RQstRIzgUyVYr9smRMDuSYB3Xbf9+5CFVghTAp+XtIpGmG4zU/
-HoZdenoVve8AjhUiVBcAkCaTvA5JaJG/+EfTnZVCwQ5N328mz8MYIWJmQ3DW1cAH
-4QIDAQABo0IwQDAOBgNVHQ8BAf8EBAMCAQYwDwYDVR0TAQH/BAUwAwEB/zAdBgNV
-HQ4EFgQUVeSB0RGAvtiJuQijMfmhJAkWuXAwDQYJKoZIhvcNAQEFBQADggEBADub
-j1abMOdTmXx6eadNl9cZlZD7Bh/KM3xGY4+WZiT6QBshJ8rmcnPyT/4xmf3IDExo
-U8aAghOY+rat2l098c5u9hURlIIM7j+VrxGrD9cv3h8Dj1csHsm7mhpElesYT6Yf
-zX1XEC+bBAlahLVu2B064dae0Wx5XnkcFMXj0EyTO2U87d89vqbllRrDtRnDvV5b
-u/8j72gZyxKTJ1wDLW8w0B62GqzeWvfRqqgnpv55gcR5mTNXuhKwqeBCbJPKVt7+
-bYQLCIt+jerXmCHG8+c8eS9enNFMFY3h7CI3zJpDC5fcgJCNs2ebb0gIFVbPv/Er
-fF6adulZkMV8gzURZVE=
------END CERTIFICATE-----
------BEGIN CERTIFICATE-----
-MIIElDCCA3ygAwIBAgIQAf2j627KdciIQ4tyS8+8kTANBgkqhkiG9w0BAQsFADBh
-MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
-d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD
-QTAeFw0xMzAzMDgxMjAwMDBaFw0yMzAzMDgxMjAwMDBaME0xCzAJBgNVBAYTAlVT
-MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxJzAlBgNVBAMTHkRpZ2lDZXJ0IFNIQTIg
-U2VjdXJlIFNlcnZlciBDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
-ANyuWJBNwcQwFZA1W248ghX1LFy949v/cUP6ZCWA1O4Yok3wZtAKc24RmDYXZK83
-nf36QYSvx6+M/hpzTc8zl5CilodTgyu5pnVILR1WN3vaMTIa16yrBvSqXUu3R0bd
-KpPDkC55gIDvEwRqFDu1m5K+wgdlTvza/P96rtxcflUxDOg5B6TXvi/TC2rSsd9f
-/ld0Uzs1gN2ujkSYs58O09rg1/RrKatEp0tYhG2SS4HD2nOLEpdIkARFdRrdNzGX
-kujNVA075ME/OV4uuPNcfhCOhkEAjUVmR7ChZc6gqikJTvOX6+guqw9ypzAO+sf0
-/RR3w6RbKFfCs/mC/bdFWJsCAwEAAaOCAVowggFWMBIGA1UdEwEB/wQIMAYBAf8C
-AQAwDgYDVR0PAQH/BAQDAgGGMDQGCCsGAQUFBwEBBCgwJjAkBggrBgEFBQcwAYYY
-aHR0cDovL29jc3AuZGlnaWNlcnQuY29tMHsGA1UdHwR0MHIwN6A1oDOGMWh0dHA6
-Ly9jcmwzLmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydEdsb2JhbFJvb3RDQS5jcmwwN6A1
-oDOGMWh0dHA6Ly9jcmw0LmRpZ2ljZXJ0LmNvbS9EaWdpQ2VydEdsb2JhbFJvb3RD
-QS5jcmwwPQYDVR0gBDYwNDAyBgRVHSAAMCowKAYIKwYBBQUHAgEWHGh0dHBzOi8v
-d3d3LmRpZ2ljZXJ0LmNvbS9DUFMwHQYDVR0OBBYEFA+AYRyCMWHVLyjnjUY4tCzh
-xtniMB8GA1UdIwQYMBaAFAPeUDVW0Uy7ZvCj4hsbw5eyPdFVMA0GCSqGSIb3DQEB
-CwUAA4IBAQAjPt9L0jFCpbZ+QlwaRMxp0Wi0XUvgBCFsS+JtzLHgl4+mUwnNqipl
-5TlPHoOlblyYoiQm5vuh7ZPHLgLGTUq/sELfeNqzqPlt/yGFUzZgTHbO7Djc1lGA
-8MXW5dRNJ2Srm8c+cftIl7gzbckTB+6WohsYFfZcTEDts8Ls/3HB40f/1LkAtDdC
-2iDJ6m6K7hQGrn2iWZiIqBtvLfTyyRRfJs8sjX7tN8Cp1Tm5gr8ZDOo0rwAhaPit
-c+LJMto4JQtV05od8GiG7S5BNO98pVAdvzr508EIDObtHopYJeS4d60tbvVS3bR0
-j6tJLp07kzQoH3jOlOrHvdPJbRzeXDLz
------END CERTIFICATE-----`
 
 var (
 	reTitle = regexp.MustCompile(`[0-9A-Za-zžćčšđ_,]+`)
@@ -617,37 +556,6 @@ func (ms *multiSorter) Less(i, j int) bool {
 	return episode(p, q)
 }
 
-func decodePem(certInput string) tls.Certificate {
-	var cert tls.Certificate
-	certPEMBlock := []byte(certInput)
-	var certDERBlock *pem.Block
-	for {
-		certDERBlock, certPEMBlock = pem.Decode(certPEMBlock)
-		if certDERBlock == nil {
-			break
-		}
-		if certDERBlock.Type == "CERTIFICATE" {
-			cert.Certificate = append(cert.Certificate, certDERBlock.Bytes)
-		}
-	}
-	return cert
-}
-
-func getTLSConfig() tls.Config {
-	certChain := decodePem(chain)
-	conf := tls.Config{}
-	conf.RootCAs = x509.NewCertPool()
-	for _, cert := range certChain.Certificate {
-		x509Cert, err := x509.ParseCertificate(cert)
-		if err != nil {
-			panic(err)
-		}
-		conf.RootCAs.AddCert(x509Cert)
-	}
-	conf.BuildNameToCertificate()
-	return conf
-}
-
 func youTube(char character) {
 
 	defer wg.Done()
@@ -657,10 +565,9 @@ func youTube(char character) {
 		}
 	}()
 
-	const apiKey = "YOUR_API_KEY"
+	const apiKey = "AIzaSyCzFjzxxyS_GNEAsyFxd1Ss8CbaJNQAmjs"
 
-	tlsConfig := getTLSConfig()
-	tr := http.Transport{TLSClientConfig: &tlsConfig}
+	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 
 	httpClient := &http.Client{
 		Transport: &transport.APIKey{Key: apiKey, Transport: &tr},
@@ -753,11 +660,9 @@ func dailyMotion(char character) {
 		return net.DialTimeout(network, addr, timeout)
 	}
 
-	tlsConfig := getTLSConfig()
-
 	transport := http.Transport{
 		Dial:            dialTimeout,
-		TLSClientConfig: &tlsConfig,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
 	httpClient := http.Client{
@@ -858,7 +763,7 @@ func vimeo(char character) {
 		}
 	}()
 
-	const apiKey = "YOUR_API_KEY"
+	const apiKey = "e0ebf580f00d1345ea7a934c3703e2d9"
 	uri := "https://api.vimeo.com/videos?query=%s&page=%s&per_page=100&sort=relevant"
 
 	name := strings.ToLower(char.Name)
@@ -871,11 +776,9 @@ func vimeo(char character) {
 		return net.DialTimeout(network, addr, timeout)
 	}
 
-	tlsConfig := getTLSConfig()
-
 	transport := http.Transport{
 		Dial:            dialTimeout,
-		TLSClientConfig: &tlsConfig,
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
 	httpClient := http.Client{
@@ -1041,7 +944,7 @@ func getFormattedTitle(videoTitle string, name string, altname string, altname2 
 
 	title = reTitleR.ReplaceAllString(title, "$3")
 
-	if strings.HasPrefix(title, "i ") || strings.HasPrefix(title, "and ") || strings.HasPrefix(title, " i ") {
+	if strings.HasPrefix(title, "i ") || strings.HasPrefix(title, "and ") || strings.HasPrefix(title, " i ") || strings.HasPrefix(title, "u epizodi") {
 		title = fmt.Sprintf("%s %s", name, title)
 	}
 
@@ -1284,85 +1187,4 @@ func Extract(service string, videoId string) (string, error) {
 		return "empty", err
 	}
 	return string(js[:]), nil
-}
-
-func ListenAndServe(bind string) {
-	http.HandleFunc("/list", handleList)
-	http.HandleFunc("/search", handleSearch)
-	http.HandleFunc("/extract", handleExtract)
-
-	l, err := net.Listen("tcp4", bind)
-	if err != nil {
-		log.Fatal(err)
-	}
-	http.Serve(l, nil)
-}
-
-func setHeader(w http.ResponseWriter) {
-	w.Header().Set("Server", fmt.Sprintf("%s/%s", appName, appVersion))
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-}
-
-func handleList(w http.ResponseWriter, r *http.Request) {
-	setHeader(w)
-	js, err := List()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	w.Write([]byte(js))
-}
-
-func handleSearch(w http.ResponseWriter, r *http.Request) {
-	setHeader(w)
-
-	query := r.FormValue("q")
-
-	if query != "" {
-		js, err := Search(query)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		if js == "" {
-			http.Error(w, "404 Not Found", http.StatusNotFound)
-			return
-		}
-		w.Write([]byte(js))
-	} else {
-		http.Error(w, "403 Forbidden", http.StatusForbidden)
-		return
-	}
-}
-
-func handleExtract(w http.ResponseWriter, r *http.Request) {
-	setHeader(w)
-
-	service := r.FormValue("srv")
-	videoId := r.FormValue("id")
-
-	if service != "" && videoId != "" {
-		js, err := Extract(service, videoId)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if js == "empty" {
-			http.Error(w, "", http.StatusNotFound)
-			return
-		} else {
-			w.Write([]byte(js))
-			return
-		}
-	} else {
-		http.Error(w, "", http.StatusForbidden)
-		return
-	}
-}
-
-func main() {
-	bind := flag.String("bind", ":7313", "Bind address")
-	flag.Parse()
-	ListenAndServe(*bind)
 }

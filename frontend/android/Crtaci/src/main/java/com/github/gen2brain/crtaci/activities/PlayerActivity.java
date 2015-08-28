@@ -12,20 +12,22 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.MediaController;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 import android.widget.VideoView;
 
 import com.github.gen2brain.crtaci.R;
 import com.github.gen2brain.crtaci.entities.Cartoon;
+import com.github.gen2brain.crtaci.utils.Utils;
 import com.github.gen2brain.crtaci.utils.VideoEnabledWebChromeClient;
 import com.github.gen2brain.crtaci.utils.VideoEnabledWebView;
+import com.google.android.gms.analytics.HitBuilders;
+import com.google.android.gms.analytics.Tracker;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 
 import java.util.HashMap;
 
-import go.Go;
-import go.main.Main;
+import go.crtaci.Crtaci;
+import io.vov.vitamio.MediaPlayer;
 
 
 public class PlayerActivity extends Activity {
@@ -38,6 +40,7 @@ public class PlayerActivity extends Activity {
 
     private String video;
     private Cartoon cartoon;
+    private Tracker tracker;
 
     private int retry = 0;
 
@@ -46,14 +49,16 @@ public class PlayerActivity extends Activity {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
-        Go.init(getApplicationContext());
-
         Bundle bundle = getIntent().getExtras();
         cartoon = (Cartoon) bundle.get("cartoon");
         video = bundle.getString("video");
 
+        tracker = Utils.getTracker(this);
+        tracker.setScreenName(cartoon.character);
+        tracker.send(new HitBuilders.AppViewBuilder().build());
+
         if(cartoon.service.equals("youtube")) {
-            if(video != null && !video.isEmpty()) {
+            if (video != null && !video.isEmpty()) {
                 player(video);
             } else {
                 playYouTube();
@@ -128,6 +133,7 @@ public class PlayerActivity extends Activity {
     public void vitamioPlayer(String url) {
         setContentView(R.layout.player_vitamio);
         vitamioView = (io.vov.vitamio.widget.VideoView) findViewById(R.id.video_view);
+        vitamioView.setVideoChroma(MediaPlayer.VIDEOCHROMA_RGB565);
         final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
 
@@ -234,8 +240,10 @@ public class PlayerActivity extends Activity {
     @Override
     public void onBackPressed() {
         if(video == null || video.isEmpty()) {
-            webChromeClient.onBackPressed();
-            webView.destroy();
+            if(webChromeClient != null && webView != null) {
+                webChromeClient.onBackPressed();
+                webView.destroy();
+            }
         }
         super.onBackPressed();
     }
@@ -248,7 +256,7 @@ public class PlayerActivity extends Activity {
 
             String result = null;
             try {
-                result = Main.Extract(service, videoId);
+                result = Crtaci.Extract(service, videoId);
             } catch(Exception e) {
                 e.printStackTrace();
             }

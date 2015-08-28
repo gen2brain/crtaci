@@ -34,7 +34,7 @@ class Player(QThread):
         self.proc_open()
 
     def get_cmd(self):
-        cmd = [MPV, "--fs", "--really-quiet", "--autofit", "60%", "--cache", "1024"]
+        cmd = [MPV, "--fs", "--really-quiet", "--autofit", "60%", "--cache", "1024", "--no-ytdl"]
         if self.rotate:
             cmd += ["--video-rotate", self.rotate]
         return cmd
@@ -48,16 +48,27 @@ class Player(QThread):
             info = None
         return info
 
+    def get_url(self, info):
+        try:
+            return u"%s" % info["url"]
+        except KeyError:
+            for i in info["formats"]:
+                if i["ext"] == "mp4" or i["ext"] == "flv":
+                    return i["url"]
+
     def proc_open(self):
         info = self.get_info()
         sys.stderr.write("URL: %s\n" % self.url)
         if info is not None:
             cmd = self.get_cmd()
             title = u"%s" % info["title"]
-            url = u"%s" % info["url"]
+            url = self.get_url(info)
             cmd += ["--media-title", title, url]
             sys.stderr.write("Playing: %s\n\n" % url)
-            ret = subprocess.call(cmd)
+            try:
+                ret = subprocess.call(cmd)
+            except TypeError:
+                ret = 1
             self.finished.emit(ret)
         else:
             self.finished.emit(1)

@@ -34,7 +34,7 @@ import com.github.gen2brain.crtaci.entities.Character;
 import com.github.gen2brain.crtaci.utils.Connectivity;
 import com.github.gen2brain.crtaci.utils.Utils;
 
-import go.main.Main;
+import go.crtaci.Crtaci;
 
 
 public class CharactersFragment extends Fragment {
@@ -47,11 +47,11 @@ public class CharactersFragment extends Fragment {
     private int selectedListItem = -1;
     private ProgressBar progressBar;
 
-    public static CharactersFragment newInstance(ArrayList<Character> characters, boolean twoPane) {
+    public static CharactersFragment newInstance(ArrayList<Character> characters, boolean twoPanel) {
         CharactersFragment fragment = new CharactersFragment();
         Bundle args = new Bundle();
         args.putSerializable("characters", characters);
-        args.putBoolean("twoPane", twoPane);
+        args.putBoolean("twoPane", twoPanel);
         fragment.setArguments(args);
         return fragment;
     }
@@ -220,9 +220,7 @@ public class CharactersFragment extends Fragment {
                 view.setBackgroundColor(getResources().getColor(R.color.item_selected));
             }
 
-            if(!Utils.playStore) {
-                holder.icon.setImageDrawable(getIcon(character));
-            }
+            holder.icon.setImageDrawable(getIcon(character));
 
             return view;
         }
@@ -255,9 +253,11 @@ public class CharactersFragment extends Fragment {
             ft.commit();
             getActivity().getSupportFragmentManager().executePendingTransactions();
         }
-        ft = getActivity().getSupportFragmentManager().beginTransaction();
-        ft.replace(R.id.cartoons_container, CartoonsFragment.newInstance(results, twoPane));
-        ft.commit();
+        if(getActivity().findViewById(R.id.cartoons_container) != null) {
+            ft = getActivity().getSupportFragmentManager().beginTransaction();
+            ft.replace(R.id.cartoons_container, CartoonsFragment.newInstance(results, twoPane));
+            ft.commit();
+        }
     }
 
     private class CartoonsTask extends AsyncTask<String, Void, ArrayList<Cartoon>> {
@@ -274,7 +274,7 @@ public class CharactersFragment extends Fragment {
 
             String result = null;
             try {
-                result = Main.Search(query);
+                result = Crtaci.Search(query);
             } catch (Exception e) {
                 e.printStackTrace();
             }

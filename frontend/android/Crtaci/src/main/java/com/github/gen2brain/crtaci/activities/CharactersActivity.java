@@ -1,21 +1,16 @@
 package com.github.gen2brain.crtaci.activities;
 
-import android.annotation.SuppressLint;
-import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.DownloadManager;
 import android.content.BroadcastReceiver;
-import android.content.DialogInterface;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import android.support.v4.app.DialogFragment;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -38,12 +33,11 @@ import com.github.gen2brain.crtaci.R;
 import com.github.gen2brain.crtaci.entities.Character;
 import com.github.gen2brain.crtaci.utils.Utils;
 
-import go.Go;
-import go.main.Main;
+import go.crtaci.Crtaci;
 import io.vov.vitamio.LibsChecker;
 
 
-public class CharactersActivity extends ActionBarActivity {
+public class CharactersActivity extends AppCompatActivity {
 
     public static final String TAG = "CharactersActivity";
 
@@ -62,8 +56,6 @@ public class CharactersActivity extends ActionBarActivity {
         if(!LibsChecker.checkVitamioLibs(this)) {
             return;
         }
-
-        Go.init(getApplicationContext());
 
         setContentView(R.layout.activity_characters);
 
@@ -84,50 +76,30 @@ public class CharactersActivity extends ActionBarActivity {
         tracker.setScreenName("Characters");
         tracker.send(new HitBuilders.AppViewBuilder().build());
 
-        if(!Utils.playStore) {
-            if(Update.checkUpdate(this)) {
-                downloadReceiver = Update.getDownloadReceiver(this);
-                registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+        if(Update.checkUpdate(this)) {
+            downloadReceiver = Update.getDownloadReceiver(this);
+            registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
 
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                    new UpdateTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-                } else {
-                    new UpdateTask().execute();
-                }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+                new UpdateTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
+            } else {
+                new UpdateTask().execute();
             }
         }
 
-        if(Utils.playStore) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            Boolean eulaAccepted = prefs.getBoolean("eula_accepted", false);
-
-            if(!eulaAccepted) {
-                new EulaFragment().show(getSupportFragmentManager(), "Disclaimer");
-            } else {
-                if(savedInstanceState != null) {
-                    characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
-                    replaceFragment(characters);
-                } else {
-                    startCharactersTask();
-                }
-            }
+        if(savedInstanceState != null) {
+            characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
+            replaceFragment(characters);
         } else {
-            if(savedInstanceState != null) {
-                characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
-                replaceFragment(characters);
-            } else {
-                startCharactersTask();
-            }
+            startCharactersTask();
         }
     }
 
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
-        if(!Utils.playStore) {
-            if(downloadReceiver != null) {
-                unregisterReceiver(downloadReceiver);
-            }
+        if(downloadReceiver != null) {
+            unregisterReceiver(downloadReceiver);
         }
         super.onDestroy();
     }
@@ -143,7 +115,7 @@ public class CharactersActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.characters, menu);
+        getMenuInflater().inflate(R.menu.main, menu);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String player = prefs.getString("player", "vitamio");
@@ -166,8 +138,6 @@ public class CharactersActivity extends ActionBarActivity {
         if(id == R.id.action_about) {
             Utils.showAbout(this);
             return true;
-        } else if(id == R.id.action_rate) {
-            Utils.rateThisApp(this);
         } else if(id == R.id.action_refresh) {
             startCharactersTask();
         } else if(id == R.id.action_vitamio_player) {
@@ -234,39 +204,6 @@ public class CharactersActivity extends ActionBarActivity {
         }
     }
 
-    @SuppressLint("ValidFragment")
-    public class EulaFragment extends DialogFragment {
-        @Override
-        public Dialog onCreateDialog(Bundle savedInstanceState) {
-            AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(getActivity());
-
-            alertDialogBuilder.setMessage(getString(R.string.eula_text));
-
-            alertDialogBuilder.setPositiveButton(getString(R.string.eula_positive_button), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    SharedPreferences.Editor edit = prefs.edit();
-                    edit.putBoolean("eula_accepted", true);
-                    edit.commit();
-                    dialog.dismiss();
-
-                    startCharactersTask();
-                }
-            });
-
-            alertDialogBuilder.setNegativeButton(getString(R.string.eula_negative_button), new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    dialog.dismiss();
-                    getActivity().finish();
-                }
-            });
-
-            return alertDialogBuilder.create();
-        }
-    }
-
 
     private class CharactersTask extends AsyncTask<Void, Void, ArrayList<Character>> {
 
@@ -281,7 +218,7 @@ public class CharactersActivity extends ActionBarActivity {
 
             String result = null;
             try {
-                result = Main.List();
+                result = Crtaci.List();
             } catch(Exception e) {
                 e.printStackTrace();
             }

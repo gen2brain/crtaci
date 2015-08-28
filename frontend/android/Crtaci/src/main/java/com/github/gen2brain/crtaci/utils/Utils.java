@@ -20,8 +20,6 @@ import com.google.android.gms.analytics.Tracker;
 
 public class Utils {
 
-    public static Boolean playStore = false;
-
     public static String toTitleCase(String input) {
         StringBuilder titleCase = new StringBuilder();
         boolean nextTitleCase = true;
@@ -35,16 +33,6 @@ public class Utils {
             titleCase.append(c);
         }
         return titleCase.toString();
-    }
-
-    public static void rateThisApp(Context ctx) {
-        Uri uri = Uri.parse("market://details?id=" + ctx.getPackageName());
-        Intent goToMarket = new Intent(Intent.ACTION_VIEW, uri);
-        try {
-            ctx.startActivity(goToMarket);
-        } catch (ActivityNotFoundException e) {
-            ctx.startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://play.google.com/store/apps/details?id=" + ctx.getPackageName())));
-        }
     }
 
     public static void showAbout(Context ctx) {

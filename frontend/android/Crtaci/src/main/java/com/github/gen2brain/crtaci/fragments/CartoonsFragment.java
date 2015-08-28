@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -27,7 +28,7 @@ import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
-import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiscCache;
+import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiskCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
@@ -47,7 +48,7 @@ import com.github.gen2brain.crtaci.activities.PlayerActivity;
 import com.github.gen2brain.crtaci.entities.Cartoon;
 import com.github.gen2brain.crtaci.utils.Utils;
 
-import go.main.Main;
+import go.crtaci.Crtaci;
 
 
 public class CartoonsFragment extends Fragment {
@@ -88,7 +89,7 @@ public class CartoonsFragment extends Fragment {
             File cacheDir = new File(getActivity().getCacheDir().toString());
             ImageLoaderConfiguration config = new
                     ImageLoaderConfiguration.Builder(getActivity().getApplicationContext())
-                    .discCache(new UnlimitedDiscCache(cacheDir))
+                    .discCache(new UnlimitedDiskCache(cacheDir))
                     .defaultDisplayImageOptions(DisplayImageOptions.createSimple())
                     .build();
             imageLoader.init(config);
@@ -179,7 +180,7 @@ public class CartoonsFragment extends Fragment {
             View view = convertView;
             final ViewHolder holder;
 
-            Cartoon cartoon = cartoons.get(position);
+            final Cartoon cartoon = cartoons.get(position);
 
             if(convertView == null) {
                 LayoutInflater inflater = getLayoutInflater(null);
@@ -203,16 +204,6 @@ public class CartoonsFragment extends Fragment {
             SpannableString spanString = new SpannableString(getTitle(cartoon));
             spanString.setSpan(new StyleSpan(Typeface.BOLD), 0, spanString.length(), 0);
             holder.title.setText(spanString);
-
-            if(Utils.playStore) {
-                if (cartoon.service.equals("youtube")) {
-                    holder.logo.setImageDrawable(getResources().getDrawable(R.drawable.youtube));
-                } else if (cartoon.service.equals("dailymotion")) {
-                    holder.logo.setImageDrawable(getResources().getDrawable(R.drawable.dailymotion));
-                } else if (cartoon.service.equals("vimeo")) {
-                    holder.logo.setImageDrawable(getResources().getDrawable(R.drawable.vimeo));
-                }
-            }
 
             String thumb;
             if(twoPane) {
@@ -276,7 +267,7 @@ public class CartoonsFragment extends Fragment {
 
             String result = null;
             try {
-                result = Main.Extract(service, videoId);
+                result = Crtaci.Extract(service, videoId);
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -289,7 +280,7 @@ public class CartoonsFragment extends Fragment {
 
             if(result == null || result.equals("empty")) {
                 try {
-                    result = Main.Extract(service, videoId);
+                    result = Crtaci.Extract(service, videoId);
                 } catch(Exception e) {
                     e.printStackTrace();
                 }
@@ -327,7 +318,7 @@ public class CartoonsFragment extends Fragment {
                     intent.putExtra("video", results);
                     intent.putExtra("cartoon", selectedCartoon);
                     startActivity(intent);
-                } else if(results.equals("empty")) {
+                } else if(results != null && results.equals("empty")) {
                     Toast.makeText(getActivity(), getString(R.string.error_video), Toast.LENGTH_LONG).show();
                 }
             }

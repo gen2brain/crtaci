@@ -6,9 +6,9 @@ import android.os.Build;
 import android.preference.PreferenceManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.NavUtils;
-import android.support.v7.app.ActionBarActivity;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -31,11 +31,10 @@ import com.github.gen2brain.crtaci.entities.Cartoon;
 import com.github.gen2brain.crtaci.utils.Connectivity;
 import com.github.gen2brain.crtaci.utils.Utils;
 
-import go.Go;
-import go.main.Main;
+import go.crtaci.Crtaci;
 
 
-public class CartoonsActivity extends ActionBarActivity {
+public class CartoonsActivity extends AppCompatActivity {
 
     public static final String TAG = "CartoonsActivity";
 
@@ -49,8 +48,6 @@ public class CartoonsActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
-
-        Go.init(getApplicationContext());
 
         setContentView(R.layout.activity_cartoons);
 
@@ -105,7 +102,7 @@ public class CartoonsActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.cartoons, menu);
+        getMenuInflater().inflate(R.menu.main, menu);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         String player = prefs.getString("player", "vitamio");
@@ -130,8 +127,6 @@ public class CartoonsActivity extends ActionBarActivity {
         } else if(id == R.id.action_about) {
             Utils.showAbout(this);
             return true;
-        } else if(id == R.id.action_rate) {
-            Utils.rateThisApp(this);
         } else if(id == R.id.action_refresh) {
             startCartoonsTask();
         } else if(id == R.id.action_vitamio_player) {
@@ -216,7 +211,7 @@ public class CartoonsActivity extends ActionBarActivity {
 
             String result = null;
             try {
-                result = Main.Search(query);
+                result = Crtaci.Search(query);
             } catch(Exception e) {
                 e.printStackTrace();
             }
