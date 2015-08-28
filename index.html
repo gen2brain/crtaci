@@ -11,7 +11,15 @@
     <link rel="stylesheet" href="assets/css/jquery.bxslider.css" />
     <script type="text/javascript" src="assets/js/jquery.js"></script>
     <script type="text/javascript" src="assets/js/jquery.bxslider.js"></script>
-    <script type="text/javascript">
+    <script>
+        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+        ga('create', 'UA-54547867-1', 'auto');
+        ga('send', 'pageview');
+
         $(document).ready(function() {
             $(".slider").bxSlider({
                 auto: true,
@@ -22,16 +30,23 @@
                 controls: true,
                 autoHover: true
             });
-        });
-    </script>
-    <script>
-        (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-            (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-                m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-        })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
 
-        ga('create', 'UA-54547867-1', 'auto');
-        ga('send', 'pageview');
+            $('#android').on('click', function() {
+                ga('send', 'event', 'Android Download', 'crtaci-1.7.apk');
+            });
+            $('#windows').on('click', function() {
+                ga('send', 'event', 'Windows Download', 'crtaci-1.7.exe');
+            });
+            $('#macosx').on('click', function() {
+                ga('send', 'event', 'Mac OSX Download', 'crtaci-1.7.dmg');
+            });
+            $('#linux32').on('click', function() {
+                ga('send', 'event', 'Linux 32bit Download', 'crtaci-1.7-32bit.tar.gz');
+            });
+            $('#linux64').on('click', function() {
+                ga('send', 'event', 'Linux 64bit Download', 'crtaci-1.7-64bit.tar.gz');
+            });
+        });
     </script>
 </head>
 <body>
@@ -65,11 +80,11 @@
 
 
         <ul class="buttons">
-            <li><a class="android" href="https://github.com/gen2brain/crtaci/releases/download/1.6/crtaci-1.6.apk" onclick="ga('send', 'event', 'Android Download', 'crtaci-1.6.apk')">Android</a></li>
-            <li><a class="windows" href="https://github.com/gen2brain/crtaci/releases/download/1.6/crtaci-1.6-setup.exe" onclick="ga('send', 'event', 'Windows Download', 'crtaci-1.6-setup.exe')">Windows</a></li>
-            <li><a class="macosx" href="https://github.com/gen2brain/crtaci/releases/download/1.6/crtaci-1.6.dmg" onclick="ga('send', 'event', 'Mac OSX Download', 'crtaci-1.6.dmg')">Mac OSX</a></li>
-            <li><a class="linux32" href="https://github.com/gen2brain/crtaci/releases/download/1.6/crtaci-1.6-32bit.tar.gz" onclick="ga('send', 'event', 'Linux 32bit Download', 'crtaci-1.6-32bit.tar.gz')">Linux 32bit</a></li>
-            <li><a class="linux64" href="https://github.com/gen2brain/crtaci/releases/download/1.6/crtaci-1.6-64bit.tar.gz" onclick="ga('send', 'event', 'Linux 64bit Download', 'crtaci-1.6-64bit.tar.gz')">Linux 64bit</a></li>
+            <li><a id="android" class="android" href="https://github.com/gen2brain/crtaci/releases/download/1.7/crtaci-1.7.apk">Android</a></li>
+            <li><a id="windows" class="windows" href="https://github.com/gen2brain/crtaci/releases/download/1.7/crtaci-1.7-setup.exe">Windows</a></li>
+            <li><a ud="macosx" class="macosx" href="https://github.com/gen2brain/crtaci/releases/download/1.7/crtaci-1.7.dmg">Mac OSX</a></li>
+            <li><a id="linux32" class="linux32" href="https://github.com/gen2brain/crtaci/releases/download/1.7/crtaci-1.7-32bit.tar.gz">Linux 32bit</a></li>
+            <li><a id="linux64" class="linux64" href="https://github.com/gen2brain/crtaci/releases/download/1.7/crtaci-1.7-64bit.tar.gz">Linux 64bit</a></li>
             <li><a class="source" href="https://github.com/gen2brain/crtaci" target="_blank">Source</a></li>
             <li><a class="demo" href="http://demo.crtaci.rs" target="_blank">Demo</a></li>
         </ul>
