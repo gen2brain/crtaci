@@ -565,7 +565,7 @@ func youTube(char character) {
 		}
 	}()
 
-	const apiKey = "AIzaSyCzFjzxxyS_GNEAsyFxd1Ss8CbaJNQAmjs"
+	const apiKey = "YOUR_API_KEY"
 
 	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
 
