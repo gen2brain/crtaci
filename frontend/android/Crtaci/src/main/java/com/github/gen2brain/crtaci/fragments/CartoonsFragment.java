@@ -1,24 +1,28 @@
 package com.github.gen2brain.crtaci.fragments;
 
-
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -26,8 +30,6 @@ import android.widget.Toast;
 
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiskCache;
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
@@ -42,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Locale;
 
 import com.github.gen2brain.crtaci.R;
 import com.github.gen2brain.crtaci.activities.PlayerActivity;
@@ -89,7 +92,7 @@ public class CartoonsFragment extends Fragment {
             File cacheDir = new File(getActivity().getCacheDir().toString());
             ImageLoaderConfiguration config = new
                     ImageLoaderConfiguration.Builder(getActivity().getApplicationContext())
-                    .discCache(new UnlimitedDiskCache(cacheDir))
+                    .diskCache(new UnlimitedDiskCache(cacheDir))
                     .defaultDisplayImageOptions(DisplayImageOptions.createSimple())
                     .build();
             imageLoader.init(config);
@@ -107,7 +110,7 @@ public class CartoonsFragment extends Fragment {
         if(cartoons != null && !cartoons.isEmpty()) {
             Tracker tracker = Utils.getTracker(getActivity());
             tracker.setScreenName(cartoons.get(0).character);
-            tracker.send(new HitBuilders.AppViewBuilder().build());
+            tracker.send(new HitBuilders.ScreenViewBuilder().build());
         }
     }
 
@@ -122,9 +125,54 @@ public class CartoonsFragment extends Fragment {
 
     public void createListView(View view) {
         ListView listView = (ListView) view.findViewById(R.id.cartoons);
-        ListAdapter adapter = new ItemAdapter();
+        final ItemAdapter adapter = new ItemAdapter();
         listView.setAdapter(adapter);
-        listView.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
+
+        listView.setMultiChoiceModeListener(new AbsListView.MultiChoiceModeListener() {
+            @Override
+            public boolean onCreateActionMode(android.view.ActionMode mode, Menu menu) {
+               	MenuInflater inflater = mode.getMenuInflater();
+                inflater.inflate(R.menu.context, menu);
+               	return true;
+            }
+
+            @Override
+            public boolean onActionItemClicked(android.view.ActionMode mode, MenuItem item) {
+               	int id = item.getItemId();
+               	if(id == R.id.action_download) {
+                    for(Cartoon c: adapter.getSelectedItems()) {
+                        new DownloadTask().execute(c.service, c.id, c.title);
+                    }
+                    mode.finish();
+                    return true;
+               	}
+
+               	return false;
+            }
+
+                        @Override
+            public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
+               	if(checked) {
+                    adapter.selectItem(position);
+               	} else {
+                    adapter.unselectItem(position);
+               	}
+
+               	int count = adapter.getSelectedCount();
+               	mode.setTitle(count + " selected");
+            }
+
+            @Override
+            public boolean onPrepareActionMode(android.view.ActionMode mode, Menu menu) {
+               	return false;
+            }
+
+            @Override
+            public void onDestroyActionMode(android.view.ActionMode mode) {
+               	adapter.unselectItems();
+            }
+       	});
 
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -139,6 +187,7 @@ public class CartoonsFragment extends Fragment {
     class ItemAdapter extends BaseAdapter {
 
         private ImageLoadingListener animateFirstListener = new AnimateFirstDisplayListener();
+        private ArrayList<Cartoon> selectedCartoons = new ArrayList<>();
 
         DisplayImageOptions options = new DisplayImageOptions.Builder()
                 .showImageOnLoading(R.drawable.ic_stub)
@@ -152,7 +201,7 @@ public class CartoonsFragment extends Fragment {
 
         private class ViewHolder {
             public TextView title;
-            public ImageView thumbnail;
+            ImageView thumbnail;
             public ImageView logo;
         }
 
@@ -189,17 +238,15 @@ public class CartoonsFragment extends Fragment {
                 holder = new ViewHolder();
                 holder.title = (TextView) view.findViewById(R.id.title);
                 holder.thumbnail = (ImageView) view.findViewById(R.id.thumbnail);
-                holder.logo = (ImageView) view.findViewById(R.id.logo);
 
                 Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/ComicRelief.ttf");
                 holder.title.setTypeface(tf);
 
                 view.setTag(holder);
+                view.setBackgroundResource(R.drawable.item_background_cartoon);
             } else {
                 holder = (ViewHolder) view.getTag();
             }
-
-            view.setBackgroundResource(R.drawable.item_background_cartoon);
 
             SpannableString spanString = new SpannableString(getTitle(cartoon));
             spanString.setSpan(new StyleSpan(Typeface.BOLD), 0, spanString.length(), 0);
@@ -218,18 +265,40 @@ public class CartoonsFragment extends Fragment {
         }
 
         private String getTitle(Cartoon cartoon) {
-            String ch = cartoon.formattedTitle;
+            String ch = Utils.toTitleCase(cartoon.formattedTitle);
             String se = "";
             if(cartoon.season != -1) {
-                se += String.format("S%02d", cartoon.season);
+                se += String.format(Locale.ROOT, "S%02d", cartoon.season);
             }
             if(cartoon.episode != -1) {
-                se += String.format("E%02d", cartoon.episode);
+                se += String.format(Locale.ROOT, "E%02d", cartoon.episode);
             }
             if(!se.isEmpty()) {
                 se = " - " + se;
             }
-            return Utils.toTitleCase(ch) + se;
+            return String.format(Locale.ROOT, "%s%s (%s)", ch, se, cartoon.durationString);
+        }
+
+        void selectItem(int position) {
+            Cartoon cartoon = cartoons.get(position);
+            selectedCartoons.add(cartoon);
+        }
+
+        void unselectItem(int position) {
+            Cartoon cartoon = cartoons.get(position);
+            selectedCartoons.remove(cartoon);
+        }
+
+        void unselectItems() {
+            selectedCartoons = new ArrayList<>();
+        }
+
+        ArrayList<Cartoon> getSelectedItems() {
+            return selectedCartoons;
+        }
+
+        int getSelectedCount() {
+            return selectedCartoons.size();
         }
     }
 
@@ -267,20 +336,14 @@ public class CartoonsFragment extends Fragment {
 
             String result = null;
             try {
-                result = Crtaci.Extract(service, videoId);
+                result = Crtaci.extract(service, videoId);
             } catch(Exception e) {
-                e.printStackTrace();
-            }
-
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {
                 e.printStackTrace();
             }
 
             if(result == null || result.equals("empty")) {
                 try {
-                    result = Crtaci.Extract(service, videoId);
+                    result = Crtaci.extract(service, videoId);
                 } catch(Exception e) {
                     e.printStackTrace();
                 }
@@ -292,17 +355,7 @@ public class CartoonsFragment extends Fragment {
                 return "empty";
             }
 
-            try {
-                JsonElement jsonElement = new Gson().fromJson(result, JsonElement.class);
-                if(jsonElement != null) {
-                    return jsonElement.getAsString();
-                } else {
-                    return null;
-                }
-            } catch(Exception e) {
-                e.printStackTrace();
-                return null;
-            }
+            return result;
         }
 
         protected void onPostExecute(String results) {
@@ -314,13 +367,56 @@ public class CartoonsFragment extends Fragment {
             Activity activity = getActivity();
             if(activity != null) {
                 if(results != null && !results.equals("empty")) {
-                    Intent intent = new Intent(activity, PlayerActivity.class);
-                    intent.putExtra("video", results);
-                    intent.putExtra("cartoon", selectedCartoon);
-                    startActivity(intent);
+                    SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(activity);
+                    String player = prefs.getString("player", "default");
+                    if(player.equals("external")) {
+                        Intent intent = new Intent(Intent.ACTION_VIEW);
+                        intent.setDataAndType(Uri.parse(results), "video/*");
+                        startActivity(intent);
+                    } else {
+                        Intent intent = new Intent(activity, PlayerActivity.class);
+                        intent.putExtra("video", results);
+                        intent.putExtra("cartoon", selectedCartoon);
+                        startActivity(intent);
+                    }
                 } else if(results != null && results.equals("empty")) {
                     Toast.makeText(getActivity(), getString(R.string.error_video), Toast.LENGTH_LONG).show();
                 }
+            }
+        }
+
+    }
+
+    private class DownloadTask extends AsyncTask<String, Void, String> {
+
+        private String title;
+
+        protected String doInBackground(String... params) {
+            String service = params[0];
+            String videoId = params[1];
+            title = params[2];
+
+            String result = null;
+            try {
+                result = Crtaci.extract(service, videoId);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+
+            if(result == null) {
+                return null;
+            } else if(result.equals("empty")) {
+                return "empty";
+            }
+
+            return result;
+        }
+
+        protected void onPostExecute(String results) {
+            Log.d(TAG, "onPostExecute");
+
+            if(results != null && !results.equals("empty")) {
+                Utils.downloadVideo(getActivity(), results, title);
             }
         }
 

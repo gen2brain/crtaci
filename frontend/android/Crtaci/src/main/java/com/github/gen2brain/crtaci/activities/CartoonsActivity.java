@@ -18,6 +18,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.github.gen2brain.crtaci.utils.Dialogs;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -53,24 +54,21 @@ public class CartoonsActivity extends AppCompatActivity {
 
         progressBar = (ProgressBar) findViewById(R.id.progressbar);
 
-        if(findViewById(R.id.cartoons_container) != null) {
-            twoPane = true;
-        } else {
-            twoPane = false;
-        }
+        twoPane = findViewById(R.id.cartoons_container) != null;
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
         Bundle bundle = getIntent().getExtras();
         character = (Character) bundle.get("character");
 
-        String title = character.name;
-        title = String.format(Utils.toTitleCase(title));
+        if(character != null) {
+            String title = character.name;
+            title = Utils.toTitleCase(title);
 
-        toolbar.setSubtitle(title);
-        toolbar.setLogo(R.drawable.ic_launcher);
-        toolbar.setNavigationIcon(R.drawable.ic_chevron_left);
+            toolbar.setTitle(title);
+            toolbar.setNavigationIcon(R.drawable.ic_chevron_left);
+            setSupportActionBar(toolbar);
+        }
 
         if(savedInstanceState != null) {
             cartoons = (ArrayList<Cartoon>) savedInstanceState.getSerializable("cartoons");
@@ -89,6 +87,12 @@ public class CartoonsActivity extends AppCompatActivity {
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
         super.onDestroy();
+        if(cartoonsTask != null) {
+            if(cartoonsTask.getStatus().equals(AsyncTask.Status.RUNNING)) {
+               	cartoonsTask.cancel(true);
+            }
+            Crtaci.cancel();
+	    }
     }
 
     @Override
@@ -105,11 +109,11 @@ public class CartoonsActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.main, menu);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String player = prefs.getString("player", "vitamio");
+        String player = prefs.getString("player", "default");
 
         menu.setGroupCheckable(R.id.player_group, true, true);
-        if(player.equals("vitamio")) {
-            MenuItem menuItem = menu.findItem(R.id.action_vitamio_player);
+        if(player.equals("external")) {
+            MenuItem menuItem = menu.findItem(R.id.action_external_player);
             menuItem.setChecked(true);
         } else if(player.equals("default")) {
             MenuItem menuItem = menu.findItem(R.id.action_default_player);
@@ -125,14 +129,14 @@ public class CartoonsActivity extends AppCompatActivity {
             NavUtils.navigateUpFromSameTask(this);
             return true;
         } else if(id == R.id.action_about) {
-            Utils.showAbout(this);
+            Dialogs.showAbout(this);
             return true;
         } else if(id == R.id.action_refresh) {
             startCartoonsTask();
-        } else if(id == R.id.action_vitamio_player) {
+        } else if(id == R.id.action_external_player) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             SharedPreferences.Editor edit = prefs.edit();
-            edit.putString("player", "vitamio");
+            edit.putString("player", "external");
             edit.apply();
             item.setChecked(true);
         } else if(id == R.id.action_default_player) {
@@ -152,10 +156,7 @@ public class CartoonsActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(keyCode == KeyEvent.KEYCODE_MENU && "LGE".equalsIgnoreCase(Build.BRAND)) {
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
+        return keyCode == KeyEvent.KEYCODE_MENU && "LGE".equalsIgnoreCase(Build.BRAND) || super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -211,19 +212,18 @@ public class CartoonsActivity extends AppCompatActivity {
 
             String result = null;
             try {
-                result = Crtaci.Search(query);
+                result = Crtaci.search(query);
             } catch(Exception e) {
                 e.printStackTrace();
             }
 
-            if(result == null || result.equals("empty")) {
+            if(result == null || result.equals("empty") || isCancelled()) {
                 return null;
             }
 
             Type listType = new TypeToken<ArrayList<Cartoon>>(){}.getType();
             try {
-                ArrayList<Cartoon> list = new Gson().fromJson(result, listType);
-                return list;
+                return new Gson().fromJson(result, listType);
             } catch(Exception e) {
                 e.printStackTrace();
                 return null;

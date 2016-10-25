@@ -8,13 +8,8 @@
     <string name="action_refresh">Osveži</string>
     <string name="update_available">Nova verzija je dostupna</string>
     <string name="update_download">Preuzmi novu verziju?</string>
-    <string name="mediacontroller_play_pause">Play/Pause</string>
-    <string name="vitamio_init_decoders">Inicijalizacija dekodera…</string>
-    <string name="vitamio_library_app_name">VitamioLibrary</string>
     <string name="error_video">Ovaj video ne može da se pusti</string>
-    <string name="action_vitamio_player">Vitamio plejer</string>
+    <string name="action_external_player">Eksterni plejer</string>
     <string name="action_default_player">Default plejer</string>
-    <string name="eula_positive_button">Agree</string>
-    <string name="eula_negative_button">Disagree</string>
-    <string name="eula_text">\nThe content provided in this application is hosted on YouTube, DailyMotion and Vimeo.\n\nThis application is just an organized way to browse and view videos alternatively.\n\nYouTube logo is Copyright: Google Inc./YouTube Inc.\nDailyMotion logo is Copyright: DailyMotion.com\nVimeo logo is Copyright: Vimeo.com\n</string>
+    <string name="action_download">Preuzmi</string>
 </resources>

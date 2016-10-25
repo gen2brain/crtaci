@@ -1,15 +1,17 @@
 package com.github.gen2brain.crtaci.activities;
 
-import android.app.DownloadManager;
-import android.content.BroadcastReceiver;
-import android.content.IntentFilter;
+import android.Manifest;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -19,9 +21,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
 
+import com.github.gen2brain.crtaci.utils.Dialogs;
 import com.github.gen2brain.crtaci.utils.Update;
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -31,11 +32,8 @@ import java.util.ArrayList;
 import com.github.gen2brain.crtaci.fragments.CharactersFragment;
 import com.github.gen2brain.crtaci.R;
 import com.github.gen2brain.crtaci.entities.Character;
-import com.github.gen2brain.crtaci.utils.Utils;
 
 import go.crtaci.Crtaci;
-import io.vov.vitamio.LibsChecker;
-
 
 public class CharactersActivity extends AppCompatActivity {
 
@@ -43,49 +41,34 @@ public class CharactersActivity extends AppCompatActivity {
 
     private boolean twoPane;
     private ArrayList<Character> characters;
-    private CharactersTask charactersTask;
     private ProgressBar progressBar;
-    private BroadcastReceiver downloadReceiver;
-    private Tracker tracker;
+
+    public static final int RC_PERMISSION_WRITE_EXTERNAL_STORAGE = 313;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
 
-        if(!LibsChecker.checkVitamioLibs(this)) {
-            return;
-        }
-
         setContentView(R.layout.activity_characters);
 
         progressBar = (ProgressBar) findViewById(R.id.progressbar);
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        //toolbar.setLogo(R.drawable.ic_launcher);
         setSupportActionBar(toolbar);
 
-        toolbar.setLogo(R.drawable.ic_launcher);
-
-        if(findViewById(R.id.cartoons_container) != null) {
-            twoPane = true;
-        } else {
-            twoPane = false;
-        }
-
-        tracker = Utils.getTracker(this);
-        tracker.setScreenName("Characters");
-        tracker.send(new HitBuilders.AppViewBuilder().build());
+        twoPane = findViewById(R.id.cartoons_container) != null;
 
         if(Update.checkUpdate(this)) {
-            downloadReceiver = Update.getDownloadReceiver(this);
-            registerReceiver(downloadReceiver, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-                new UpdateTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
-            } else {
-                new UpdateTask().execute();
-            }
+            new UpdateTask().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
         }
+
+        int permissionCheck = ContextCompat.checkSelfPermission(CharactersActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
+       	if(permissionCheck != PackageManager.PERMISSION_GRANTED) {
+            Log.d(TAG, String.format("permissionCheck:%d", permissionCheck));
+            ActivityCompat.requestPermissions(CharactersActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, RC_PERMISSION_WRITE_EXTERNAL_STORAGE);
+       	}
 
         if(savedInstanceState != null) {
             characters = (ArrayList<Character>) savedInstanceState.getSerializable("characters");
@@ -98,9 +81,6 @@ public class CharactersActivity extends AppCompatActivity {
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
-        if(downloadReceiver != null) {
-            unregisterReceiver(downloadReceiver);
-        }
         super.onDestroy();
     }
 
@@ -118,11 +98,11 @@ public class CharactersActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.main, menu);
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String player = prefs.getString("player", "vitamio");
+        String player = prefs.getString("player", "default");
 
         menu.setGroupCheckable(R.id.player_group, true, true);
-        if(player.equals("vitamio")) {
-            MenuItem menuItem = menu.findItem(R.id.action_vitamio_player);
+        if(player.equals("external")) {
+            MenuItem menuItem = menu.findItem(R.id.action_external_player);
             menuItem.setChecked(true);
         } else if(player.equals("default")) {
             MenuItem menuItem = menu.findItem(R.id.action_default_player);
@@ -136,14 +116,14 @@ public class CharactersActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
         if(id == R.id.action_about) {
-            Utils.showAbout(this);
+            Dialogs.showAbout(this);
             return true;
         } else if(id == R.id.action_refresh) {
             startCharactersTask();
-        } else if(id == R.id.action_vitamio_player) {
+        } else if(id == R.id.action_external_player) {
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
             SharedPreferences.Editor edit = prefs.edit();
-            edit.putString("player", "vitamio");
+            edit.putString("player", "external");
             edit.apply();
             item.setChecked(true);
         } else if(id == R.id.action_default_player) {
@@ -158,10 +138,7 @@ public class CharactersActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(keyCode == KeyEvent.KEYCODE_MENU && "LGE".equalsIgnoreCase(Build.BRAND)) {
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
+        return keyCode == KeyEvent.KEYCODE_MENU && "LGE".equalsIgnoreCase(Build.BRAND) || super.onKeyDown(keyCode, event);
     }
 
     @Override
@@ -173,8 +150,22 @@ public class CharactersActivity extends AppCompatActivity {
         return super.onKeyUp(keyCode, event);
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
+       	switch(requestCode) {
+            case RC_PERMISSION_WRITE_EXTERNAL_STORAGE: {
+               	if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Log.d(TAG, "External storage allowed");
+               	} else {
+                    Log.d(TAG, "External storage denied");
+               	}
+               	break;
+            }
+       	}
+    }
+
     public void startCharactersTask() {
-        charactersTask = new CharactersTask();
+        CharactersTask charactersTask = new CharactersTask();
         charactersTask.execute();
     }
 
@@ -218,7 +209,7 @@ public class CharactersActivity extends AppCompatActivity {
 
             String result = null;
             try {
-                result = Crtaci.List();
+                result = Crtaci.list();
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -229,8 +220,7 @@ public class CharactersActivity extends AppCompatActivity {
 
             Type listType = new TypeToken<ArrayList<Character>>() {}.getType();
             try {
-                ArrayList<Character> list = new Gson().fromJson(result, listType);
-                return list;
+                return new Gson().fromJson(result, listType);
             } catch(Exception e) {
                 e.printStackTrace();
                 return null;
@@ -267,7 +257,7 @@ public class CharactersActivity extends AppCompatActivity {
 
         protected void onPostExecute(Boolean result) {
             if(result) {
-                Utils.showUpdate(CharactersActivity.this);
+                Dialogs.showUpdate(CharactersActivity.this);
             }
         }
     }

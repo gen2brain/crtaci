@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.ContextCompat;
 import android.text.SpannableString;
 import android.text.style.StyleSpan;
 import android.util.Log;
@@ -43,7 +44,6 @@ public class CharactersFragment extends Fragment {
 
     private boolean twoPane;
     private ArrayList<Character> characters;
-    private CartoonsTask cartoonsTask;
     private int selectedListItem = -1;
     private ProgressBar progressBar;
 
@@ -68,9 +68,7 @@ public class CharactersFragment extends Fragment {
 
         twoPane = getArguments().getBoolean("twoPane");
 
-        View view = inflater.inflate(R.layout.fragment_characters, container, false);
-
-        return view;
+        return inflater.inflate(R.layout.fragment_characters, container, false);
     }
 
     @Override
@@ -113,7 +111,7 @@ public class CharactersFragment extends Fragment {
         }
 
         if(Connectivity.isConnected(getActivity())) {
-            cartoonsTask = new CartoonsTask();
+            CartoonsTask cartoonsTask = new CartoonsTask();
             cartoonsTask.execute(query);
         } else {
             Toast.makeText(getActivity(), getString(R.string.error_network), Toast.LENGTH_LONG).show();
@@ -195,8 +193,6 @@ public class CharactersFragment extends Fragment {
                 holder.name = (TextView) view.findViewById(R.id.name);
                 holder.icon = (ImageView) view.findViewById(R.id.icon);
 
-                holder.icon.setImageDrawable(getResources().getDrawable(R.drawable.ic_label));
-
                 Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/ComicRelief.ttf");
                 holder.name.setTypeface(tf);
 
@@ -217,7 +213,7 @@ public class CharactersFragment extends Fragment {
             }
 
             if(position == selectedListItem) {
-                view.setBackgroundColor(getResources().getColor(R.color.item_selected));
+                view.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.item_selected));
             }
 
             holder.icon.setImageDrawable(getIcon(character));
@@ -240,8 +236,7 @@ public class CharactersFragment extends Fragment {
             ch = ch.replace(" ", "_");
 
             int resId = getResources().getIdentifier(ch, "drawable", getActivity().getPackageName());
-            Drawable icon = getResources().getDrawable(resId);
-            return icon;
+            return ContextCompat.getDrawable(getContext(), resId);
         }
     }
 
@@ -274,7 +269,7 @@ public class CharactersFragment extends Fragment {
 
             String result = null;
             try {
-                result = Crtaci.Search(query);
+                result = Crtaci.search(query);
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -285,8 +280,7 @@ public class CharactersFragment extends Fragment {
 
             Type listType = new TypeToken<ArrayList<Cartoon>>(){}.getType();
             try {
-                ArrayList<Cartoon> list = new Gson().fromJson(result, listType);
-                return list;
+                return new Gson().fromJson(result, listType);
             } catch(Exception e) {
                 e.printStackTrace();
                 return null;

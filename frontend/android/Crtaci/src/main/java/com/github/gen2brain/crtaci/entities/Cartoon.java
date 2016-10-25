@@ -27,6 +27,17 @@ public class Cartoon implements Serializable {
 
     public String thumbLarge;
 
+    public String durationString;
+
+    @Override
+    public boolean equals(Object obj) {
+       	if(obj == null) return false;
+       	if(obj == this) return true;
+       	if(!(obj instanceof Cartoon)) return false;
+       	Cartoon cartoon = (Cartoon) obj;
+       	return cartoon.url.equals(this.url);
+    }
+
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
@@ -44,6 +55,7 @@ public class Cartoon implements Serializable {
         result.append("  thumbSmall: " + this.thumbSmall + NL);
         result.append("  thumbMedium: " + this.thumbMedium + NL);
         result.append("  thumbLarge: " + this.thumbLarge + NL);
+        result.append("  durationString: " + this.durationString + NL);
         result.append("}" + NL);
 
         return result.toString();

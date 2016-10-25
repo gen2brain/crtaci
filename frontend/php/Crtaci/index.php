@@ -5,10 +5,15 @@ require("helpers.php");
 
 function main() {
     $crtaci = new Crtaci();
+
     $characters = $crtaci->getCharacters();
+    if(is_null($characters)) {
+        header("HTTP/1.0 500 Internal Server Error");
+        print("<h1>500 Internal Server Error</h1>");
+        exit();
+    }
 
     if(isset($_GET["c"]) && !empty($_GET["c"])) {
-        $query = str_replace("/demo", "", $_GET["c"]);
         $query = str_replace("/", "", $query);
     } else {
         $query = $characters[0]["name"];

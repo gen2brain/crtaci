@@ -8,12 +8,12 @@ Application is available for Windows, Mac OS X, Linux, Android and Web.
 Web Site
 -------
 
-http://crtaci.rs
+https://crtaci.rs
 
 Demo
 -------
 
-http://demo.crtaci.rs
+https://demo.crtaci.rs
 
 License
 -------

@@ -1,0 +1,40 @@
+[Setup]
+AppName=Crtaci
+AppVerName=Crtaci {VERSION}
+VersionInfoVersion={VERSION}
+AppPublisher=
+AppPublisherURL=https://crtaci.rs/
+AppSupportURL=
+AppUpdatesURL=
+DefaultDirName={pf}\Crtaci
+DefaultGroupName=Crtaci
+AllowNoIcons=yes
+OutputDir=.
+Uninstallable=yes
+WindowVisible=no
+AppCopyright=Author: Milan Nikolic <gen2brain@gmail.com>
+OutputBaseFilename=crtaci-{VERSION}-setup
+UninstallDisplayIcon={app}\crtaci.exe
+LicenseFile=crtaci\COPYING
+DisableStartupPrompt=yes
+ChangesAssociations=yes
+
+[Tasks]
+Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}";
+
+[Files]
+Source: "crtaci\crtaci.exe"; DestDir: "{app}";
+Source: "crtaci\mpv-1.dll"; DestDir: "{app}";
+Source: "crtaci\AUTHORS"; DestDir: "{app}";
+Source: "crtaci\COPYING"; DestDir: "{app}";
+Source: "crtaci\ChangeLog"; DestDir: "{app}";
+Source: "crtaci\README.md"; DestDir: "{app}";
+
+[Icons]
+Name: {group}\Crtaci; Filename: {app}\crtaci.exe; Tasks: desktopicon;
+Name: {group}\{cm:ProgramOnTheWeb,crtaci}; Filename: http://crtaci.rs/;
+Name: {group}\{cm:UninstallProgram,crtaci}; Filename: {app}\unins000.exe;
+Name: {userdesktop}\Crtaci; Filename: {app}\crtaci.exe; Tasks: desktopicon;
+
+[Run]
+Filename: {app}\crtaci.exe; Description: {cm:LaunchProgram,crtaci}; Flags: nowait postinstall skipifsilent;

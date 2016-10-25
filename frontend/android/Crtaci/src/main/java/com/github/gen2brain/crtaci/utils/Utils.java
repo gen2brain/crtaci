@@ -1,19 +1,13 @@
 package com.github.gen2brain.crtaci.utils;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
+import android.app.DownloadManager;
 import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
+import android.os.Environment;
 import android.preference.PreferenceManager;
-import android.view.LayoutInflater;
-import android.view.View;
 
-import com.alertdialogpro.AlertDialogPro;
-
-import com.github.gen2brain.crtaci.R;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 
@@ -33,45 +27,6 @@ public class Utils {
             titleCase.append(c);
         }
         return titleCase.toString();
-    }
-
-    public static void showAbout(Context ctx) {
-        LayoutInflater inflater = (LayoutInflater) ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View messageView = inflater.inflate(R.layout.about_dialog, null, false);
-
-        String ver = Update.getCurrentVersion(ctx);
-        String title = String.format("%s %s", ctx.getResources().getString(R.string.app_name), ver);
-
-        AlertDialogPro.Builder builder = new AlertDialogPro.Builder(ctx);
-        builder.setIcon(R.drawable.ic_launcher);
-        builder.setTitle(title);
-        builder.setView(messageView);
-        builder.create();
-        builder.show();
-    }
-
-    public static void showUpdate(Context ctx) {
-        final Context context = ctx;
-        AlertDialogPro.Builder builder = new AlertDialogPro.Builder(ctx);
-        builder.setIcon(R.drawable.ic_launcher);
-        builder.setTitle(R.string.update_available);
-        builder.setMessage(R.string.update_download);
-        builder.setPositiveButton("OK",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        Update.downloadUpdate(context);
-                    }
-                }
-        );
-        builder.setNegativeButton("Cancel",
-                new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int whichButton) {
-                        dialog.dismiss();
-                    }
-                }
-        );
-        builder.create();
-        builder.show();
     }
 
     public static Tracker getTracker(Context ctx) {
@@ -95,12 +50,23 @@ public class Utils {
 
     public static int getLastCharacter(Context ctx) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
-        int last = prefs.getInt("last", -1);
-        return last;
+        return prefs.getInt("last", -1);
     }
 
-    public static long getUnixTime() {
+    static long getUnixTime() {
         return System.currentTimeMillis() / 1000L;
+    }
+
+    public static void downloadVideo(Context ctx, String url, String title) {
+       	DownloadManager downloadmanager;
+       	downloadmanager = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
+       	Uri uri = Uri.parse(url);
+       	DownloadManager.Request request = new DownloadManager.Request(uri);
+       	request.setTitle(title.replace(" ", "_")+".mp4");
+       	request.setDescription("Crtaci");
+       	request.setVisibleInDownloadsUi(true);
+       	request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, title.replace(" ", "_")+".mp4");
+       	downloadmanager.enqueue(request);
     }
 
 }

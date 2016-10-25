@@ -1,6 +1,5 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools" >
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
 
     <item android:id="@+id/action_about"
         android:title="@string/action_about"
@@ -14,8 +13,8 @@
 
     <group android:id="@+id/player_group"
         android:checkableBehavior="single" >
-        <item android:id="@+id/action_vitamio_player"
-            android:title="@string/action_vitamio_player"
+        <item android:id="@+id/action_external_player"
+            android:title="@string/action_external_player"
             android:checkable="true"
             app:showAsAction="never" />
 

@@ -1,3 +1,11 @@
+v0.1.8 Oct 24, 2016:
+
+    * desktop app is rewritten in Go
+    * new characters: Asteriks
+    * added video duration
+    * added download option in Android app
+    * backend is compiled with Go 1.7
+
 v0.1.7 Aug 29, 2015:
 
     * fix dailymotion and vimeo video extract

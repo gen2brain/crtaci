@@ -1,8 +1,8 @@
 package com.github.gen2brain.crtaci.activities;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.res.Configuration;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -16,18 +16,10 @@ import android.widget.VideoView;
 
 import com.github.gen2brain.crtaci.R;
 import com.github.gen2brain.crtaci.entities.Cartoon;
-import com.github.gen2brain.crtaci.utils.Utils;
 import com.github.gen2brain.crtaci.utils.VideoEnabledWebChromeClient;
 import com.github.gen2brain.crtaci.utils.VideoEnabledWebView;
-import com.google.android.gms.analytics.HitBuilders;
-import com.google.android.gms.analytics.Tracker;
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-
-import java.util.HashMap;
 
 import go.crtaci.Crtaci;
-import io.vov.vitamio.MediaPlayer;
 
 
 public class PlayerActivity extends Activity {
@@ -36,11 +28,9 @@ public class PlayerActivity extends Activity {
 
     private VideoEnabledWebView webView;
     private VideoEnabledWebChromeClient webChromeClient;
-    private io.vov.vitamio.widget.VideoView vitamioView;
 
     private String video;
     private Cartoon cartoon;
-    private Tracker tracker;
 
     private int retry = 0;
 
@@ -53,44 +43,38 @@ public class PlayerActivity extends Activity {
         cartoon = (Cartoon) bundle.get("cartoon");
         video = bundle.getString("video");
 
-        tracker = Utils.getTracker(this);
-        tracker.setScreenName(cartoon.character);
-        tracker.send(new HitBuilders.AppViewBuilder().build());
-
-        if(cartoon.service.equals("youtube")) {
-            if (video != null && !video.isEmpty()) {
-                player(video);
-            } else {
-                playYouTube();
-            }
-        } else if(cartoon.service.equals("dailymotion")) {
-            if(video != null && !video.isEmpty()) {
-                player(video);
-            } else {
-                playDailyMotion();
-            }
-        } else if(cartoon.service.equals("vimeo")) {
-            if(video != null && !video.isEmpty()) {
-                player(video);
-            } else {
-                playVimeo();
-            }
-        }
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if(vitamioView != null) {
-            vitamioView.setVideoLayout(io.vov.vitamio.widget.VideoView.VIDEO_LAYOUT_SCALE, 0);
+        switch(cartoon.service) {
+            case "youtube":
+                if(video != null && !video.isEmpty()) {
+                    player(video);
+                } else {
+                    playYouTube();
+                }
+                break;
+            case "dailymotion":
+                if(video != null && !video.isEmpty()) {
+                    player(video);
+                } else {
+                    playDailyMotion();
+                }
+                break;
+            case "vimeo":
+                if(video != null && !video.isEmpty()) {
+                    player(video);
+                } else {
+                    playVimeo();
+                }
+                break;
         }
     }
 
     public void player(String url) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String player = prefs.getString("player", "vitamio");
-        if(player.equals("vitamio")) {
-            vitamioPlayer(url);
+        String player = prefs.getString("player", "default");
+        if(player.equals("external")) {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setDataAndType(Uri.parse(url), "video/*");
+            startActivity(intent);
         } else if(player.equals("default")) {
             defaultPlayer(url);
         }
@@ -130,62 +114,6 @@ public class PlayerActivity extends Activity {
         webView.loadUrl(url);
     }
 
-    public void vitamioPlayer(String url) {
-        setContentView(R.layout.player_vitamio);
-        vitamioView = (io.vov.vitamio.widget.VideoView) findViewById(R.id.video_view);
-        vitamioView.setVideoChroma(MediaPlayer.VIDEOCHROMA_RGB565);
-        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);
-        progressBar.setVisibility(View.VISIBLE);
-
-        vitamioView.setBufferSize(1024 * 512);
-
-        vitamioView.setOnPreparedListener(new io.vov.vitamio.MediaPlayer.OnPreparedListener() {
-            @Override
-            public void onPrepared(io.vov.vitamio.MediaPlayer mp) {
-                progressBar.setVisibility(View.INVISIBLE);
-            }
-        });
-
-        vitamioView.setOnErrorListener(new io.vov.vitamio.MediaPlayer.OnErrorListener() {
-            @Override
-            public boolean onError(io.vov.vitamio.MediaPlayer mp, int what, int extra) {
-                Log.d(TAG, "onError");
-                if(retry >= 2) {
-                    video = null;
-                    if(cartoon.service.equals("youtube")) {
-                        playYouTube();
-                    } else if (cartoon.service.equals("dailymotion")) {
-                        playDailyMotion();
-                    } else if (cartoon.service.equals("vimeo")) {
-                        playVimeo();
-                    }
-                } else {
-                    Log.d(TAG, "retry " + String.valueOf(retry));
-                    new ExtractTask().execute(cartoon.service, cartoon.id);
-                }
-                return true;
-            }
-        });
-
-        vitamioView.setOnCompletionListener(new io.vov.vitamio.MediaPlayer.OnCompletionListener() {
-            @Override
-            public void onCompletion(io.vov.vitamio.MediaPlayer mediaPlayer) {
-                onBackPressed();
-            }
-        });
-
-        HashMap<String, String> options = new HashMap<>();
-        options.put("multiple_requests", "1");
-
-        io.vov.vitamio.widget.MediaController mediaController = new io.vov.vitamio.widget.MediaController(this);
-        mediaController.setAnchorView(vitamioView);
-        mediaController.setMediaPlayer(vitamioView);
-        vitamioView.setKeepScreenOn(true);
-        vitamioView.setMediaController(mediaController);
-        vitamioView.setVideoURI(Uri.parse(url), options);
-        vitamioView.requestFocus();
-    }
-
     public void defaultPlayer(String url) {
         setContentView(R.layout.player);
         final VideoView videoView = (VideoView) findViewById(R.id.video_view);
@@ -206,12 +134,16 @@ public class PlayerActivity extends Activity {
                 Log.d(TAG, "onError");
                 if(retry >= 2) {
                     video = null;
-                    if(cartoon.service.equals("youtube")) {
-                        playYouTube();
-                    } else if (cartoon.service.equals("dailymotion")) {
-                        playDailyMotion();
-                    } else if (cartoon.service.equals("vimeo")) {
-                        playVimeo();
+                    switch(cartoon.service) {
+                        case "youtube":
+                            playYouTube();
+                            break;
+                        case "dailymotion":
+                            playDailyMotion();
+                            break;
+                        case "vimeo":
+                            playVimeo();
+                            break;
                     }
                 } else {
                     Log.d(TAG, "retry " + String.valueOf(retry));
@@ -256,7 +188,7 @@ public class PlayerActivity extends Activity {
 
             String result = null;
             try {
-                result = Crtaci.Extract(service, videoId);
+                result = Crtaci.extract(service, videoId);
             } catch(Exception e) {
                 e.printStackTrace();
             }
@@ -265,17 +197,7 @@ public class PlayerActivity extends Activity {
                 return null;
             }
 
-            try {
-                JsonElement jsonElement = new Gson().fromJson(result, JsonElement.class);
-                if(jsonElement != null) {
-                    return jsonElement.getAsString();
-                } else {
-                    return null;
-                }
-            } catch(Exception e) {
-                e.printStackTrace();
-                return null;
-            }
+            return result;
         }
 
         protected void onPostExecute(String results) {

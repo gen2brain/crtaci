@@ -1,0 +1,5 @@
+include setup.py crtaci.py ../../AUTHORS ../../README.md ../../ChangeLog ../../COPYING
+include backend/crtaci-http
+recursive-include . *.py *.ui *.qrc *.svg *.png *.jpg *.ts
+recursive-include xdg *.desktop *.png
+global-exclude *_ui.py *_rc.py

@@ -16,6 +16,7 @@
 package crtaci
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -31,26 +32,32 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gen2brain/vidextr"
+	"github.com/ChannelMeter/iso8601duration"
 	"github.com/google/google-api-go-client/googleapi/transport"
-	youtube "github.com/google/google-api-go-client/youtube/v3"
+	"google.golang.org/api/youtube/v3"
+
+	"github.com/gen2brain/vidextr"
 )
 
-type cartoon struct {
-	Id             string `json:"id"`
-	Character      string `json:"character"`
-	Title          string `json:"title"`
-	FormattedTitle string `json:"formattedTitle"`
-	Episode        int    `json:"episode"`
-	Season         int    `json:"season"`
-	Service        string `json:"service"`
-	Url            string `json:"url"`
-	ThumbSmall     string `json:"thumbSmall"`
-	ThumbMedium    string `json:"thumbMedium"`
-	ThumbLarge     string `json:"thumbLarge"`
+const Version = "1.8"
+
+type Cartoon struct {
+	Id             string  `json:"id"`
+	Character      string  `json:"character"`
+	Title          string  `json:"title"`
+	FormattedTitle string  `json:"formattedTitle"`
+	Episode        int     `json:"episode"`
+	Season         int     `json:"season"`
+	Service        string  `json:"service"`
+	Url            string  `json:"url"`
+	ThumbSmall     string  `json:"thumbSmall"`
+	ThumbMedium    string  `json:"thumbMedium"`
+	ThumbLarge     string  `json:"thumbLarge"`
+	Duration       float64 `json:"duration"`
+	DurationString string  `json:"durationString"`
 }
 
-type character struct {
+type Character struct {
 	Name     string `json:"name"`
 	AltName  string `json:"altname"`
 	AltName2 string `json:"altname2"`
@@ -58,8 +65,9 @@ type character struct {
 	Query    string `json:"query"`
 }
 
-var characters = []character{
+var characters = []Character{
 	{"atomski mrav", "", "", "medium", ""},
+	{"asteriks", "", "asterix", "xlong", ""},
 	{"a je to", "", "", "medium", "a je to crtani"},
 	{"anđeoski prijatelji", "andjeoski prijatelji", "", "medium", ""},
 	{"bananamen", "", "", "medium", ""},
@@ -156,359 +164,39 @@ var characters = []character{
 	{"zmajeva kugla", "zmajeva kugla", "zmajeva kugla z", "long", ""},
 }
 
-var filters = []string{
-	"najbolji crtaci",
-	"www.crtani-filmovi.org",
-	"by crtani svijet",
-	"crtanifilmonline",
-	"crtani filmovi",
-	"crtani film",
-	"stari crtani",
-	"cijeli crtani",
-	"crtani",
-	"crtic",
-	"sinhronizovano",
-	"sihronizovano",
-	"sinhronizovani",
-	"sinhronizovan",
-	"sinhronizacija",
-	"sinkronizacija",
-	"titlovano",
-	"sa prevodom",
-	"nove epizode",
-	"na srpskom jeziku",
-	"na srpskom",
-	"srpska",
-	"srpski",
-	"srb ",
-	" srb",
-	" sd",
-	" hq",
-	" svcd",
-	"hrvatska",
-	"hrv,srp,bos",
-	"zagorci",
-	"slovenska verzija",
-	"b92 tv",
-	"za decu",
-	"zadecu",
-	"youtube",
-	"youtube",
-	"full movie",
-	"mashini skazki",
-	"the cartooner 100",
-	"iz 60-70-80-tih",
-	"mpeg4",
-	"144p h 264 aac",
-	"sihroni fll 2",
-	"zlekedik",
-	"gusztav allast keres",
-	"guszt v k",
-	"rtb",
-	"tvrip",
-	"djuza stoiljkovic",
-	"okrenite preko smplayer-a",
-	"new episodes",
-	"new episode",
-	"animado",
-	"animad8",
-	"animated",
-	"cartoon",
-	"of 47",
-	"dailymotion-video",
-	"video dailymotion",
-	"ultra tv",
-	"happy tv",
-}
-
-var censoredWords = []string{
-	"kurac",
-	"kurcu",
-	"sranje",
-	"sranja",
-	"govna",
-	"govno",
-	"picka",
-	"picke",
-	"peder",
-	"jebač",
-	"uzivo",
-	"parodija",
-	"sprdnja",
-	"tretmen",
-	"ispaljotka",
-	"kinder jaja",
-	"video igrice",
-	"atomski mravi",
-	"igracke od plastelina",
-	"sex",
-	"sexy",
-	"flesh",
-	"ubisoft",
-	"wanna",
-	"special",
-	"trailer",
-	"teaser",
-	"music",
-	"monster",
-	"intro",
-	"countdown",
-	"eternity",
-	"summer",
-	"galaxy",
-	"constitution",
-	"hunkyard",
-	"riders",
-	"flash",
-	"wanted",
-	"instrumental",
-	"gamer",
-	"remix",
-	"tour",
-	"party",
-	"bjorke",
-	"tweety",
-	"revolution",
-	"halloween",
-	"remastered",
-	"celebration",
-	"experiments",
-	"food",
-	"gameplay",
-	"surprise",
-	"batters",
-	"bottle",
-	"erasers",
-	"series",
-	"comics",
-	"village",
-	"theatre",
-	"dolphin",
-	"stallone",
-	"koniec",
-	"latino",
-	"lovers",
-	"lubochka",
-	"tobbe",
-	"sushi",
-	"prikljuchenija",
-	"slovenska",
-	"aakerhus",
-	"sylvia",
-	"deutsch",
-	"remue",
-	"kespar",
-	"splitter",
-	"desierto",
-	"pelicula",
-	"episodio",
-	"rwerk",
-	"xhaven",
-	"erkste",
-	"przytul",
-	"potenzf",
-	"szalony",
-	"schweiz",
-	"verkackt",
-	"sottile",
-	"goldene",
-	"osterhase",
-	"elasmosaurio",
-	"ombra",
-	"ehlers",
-	"dejas",
-	"capitulo",
-	"et ses",
-	"tu sais",
-	"ma vision",
-	"v riti ",
-	"how could",
-	"new year",
-	" del ",
-	"maldicion",
-	"fernsehausstrahlung",
-	"the best bits of",
-	"jamella",
-	"kasper-sky",
-	"kasper internet",
-	"feiern",
-	"terpidana",
-	"borba za koralovo",
-	"sve pesme",
-	"minecraft",
-	"gasttoz",
-	"gastoz",
-	"batailles",
-	"maminka",
-	"adolphus",
-	"humaine",
-	"spain",
-	"michele",
-	"voulait",
-	"cekilis",
-	"igracke za decu",
-	"xperiene",
-	"show",
-	"symphony",
-}
-
-var censoredIds = []string{
-	"52vfFeJERfQ",
-	"DLk4SLmIDUU",
-	"VsNOHQfm02M",
-	"yfYfGnCVbHs",
-	"8zZ6tg2LXiM",
-	"-1CnR5qVh5E",
-	"DPxb3-7lakw",
-	"zKhPpVTUn_Q",
-	"vBggIcqV1rc",
-	"YrmKYtDnthk",
-	"YzqWmqeR43I",
-	"Id3kHQC9vPI",
-	"Ngke-HPnHok",
-	"7VPtdqnHxHw",
-	"Q6hTJ11ZGwU",
-	"n28-lRu5cpw",
-	"dl_kPk276oo",
-	"YsdOt6qc6o4",
-	"Tm7mOlgPlxA",
-	"X8BwFSHJpg4",
-	"QYrsrjgGh5g",
-	"_z6pgpPDXBY",
-	"7_ys2vKapLg",
-	"G7SnbTCsj28",
-	"2LzVPEoiacY",
-	"8QJozzsvPnU",
-	"KpLrIWB78sQ",
-	"CuV0mDu4GL4",
-	"c1-ywGJfS8U",
-	"sotlkpiczWk",
-	"wPUhMP7aGnw",
-	"AR0Jc1rh2N0",
-	"xuGex-B3GbQ",
-	"drEJEbHDgIA",
-	"JF4qkkgQsO4",
-	"Y4r7m-Payv8",
-	"0HDbPXN-HaE",
-	"yONB3IwxtlQ",
-	"BjtFDLOmEu8",
-	"cpF73znG7UM",
-	"2onSjJVgtpg",
-	"gRLppbNNCLI",
-	"smKnRR0ouds",
-	"5nElGb8odmk",
-	"xs_IiToWEEs",
-	"co4B3-BwcUY",
-	"QCHSP32z2nc",
-	"CRyDcmPHZy4",
-	"YyFNnHlDgP0",
-	"uVn9vpFlljE",
-	"LuYPcHVsyow",
-	"6sPavaRoEA8",
-	"JpG72eCdmKo",
-	"XL4TZVlGc3o",
-	"bAeHz5miEJg",
-	"6zCKejl_1bY",
-	"Ragr70eHvQg",
-	"7nDvQPYJpMg",
-	"jYU_doi3Y7w",
-	"5FqM9elA3AY",
-	"3Wha_dlJ9G0",
-	"bTLVcWEtk-0",
-	"WIqCOdLvDBs",
-	"x5-SgQVUY-c",
-	"MQPLlgJkvLc",
-	"Fu88sn45nlE",
-	"0Uq52kdn-MA",
-	"9sMBmQNPFTA",
-	"AiUBMthSJ9I",
-	"jAsHYIyp9fY",
-	"8nWgj3tk0kg",
-	"2lD_oXT4ssA",
-	"iT4ZXYso2kA",
-	"fuYMMWpRjkM",
-	"qgSiTwWVRlQ",
-	"9CtO4IlBrtM",
-	"cD5nttAuRM",
-	"TzZ2e_CsbAg",
-	"z4pecRAGn3k",
-	"U8MqpWcX7m8",
-	"veag9KGlq2I",
-	"xy53o1",
-	"xy53q1",
-	"x3osiz",
-	"x25ja2c",
-	"x4aha4",
-	"x7k5hx",
-	"x60rr7",
-	"x7k5ko",
-	"x4e7mn",
-	"xs4jyr",
-	"x7wviw",
-	"x5nyjf",
-	"x20uqv5",
-	"x20uvfy",
-	"x29i8ae",
-	"x2k0tnk",
-	"x2etl16",
-	"x2dv1ec",
-	"x196m5x",
-	"x2cz5es",
-	"x2p0jt2",
-	"x2r0sas",
-	"x33bdoj",
-	"4562474",
-	"21508130",
-	"14072389",
-	"145041047",
-	"163980203",
-	"165572645",
-	"168855693",
-	"61534934",
-	"15376700",
-	"73551241",
-	"80060489",
-}
-
-var (
-	reTitle = regexp.MustCompile(`[0-9A-Za-zžćčšđ_,]+`)
-	reAlpha = regexp.MustCompile(`[A-Za-zžćčšđ]+`)
-	reDesc  = regexp.MustCompile(`(?U)(\(|\[).*(\)|\])`)
-	reYear  = regexp.MustCompile(`(19\d{2}|20\d{2})`)
-	reExt   = regexp.MustCompile(`\.(?i:avi|mp4|flv|wmv|mpg|mpeg|mpeg4)$`)
-	reRip   = regexp.MustCompile(`(?i:xvid)?(tv|dvd)?(-|\s)(rip)(bg)?(audio)?`)
-	reChars = regexp.MustCompile(`(?i:braca grimm|i snupi [sš]ou|i snupi|charlie brown and snoopy|brzi gonzales i patak da[cč]a|patak da[cč]a i brzi gonzales|patak da[cč]a i elmer|patak da[cč]a i gicko prasi[cć]|i hello kitty|tom and jerry|tom i d[zž]eri [sš]ou|spongebob squarepants|paja patak i [sš]ilja|bini i sesil|masha i medved|elmer fudd|blinkibil|kockalone|najlepse bajke|stari sinhronizovani crtaci|popeye the sailor|kasper i drugari,|leghorn)`)
-	reTime  = regexp.MustCompile(`(\d{2})h(\d{2})m(\d{2})s`)
-	rePart  = regexp.MustCompile(`\s([\diI]{1,2})\.?\s?(?i:/|deo|od|part)\s?([\diI]{1,2})?\s*(?i:deo)?`)
-	rePart2 = regexp.MustCompile(`\s(?i:pt)\s?(\d{1,2})\s*`)
-
-	reTitleR     = regexp.MustCompile(`^(\d{1,2}\.?)\s?(\d{1,})?(.*)$`)
-	reTitleNotEp = regexp.MustCompile(`\d{2,}\s(?i:razbojnika|sati|malih|pljeskavica)`)
-	reTitle20    = regexp.MustCompile(`(\s20)`)
-
-	reE1 = regexp.MustCompile(`(?i:epizoda|epizida|epzioda|episode|epizodas|episoda|Эпизод)\s?(\d{1,3})`)
-	reE2 = regexp.MustCompile(`(\d{1,3})\.?-?\s?(?i:epizoda|epizida|epzioda|episode|epizodas|episoda)`)
-	reE3 = regexp.MustCompile(`\s(?i:ep|e)\.?\s*(\d{1,3})`)
-	reE4 = regexp.MustCompile(`(?:^|-|\.|\s)\s?(\d{1,3}\b)`)
-	reE5 = regexp.MustCompile(`(?i:s)(?:\d{1,2})(?i:e)(\d{2})(?:\d{1})?(?:a|b)`)
-	reE6 = regexp.MustCompile(`(?i:s)(?:\d{1,2})(?:e)(\d{1,2})`)
-
-	reS1 = regexp.MustCompile(`(?i:sezona|sezon)\s?(\d{1,2})`)
-	reS2 = regexp.MustCompile(`(\d{1,2})\.?\s?(?i:sezona|sezon)`)
-	reS3 = regexp.MustCompile(`(?i:s)\s?(\d{1,2})`)
-	reS4 = regexp.MustCompile(`(\d{1,2})(?i:x)`)
-)
-
 var (
 	wg       sync.WaitGroup
-	cartoons []cartoon
+	cartoons []Cartoon
 )
 
-type multiSorter struct {
-	cartoons []cartoon
+var ctx, cancel = context.WithCancel(context.TODO())
+var timeOut time.Duration = time.Duration(10 * time.Second)
+
+var tr = &http.Transport{
+	Dial:                func(network, addr string) (net.Conn, error) { return net.DialTimeout(network, addr, timeOut) },
+	TLSHandshakeTimeout: timeOut,
+	TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
+	MaxIdleConnsPerHost: 10,
 }
 
-func (ms *multiSorter) Sort(cartoons []cartoon) {
+var client = &http.Client{
+	Transport: tr,
+	Timeout:   timeOut,
+}
+
+var clientGoogle = &http.Client{
+	Transport: &transport.APIKey{
+		Key:       "YOUR_API_KEY",
+		Transport: tr,
+	},
+	Timeout: timeOut,
+}
+
+type multiSorter struct {
+	cartoons []Cartoon
+}
+
+func (ms *multiSorter) Sort(cartoons []Cartoon) {
 	ms.cartoons = cartoons
 	sort.Sort(ms)
 }
@@ -524,7 +212,7 @@ func (ms *multiSorter) Swap(i, j int) {
 func (ms *multiSorter) Less(i, j int) bool {
 	p, q := &ms.cartoons[i], &ms.cartoons[j]
 
-	episode := func(c1, c2 *cartoon) bool {
+	episode := func(c1, c2 *Cartoon) bool {
 		if c1.Episode == -1 {
 			return false
 		} else if c2.Episode == -1 {
@@ -533,7 +221,7 @@ func (ms *multiSorter) Less(i, j int) bool {
 		return c1.Episode < c2.Episode
 	}
 
-	season := func(c1, c2 *cartoon) bool {
+	season := func(c1, c2 *Cartoon) bool {
 		if c1.Season == -1 {
 			return false
 		} else if c2.Season == -1 {
@@ -556,8 +244,7 @@ func (ms *multiSorter) Less(i, j int) bool {
 	return episode(p, q)
 }
 
-func youTube(char character) {
-
+func youTube(char Character) {
 	defer wg.Done()
 	defer func() {
 		if r := recover(); r != nil {
@@ -565,15 +252,7 @@ func youTube(char character) {
 		}
 	}()
 
-	const apiKey = "AIzaSyCzFjzxxyS_GNEAsyFxd1Ss8CbaJNQAmjs"
-
-	tr := http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}
-
-	httpClient := &http.Client{
-		Transport: &transport.APIKey{Key: apiKey, Transport: &tr},
-	}
-
-	yt, err := youtube.New(httpClient)
+	yt, err := youtube.New(clientGoogle)
 	if err != nil {
 		log.Print("Error creating YouTube client:", err)
 		return
@@ -583,11 +262,16 @@ func youTube(char character) {
 	altname := strings.ToLower(char.AltName)
 	altname2 := strings.ToLower(char.AltName2)
 
-	getResponse := func(token string) *youtube.SearchListResponse {
+	getSearchResponse := func(token string) *youtube.SearchListResponse {
+		d := char.Duration
+		if char.Duration == "xlong" {
+			d = "long"
+		}
+
 		apiCall := yt.Search.List("id,snippet").
 			Q(getQuery(char, false)).
 			MaxResults(50).
-			VideoDuration(char.Duration).
+			VideoDuration(d).
 			Type("video").
 			PageToken(token)
 
@@ -599,18 +283,45 @@ func youTube(char character) {
 		return response
 	}
 
-	parseResponse := func(response *youtube.SearchListResponse) {
-		for _, video := range response.Items {
+	getVideoResponse := func(r *youtube.SearchListResponse) *youtube.VideoListResponse {
+		ids := make([]string, 0)
+		for _, video := range r.Items {
+			ids = append(ids, video.Id.VideoId)
+		}
+
+		apiCall := yt.Videos.List("id,contentDetails").Id(strings.Join(ids, ","))
+
+		response, err := apiCall.Do()
+		if err != nil {
+			log.Print("Error making YouTube API call:", err.Error())
+			return nil
+		}
+		return response
+	}
+
+	parseResponse := func(searchResponse *youtube.SearchListResponse, videoResponse *youtube.VideoListResponse) {
+		for _, video := range searchResponse.Items {
 			videoId := video.Id.VideoId
 			videoTitle := strings.ToLower(video.Snippet.Title)
 			videoThumbSmall := video.Snippet.Thumbnails.Default.Url
 			videoThumbMedium := video.Snippet.Thumbnails.Medium.Url
 			videoThumbLarge := video.Snippet.Thumbnails.High.Url
 
-			if isValidTitle(videoTitle, name, altname, altname2, videoId) {
+			var videoDuration float64
+			for _, v := range videoResponse.Items {
+				if videoId == v.Id {
+					d, err := duration.FromString(v.ContentDetails.Duration)
+					if err != nil {
+						break
+					}
+					videoDuration = d.ToDuration().Seconds()
+				}
+			}
+
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && char.Duration == getDuration(videoDuration) {
 				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
-				c := cartoon{
+				c := Cartoon{
 					videoId,
 					name,
 					videoTitle,
@@ -622,6 +333,8 @@ func youTube(char character) {
 					videoThumbSmall,
 					videoThumbMedium,
 					videoThumbLarge,
+					videoDuration,
+					formatDuration(videoDuration),
 				}
 
 				cartoons = append(cartoons, c)
@@ -629,18 +342,23 @@ func youTube(char character) {
 		}
 	}
 
-	response := getResponse("")
-	parseResponse(response)
+	searchResponse := getSearchResponse("")
+	if searchResponse != nil {
+		videoResponse := getVideoResponse(searchResponse)
+		parseResponse(searchResponse, videoResponse)
 
-	if response.NextPageToken != "" {
-		response = getResponse(response.NextPageToken)
-		parseResponse(response)
+		if searchResponse.NextPageToken != "" {
+			searchResponse = getSearchResponse(searchResponse.NextPageToken)
+			if searchResponse != nil {
+				videoResponse = getVideoResponse(searchResponse)
+				parseResponse(searchResponse, videoResponse)
+			}
+		}
 	}
 
 }
 
-func dailyMotion(char character) {
-
+func dailyMotion(char Character) {
 	defer wg.Done()
 	defer func() {
 		if r := recover(); r != nil {
@@ -654,28 +372,24 @@ func dailyMotion(char character) {
 	altname := strings.ToLower(char.AltName)
 	altname2 := strings.ToLower(char.AltName2)
 
-	timeout := time.Duration(6 * time.Second)
-
-	dialTimeout := func(network, addr string) (net.Conn, error) {
-		return net.DialTimeout(network, addr, timeout)
-	}
-
-	transport := http.Transport{
-		Dial:            dialTimeout,
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	httpClient := http.Client{
-		Transport: &transport,
-	}
-
 	getResponse := func(page string) ([]interface{}, bool) {
-		res, err := httpClient.Get(fmt.Sprintf(uri, getQuery(char, true), page))
+		req, err := http.NewRequest("GET", fmt.Sprintf(uri, getQuery(char, true), page), nil)
 		if err != nil {
-			log.Print("Error making DailyMotion API call:", err.Error())
+			log.Print("Error making DailyMotion API call: %v", err.Error())
 			return nil, false
 		}
-		body, _ := ioutil.ReadAll(res.Body)
+
+		res, err := client.Do(req)
+		if err != nil {
+			log.Print("Error making DailyMotion API call: %v", err.Error())
+			return nil, false
+		}
+
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			log.Print("Error making DailyMotion API call: %v", err.Error())
+			return nil, false
+		}
 		res.Body.Close()
 
 		var data map[string]interface{}
@@ -716,12 +430,12 @@ func dailyMotion(char character) {
 			videoThumbMedium := video["thumbnail_360_url"].(string)
 			videoThumbLarge := video["thumbnail_480_url"].(string)
 
-			videoDuration := getDuration(video["duration"].(float64))
+			videoDuration := video["duration"].(float64)
 
-			if isValidTitle(videoTitle, name, altname, altname2, videoId) && char.Duration == videoDuration {
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && char.Duration == getDuration(videoDuration) {
 				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
-				c := cartoon{
+				c := Cartoon{
 					videoId,
 					name,
 					videoTitle,
@@ -733,6 +447,8 @@ func dailyMotion(char character) {
 					videoThumbSmall,
 					videoThumbMedium,
 					videoThumbLarge,
+					videoDuration,
+					formatDuration(videoDuration),
 				}
 
 				cartoons = append(cartoons, c)
@@ -754,8 +470,7 @@ func dailyMotion(char character) {
 
 }
 
-func vimeo(char character) {
-
+func vimeo(char Character) {
 	defer wg.Done()
 	defer func() {
 		if r := recover(); r != nil {
@@ -763,27 +478,12 @@ func vimeo(char character) {
 		}
 	}()
 
-	const apiKey = "e0ebf580f00d1345ea7a934c3703e2d9"
+	const apiKey = "YOUR_API_KEY"
 	uri := "https://api.vimeo.com/videos?query=%s&page=%s&per_page=100&sort=relevant"
 
 	name := strings.ToLower(char.Name)
 	altname := strings.ToLower(char.AltName)
 	altname2 := strings.ToLower(char.AltName2)
-
-	timeout := time.Duration(6 * time.Second)
-
-	dialTimeout := func(network, addr string) (net.Conn, error) {
-		return net.DialTimeout(network, addr, timeout)
-	}
-
-	transport := http.Transport{
-		Dial:            dialTimeout,
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	httpClient := http.Client{
-		Transport: &transport,
-	}
 
 	getResponse := func(page string) []interface{} {
 		req, err := http.NewRequest("GET", fmt.Sprintf(uri, getQuery(char, true), page), nil)
@@ -792,9 +492,10 @@ func vimeo(char character) {
 			return nil
 		}
 
+		req = req.WithContext(ctx)
 		req.Header.Set("Authorization", "bearer "+apiKey)
 		req.Header.Set("Accept", "application/vnd.vimeo.video+json;version=3.2")
-		res, err := httpClient.Do(req)
+		res, err := client.Do(req)
 		if err != nil {
 			log.Print("Error making Vimeo API call:", err.Error())
 			return nil
@@ -847,12 +548,12 @@ func vimeo(char character) {
 			videoThumbMedium := sizes[2].(map[string]interface{})["link"].(string)
 			videoThumbLarge := sizes[1].(map[string]interface{})["link"].(string)
 
-			videoDuration := getDuration(video["duration"].(float64))
+			videoDuration := video["duration"].(float64)
 
-			if isValidTitle(videoTitle, name, altname, altname2, videoId) && char.Duration == videoDuration {
+			if isValidTitle(videoTitle, name, altname, altname2, videoId) && char.Duration == getDuration(videoDuration) {
 				formattedTitle := getFormattedTitle(videoTitle, name, altname, altname2)
 
-				c := cartoon{
+				c := Cartoon{
 					videoId,
 					name,
 					videoTitle,
@@ -864,6 +565,8 @@ func vimeo(char character) {
 					videoThumbSmall,
 					videoThumbMedium,
 					videoThumbLarge,
+					videoDuration,
+					formatDuration(videoDuration),
 				}
 
 				cartoons = append(cartoons, c)
@@ -878,6 +581,13 @@ func vimeo(char character) {
 
 }
 
+func formatDuration(videoDuration float64) string {
+	s := int(videoDuration)
+	minutes := s / 60
+	seconds := s - (minutes * 60)
+	return fmt.Sprintf("%02d:%02d", minutes, seconds)
+}
+
 func getDuration(videoDuration float64) string {
 	minutes := videoDuration / 60
 	switch {
@@ -885,8 +595,10 @@ func getDuration(videoDuration float64) string {
 		return "short"
 	case minutes >= 4 && minutes <= 20:
 		return "medium"
-	case minutes > 20:
+	case minutes > 20 && minutes <= 50:
 		return "long"
+	case minutes > 50:
+		return "xlong"
 	default:
 		return "any"
 	}
@@ -944,7 +656,7 @@ func getFormattedTitle(videoTitle string, name string, altname string, altname2 
 
 	title = reTitleR.ReplaceAllString(title, "$3")
 
-	if strings.HasPrefix(title, "i ") || strings.HasPrefix(title, "and ") || strings.HasPrefix(title, " i ") || strings.HasPrefix(title, "u epizodi") {
+	if strings.HasPrefix(title, "i ") || strings.HasPrefix(title, "and ") || strings.HasPrefix(title, " i ") || strings.HasPrefix(title, "u ") || strings.HasPrefix(title, "u epizodi") {
 		title = fmt.Sprintf("%s %s", name, title)
 	}
 
@@ -1068,7 +780,7 @@ func getSeason(videoTitle string) int {
 	return s
 }
 
-func getQuery(char character, escape bool) string {
+func getQuery(char Character, escape bool) string {
 	query := ""
 	if char.Query != "" {
 		query = char.Query
@@ -1077,9 +789,11 @@ func getQuery(char character, escape bool) string {
 	} else {
 		query = char.Name
 	}
+
 	if escape {
 		query = url.QueryEscape(query)
 	}
+
 	return query
 }
 
@@ -1089,11 +803,13 @@ func isCensored(videoTitle string, videoId string) bool {
 			return true
 		}
 	}
+
 	for _, id := range censoredIds {
 		if id == videoId {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -1106,6 +822,7 @@ func isValidTitle(videoTitle string, name string, altname string, altname2 strin
 			return true
 		}
 	}
+
 	if altname != "" {
 		if strings.HasPrefix(videoTitle, altname) {
 			if !isCensored(videoTitle, videoId) {
@@ -1113,6 +830,7 @@ func isValidTitle(videoTitle string, name string, altname string, altname2 strin
 			}
 		}
 	}
+
 	if altname2 != "" {
 		if strings.HasPrefix(videoTitle, altname2) {
 			if !isCensored(videoTitle, videoId) {
@@ -1120,7 +838,12 @@ func isValidTitle(videoTitle string, name string, altname string, altname2 strin
 			}
 		}
 	}
+
 	return false
+}
+
+func Cancel() {
+	cancel()
 }
 
 func List() (string, error) {
@@ -1128,11 +851,12 @@ func List() (string, error) {
 	if err != nil {
 		return "empty", err
 	}
+
 	return string(js[:]), nil
 }
 
 func Search(query string) (string, error) {
-	char := new(character)
+	char := new(Character)
 	for _, c := range characters {
 		if query == c.Name || query == c.AltName {
 			char = &c
@@ -1140,9 +864,11 @@ func Search(query string) (string, error) {
 		}
 	}
 
+	ctx, cancel = context.WithCancel(context.TODO())
+
 	if char.Name != "" {
 		wg.Add(3)
-		cartoons = make([]cartoon, 0)
+		cartoons = make([]Cartoon, 0)
 		go youTube(*char)
 		go dailyMotion(*char)
 		go vimeo(*char)
@@ -1165,6 +891,7 @@ func Search(query string) (string, error) {
 func Extract(service string, videoId string) (string, error) {
 	var url string
 	var err error
+
 	switch {
 	case service == "youtube":
 		url, err = vidextr.YouTube(videoId)
@@ -1182,9 +909,24 @@ func Extract(service string, videoId string) (string, error) {
 		return "empty", nil
 	}
 
-	js, err := json.Marshal(url)
+	return url, nil
+}
+
+func CheckUpdate() bool {
+	ver, _ := strconv.ParseFloat(Version, 64)
+	req, err := http.NewRequest("HEAD", fmt.Sprintf("https://crtaci.rs/download/crtaci-%.1f.apk", ver+0.1), nil)
 	if err != nil {
-		return "empty", err
+		return false
 	}
-	return string(js[:]), nil
+
+	res, err := client.Do(req)
+	if err != nil {
+		return false
+	}
+
+	if res.StatusCode == http.StatusOK {
+		return true
+	}
+
+	return false
 }

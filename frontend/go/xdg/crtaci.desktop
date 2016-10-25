@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Crtaci
+Exec=crtaci
+Terminal=false
+Type=Application
+Icon=crtaci
+Comment=Good old cartoons
+Categories=AudioVideo;Video;Player;TV;
