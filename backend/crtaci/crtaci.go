@@ -186,7 +186,7 @@ var client = &http.Client{
 
 var clientGoogle = &http.Client{
 	Transport: &transport.APIKey{
-		Key:       "AIzaSyCzFjzxxyS_GNEAsyFxd1Ss8CbaJNQAmjs",
+		Key:       "YOUR_API_KEY",
 		Transport: tr,
 	},
 	Timeout: timeOut,
@@ -478,7 +478,7 @@ func vimeo(char Character) {
 		}
 	}()
 
-	const apiKey = "e0ebf580f00d1345ea7a934c3703e2d9"
+	const apiKey = "YOUR_API_KEY"
 	uri := "https://api.vimeo.com/videos?query=%s&page=%s&per_page=100&sort=relevant"
 
 	name := strings.ToLower(char.Name)
