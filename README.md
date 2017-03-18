@@ -10,11 +10,6 @@ Web Site
 
 https://crtaci.rs
 
-Demo
--------
-
-https://demo.crtaci.rs
-
 License
 -------
 
