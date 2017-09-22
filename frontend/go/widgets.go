@@ -3,12 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
-	"net"
-	"net/http"
 	"strings"
-	"time"
 
 	"github.com/therecipe/qt/core"
 	"github.com/therecipe/qt/gui"
@@ -19,24 +15,28 @@ import (
 )
 
 //go:generate qtmoc
+
+// Object type
 type Object struct {
 	core.QObject
 
-	_ func(value string) `signal:finished`
-	_ func(value string) `signal:finished2`
+	_ func(value string) `signal:"finished"`
+	_ func(value string) `signal:"finished2"`
 }
 
-//go:generate qtmoc
+// Object2 type
 type Object2 struct {
 	core.QObject
 
-	_ func(value string) `signal:valueChanged`
+	_ func(value string) `signal:"valueChanged"`
 }
 
+// CharactersList type
 type CharactersList struct {
 	*widgets.QListWidget
 }
 
+// NewCharactersList returns new list
 func NewCharactersList(w *widgets.QWidget) *CharactersList {
 	listWidget := widgets.NewQListWidget(w)
 	listWidget.SetUniformItemSizes(true)
@@ -65,17 +65,18 @@ func NewCharactersList(w *widgets.QWidget) *CharactersList {
 	return list
 }
 
+// Init initializes list
 func (l *CharactersList) Init() {
 	list, err := crtaci.List()
 	if err != nil {
-		log.Printf("ERROR: List: %s\n", err.Error())
+		log.Printf("Error: List: %s\n", err.Error())
 		return
 	}
 
 	characters := make([]crtaci.Character, 0)
 	err = json.Unmarshal([]byte(list), &characters)
 	if err != nil {
-		log.Printf("ERROR: Unmarshal: %s\n", err.Error())
+		log.Printf("Error: Unmarshal: %s\n", err.Error())
 		return
 	}
 
@@ -85,10 +86,12 @@ func (l *CharactersList) Init() {
 	}
 }
 
+// CharactersListItem type
 type CharactersListItem struct {
 	*widgets.QListWidgetItem
 }
 
+// NewCharactersListItem returns new item
 func NewCharactersListItem(l *CharactersList, c crtaci.Character) *CharactersListItem {
 	font := gui.NewQFont()
 	font.SetFamily("Comic Sans MS")
@@ -112,11 +115,13 @@ func NewCharactersListItem(l *CharactersList, c crtaci.Character) *CharactersLis
 	return &CharactersListItem{item}
 }
 
+// CartoonsList
 type CartoonsList struct {
 	*Object
 	*widgets.QListWidget
 }
 
+// NewCartoonsList returns new cartoon list
 func NewCartoonsList(w *widgets.QWidget) *CartoonsList {
 	listWidget := widgets.NewQListWidget(w)
 	listWidget.SetUniformItemSizes(true)
@@ -170,11 +175,12 @@ func NewCartoonsList(w *widgets.QWidget) *CartoonsList {
 	return &CartoonsList{NewObject(w), listWidget}
 }
 
+// Init initializes list
 func (l *CartoonsList) Init(manager *network.QNetworkAccessManager, data string) {
 	var cartoons []crtaci.Cartoon
 	err := json.Unmarshal([]byte(data), &cartoons)
 	if err != nil {
-		log.Printf("ERROR: Unmarshal: %s\n", err.Error())
+		log.Printf("Error: Unmarshal: %s\n", err.Error())
 		return
 	}
 
@@ -183,14 +189,16 @@ func (l *CartoonsList) Init(manager *network.QNetworkAccessManager, data string)
 	}
 
 	for idx, c := range cartoons {
-		item := NewCartoonsListItem(l, c)
+		var item = NewCartoonsListItem(l, c)
 		l.InsertItem(idx, item)
 
 		reply := manager.Get(network.NewQNetworkRequest(core.NewQUrl3(c.ThumbMedium, core.QUrl__TolerantMode)))
 		reply.ConnectFinished(func() {
+			defer reply.DeleteLater()
+
 			if reply.IsReadable() && reply.Error() == network.QNetworkReply__NoError {
 				data := reply.ReadAll()
-				if data != "" {
+				if data.ConstData() != "" {
 					pixmap := gui.NewQPixmap()
 					ok := pixmap.LoadFromData2(data, "JPG", core.Qt__AutoColor)
 					if ok {
@@ -198,81 +206,17 @@ func (l *CartoonsList) Init(manager *network.QNetworkAccessManager, data string)
 					}
 				}
 			}
-			if reply.IsFinished() {
-				reply.DeleteLater()
-			}
 		})
 	}
 }
 
-func (l *CartoonsList) InitWin32(data string) {
-	var cartoons []crtaci.Cartoon
-	err := json.Unmarshal([]byte(data), &cartoons)
-	if err != nil {
-		log.Printf("ERROR: Unmarshal: %s\n", err.Error())
-		return
-	}
-
-	if l.Count() > 0 {
-		l.Clear()
-	}
-
-	client := &http.Client{
-		Transport: &http.Transport{
-			Dial:                func(network, addr string) (net.Conn, error) { return net.DialTimeout(network, addr, 5*time.Second) },
-			MaxIdleConnsPerHost: 10,
-		},
-		Timeout: 10 * time.Second,
-	}
-
-	for idx, c := range cartoons {
-		item := NewCartoonsListItem(l, c)
-		l.InsertItem(idx, item)
-
-		var image []byte
-
-		item.ConnectFinished(func(data string) {
-			pixmap := gui.NewQPixmap()
-			ok := pixmap.LoadFromData2(string(image), "JPG", core.Qt__AutoColor)
-			if ok {
-				item.SetIcon(gui.NewQIcon2(pixmap.Scaled2(240, 180, core.Qt__IgnoreAspectRatio, core.Qt__SmoothTransformation)))
-			}
-		})
-
-		go func(item *CartoonsListItem, uri string) {
-			req, err := http.NewRequest("GET", uri, nil)
-			if err != nil {
-				log.Printf("ERROR: %s\n", err.Error())
-				return
-			}
-
-			res, err := client.Do(req)
-			if err != nil {
-				log.Printf("ERROR: %s\n", err.Error())
-				return
-			}
-
-			data, err := ioutil.ReadAll(res.Body)
-			if err != nil {
-				log.Printf("ERROR: ReadAll: %s\n", err.Error())
-				return
-			}
-			res.Body.Close()
-
-			image = data
-
-			item.Finished(string(data))
-		}(item, c.ThumbMedium)
-	}
-
-	l.SetCurrentRow(0)
-}
-
+// CartoonsListItem type
 type CartoonsListItem struct {
 	*Object
 	*widgets.QListWidgetItem
 }
 
+// NewCartoonsListItem returns new cartoons list item
 func NewCartoonsListItem(l *CartoonsList, c crtaci.Cartoon) *CartoonsListItem {
 	desc := ""
 	if c.Season != -1 {
@@ -300,6 +244,7 @@ func NewCartoonsListItem(l *CartoonsList, c crtaci.Cartoon) *CartoonsListItem {
 	return &CartoonsListItem{NewObject(l), item}
 }
 
+// NewAbout returns new about dialog
 func NewAbout(parent *widgets.QWidget) *widgets.QDialog {
 	dialog := widgets.NewQDialog(parent, 0)
 	dialog.SetWindowTitle("About")
@@ -334,6 +279,7 @@ func NewAbout(parent *widgets.QWidget) *widgets.QDialog {
 	return dialog
 }
 
+// NewAbout returns new help dialog
 func NewHelp(parent *widgets.QWidget) *widgets.QDialog {
 	dialog := widgets.NewQDialog(parent, 0)
 	dialog.SetWindowTitle("Shortcuts (mpv)")

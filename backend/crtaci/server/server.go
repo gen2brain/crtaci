@@ -1,18 +1,3 @@
-// Author: Milan Nikolic <gen2brain@gmail.com>
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 package main
 
 import (
@@ -31,28 +16,44 @@ import (
 	"github.com/gen2brain/crtaci/backend/crtaci"
 )
 
-var (
-	basedir, _ = filepath.Abs(filepath.Dir(os.Args[0]))
-	template   []byte
-)
+// Server struct
+type Server struct {
+	Bind         string
+	BaseDir      string
+	Template     []byte
+	ReadTimeout  int
+	WriteTimeout int
+}
 
-func setHeader(w http.ResponseWriter) {
+// NewServer returns new Server
+func NewServer() *Server {
+	s := &Server{}
+	return s
+}
+
+// Header sets server headers
+func (s *Server) Header(w http.ResponseWriter) {
 	w.Header().Set("Server", fmt.Sprintf("crtaci-http/%s", crtaci.Version))
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 }
 
-func handleList(w http.ResponseWriter, r *http.Request) {
-	setHeader(w)
+// List lists cartoon characters
+func (s *Server) List(w http.ResponseWriter, r *http.Request) {
+	s.Header(w)
+
 	js, err := crtaci.List()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	w.Write([]byte(js))
+	return
 }
 
-func handleSearch(w http.ResponseWriter, r *http.Request) {
-	setHeader(w)
+// Search searches for cartoons
+func (s *Server) Search(w http.ResponseWriter, r *http.Request) {
+	s.Header(w)
 
 	query := r.FormValue("q")
 
@@ -63,19 +64,22 @@ func handleSearch(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if js == "" {
+		if js == "" || js == "empty" {
 			http.Error(w, "404 Not Found", http.StatusNotFound)
 			return
 		}
+
 		w.Write([]byte(js))
+		return
 	} else {
-		http.Error(w, "403 Forbidden", http.StatusForbidden)
+		http.Error(w, "400 Bad Request", http.StatusBadRequest)
 		return
 	}
 }
 
-func handleExtract(w http.ResponseWriter, r *http.Request) {
-	setHeader(w)
+// Extract extracts video uri
+func (s *Server) Extract(w http.ResponseWriter, r *http.Request) {
+	s.Header(w)
 
 	service := r.FormValue("srv")
 	videoId := r.FormValue("id")
@@ -86,7 +90,7 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		if js == "empty" {
+		if js == "" || js == "empty" {
 			http.Error(w, "", http.StatusNotFound)
 			return
 		} else {
@@ -94,21 +98,24 @@ func handleExtract(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		http.Error(w, "", http.StatusForbidden)
+		http.Error(w, "400 Bad Request", http.StatusBadRequest)
 		return
 	}
 }
 
-func handleAssets(w http.ResponseWriter, r *http.Request) {
-	path := filepath.Join(basedir, "public", r.URL.Path)
+// Public handles public files
+func (s *Server) Public(w http.ResponseWriter, r *http.Request) {
+	path := filepath.Join(s.BaseDir, "public", r.URL.Path)
 	if f, err := os.Stat(path); err == nil && !f.IsDir() {
 		http.ServeFile(w, r, path)
 		return
 	}
+
 	http.NotFound(w, r)
 }
 
-func handleIndex(w http.ResponseWriter, r *http.Request) {
+// Index handles index
+func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 	list, err := crtaci.List()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -145,7 +152,17 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var h1, h2 string
+	html := string(s.Template)
+	html = strings.Replace(html, "{TITLE}", "Crtaći / "+strings.Title(query), -1)
+	html = strings.Replace(html, "{CHARACTERS}", s.Characters(characters, query), -1)
+	html = strings.Replace(html, "{CARTOONS}", s.Cartoons(cartoons), -1)
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Write([]byte(html))
+}
+
+// Characters returns characters html
+func (s *Server) Characters(characters []crtaci.Character, query string) (h string) {
 	for idx, c := range characters {
 		name := c.Name
 		icon := c.Name
@@ -166,9 +183,14 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 			class = " class=\"selected\""
 		}
 
-		h1 += fmt.Sprintf("<li%s><img src=\"%s\" width=\"48\" height=\"48\" alt=\"\"/><a href=\"?c=%s\" title=\"%s\">%s</a></li>", class, icon, name, c.Name, c.Name)
+		h += fmt.Sprintf("<li%s><img src=\"%s\" width=\"48\" height=\"48\" alt=\"%s\"/><a href=\"?c=%s\" title=\"%s\">%s</a></li>", class, icon, c.Name, name, c.Name, c.Name)
 	}
 
+	return
+}
+
+// Cartoons returns cartoons html
+func (s *Server) Cartoons(cartoons []crtaci.Cartoon) (h string) {
 	for _, c := range cartoons {
 		image := c.ThumbLarge
 		if c.Service != "youtube" {
@@ -190,42 +212,51 @@ func handleIndex(w http.ResponseWriter, r *http.Request) {
 			se = " - " + se
 		}
 
-		h2 += fmt.Sprintf("<li><div class=\"image\"><a class=\"media\" href=\"%s\"><img class=\"thumb\" data-original=\"%s\" width=\"240\" height=\"180\"/><div class=\"play\"></div></a></div><div class=\"text\">%s%s (%s)</div></li>", c.Url, image, c.FormattedTitle, se, c.DurationString)
+		h += fmt.Sprintf("<li><div class=\"image\"><a class=\"media\" href=\"%s\"><img class=\"thumb\" data-original=\"%s\" width=\"240\" height=\"180\"/><div class=\"play\"></div></a></div><div class=\"text\">%s%s (%s)</div></li>",
+			c.Url, image, c.FormattedTitle, se, c.DurationString)
 	}
 
-	html := string(template)
-	html = strings.Replace(html, "{TITLE}", "Crtaći / "+strings.Title(query), -1)
-	html = strings.Replace(html, "{CHARACTERS}", h1, -1)
-	html = strings.Replace(html, "{CARTOONS}", h2, -1)
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(html))
+	return
 }
 
-func ListenAndServe(bind string) {
-	http.HandleFunc("/list", handleList)
-	http.HandleFunc("/search", handleSearch)
-	http.HandleFunc("/extract", handleExtract)
-	http.HandleFunc("/assets/", handleAssets)
-	http.HandleFunc("/", handleIndex)
+// ListenAndServe listens on the TCP address and serves requests
+func (s *Server) ListenAndServe() {
+	http.HandleFunc("/list", s.List)
+	http.HandleFunc("/search", s.Search)
+	http.HandleFunc("/extract", s.Extract)
+	http.HandleFunc("/assets/", s.Public)
+	http.HandleFunc("/download/", s.Public)
+	http.HandleFunc("/", s.Index)
 
-	l, err := net.Listen("tcp4", bind)
+	l, err := net.Listen("tcp4", s.Bind)
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	http.Serve(l, nil)
 }
 
 func main() {
-	bind := flag.String("bind", ":7313", "Bind address")
+	srv := NewServer()
+
+	flag.StringVar(&srv.Bind, "bind-addr", ":7313", "Bind address")
+	flag.IntVar(&srv.ReadTimeout, "read-timeout", 5, "Read timeout (seconds)")
+	flag.IntVar(&srv.WriteTimeout, "write-timeout", 15, "Write timeout (seconds)")
 	flag.Parse()
 
 	var err error
-	template, err = ioutil.ReadFile(filepath.Join(basedir, "public", "assets", "view.html"))
+
+	srv.BaseDir, err = filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 
-	ListenAndServe(*bind)
+	srv.Template, err = ioutil.ReadFile(filepath.Join(srv.BaseDir, "public", "assets", "view.html"))
+	if err != nil {
+		log.Fatal(err)
+		return
+	}
+
+	srv.ListenAndServe()
 }

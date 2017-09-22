@@ -2,14 +2,14 @@
 	"FixedFileInfo":
 	{
 		"FileVersion": {
-			"Major": 2,
-			"Minor": 3,
+			"Major": 1,
+			"Minor": 9,
 			"Patch": 0,
 			"Build": 0
 		},
 		"ProductVersion": {
-			"Major": 2,
-			"Minor": 3,
+			"Major": 1,
+			"Minor": 9,
 			"Patch": 0,
 			"Build": 0
 		},
@@ -24,14 +24,14 @@
 		"Comments": "Crtaći searches YouTube, DailyMotion and Vimeo for good old cartoons",
 		"CompanyName": "",
 		"FileDescription": "Crtaci",
-		"FileVersion": "1.8.0",
+		"FileVersion": "1.9.0",
 		"InternalName": "",
 		"LegalCopyright": "",
 		"LegalTrademarks": "",
 		"OriginalFilename": "crtaci.exe",
 		"PrivateBuild": "",
 		"ProductName": "Crtaci",
-		"ProductVersion": "1.8.0",
+		"ProductVersion": "1.9.0",
 		"SpecialBuild": ""
 	},
 	"VarFileInfo":

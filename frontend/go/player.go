@@ -15,18 +15,19 @@ import (
 	"gitlab.com/hannahxy/go-mpv"
 )
 
-//go:generate qtmoc
+// Object3 type
 type Object3 struct {
 	core.QObject
 
-	_ func() `signal:paused`
-	_ func() `signal:unpaused`
-	_ func() `signal:startFile`
-	_ func() `signal:fileLoaded`
-	_ func() `signal:endFile`
-	_ func() `signal:shutdown`
+	_ func() `signal:"paused"`
+	_ func() `signal:"unpaused"`
+	_ func() `signal:"startFile"`
+	_ func() `signal:"fileLoaded"`
+	_ func() `signal:"endFile"`
+	_ func() `signal:"shutdown"`
 }
 
+// Player type
 type Player struct {
 	*Object3
 
@@ -37,10 +38,12 @@ type Player struct {
 	started bool
 }
 
+// NewPlayer returns new player
 func NewPlayer(w *widgets.QWidget) *Player {
 	return &Player{NewObject3(w), nil, w, false, false}
 }
 
+// Init initialize player
 func (p *Player) Init() {
 	p.Mpv = mpv.Create()
 	p.Mpv.RequestLogMessages("no")
@@ -74,31 +77,35 @@ func (p *Player) Init() {
 
 	err := p.Mpv.Initialize()
 	if err != nil {
-		log.Printf("ERROR: Initialize: %s\n", err.Error())
+		log.Printf("Error: Initialize: %s\n", err.Error())
 	}
 }
 
+// SetOption sets option
 func (p *Player) SetOption(name string, format mpv.Format, data interface{}) {
 	err := p.Mpv.SetOption(name, format, data)
 	if err != nil {
-		log.Printf("ERROR: SetOption %s: %s\n", name, err.Error())
+		log.Printf("Error: SetOption %s: %s\n", name, err.Error())
 	}
 }
 
+// SetOptionString sets string option
 func (p *Player) SetOptionString(name, value string) {
 	err := p.Mpv.SetOptionString(name, value)
 	if err != nil {
-		log.Printf("ERROR: SetOptionString %s: %s\n", name, err.Error())
+		log.Printf("Error: SetOptionString %s: %s\n", name, err.Error())
 	}
 }
 
+// Rotate rotates video
 func (p *Player) Rotate(r int64) {
 	err := p.Mpv.SetOption("video-rotate", mpv.FORMAT_INT64, r)
 	if err != nil {
-		log.Printf("ERROR: video-rotate: %s\n", err.Error())
+		log.Printf("Error: video-rotate: %s\n", err.Error())
 	}
 }
 
+// Play plays video
 func (p *Player) Play(url string, title string) {
 	if title != "" {
 		p.SetOptionString("force-media-title", title)
@@ -106,7 +113,7 @@ func (p *Player) Play(url string, title string) {
 
 	err := p.Mpv.Command([]string{"loadfile", url})
 	if err != nil {
-		log.Printf("ERROR: loadfile: %s\n", err.Error())
+		log.Printf("Error: loadfile: %s\n", err.Error())
 	}
 
 	for {
@@ -124,23 +131,27 @@ func (p *Player) Play(url string, title string) {
 	p.Shutdown()
 }
 
+// Stop stops video
 func (p *Player) Stop() {
 	if p.IsStarted() {
 		err := p.Mpv.Command([]string{"stop"})
 		if err != nil {
-			log.Printf("ERROR: stop: %s\n", err.Error())
+			log.Printf("Error: stop: %s\n", err.Error())
 		}
 	}
 }
 
+// IsPaused checks if player is paused
 func (p *Player) IsPaused() bool {
 	return p.paused
 }
 
+// IsStarted checks if player is started
 func (p *Player) IsStarted() bool {
 	return p.started
 }
 
+// handleEvent handles player events
 func (p *Player) handleEvent(e *mpv.Event) {
 	switch e.Event_Id {
 	case mpv.EVENT_PAUSE:
@@ -159,6 +170,6 @@ func (p *Player) handleEvent(e *mpv.Event) {
 	case mpv.EVENT_LOG_MESSAGE:
 		s := (*C.struct_mpv_event_log_message)(e.Data)
 		msg := C.GoString((*C.char)(s.text))
-		log.Printf("MPV: %s\n", strings.TrimSpace(msg))
+		log.Printf("Mpv: %s\n", strings.TrimSpace(msg))
 	}
 }
