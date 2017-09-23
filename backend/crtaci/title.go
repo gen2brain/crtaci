@@ -77,6 +77,11 @@ func (t *videoTitle) Format(name, altname, altname2 string) string {
 
 	title = reTitleR.ReplaceAllString(title, "$3")
 
+	if strings.HasPrefix(title, ",") {
+		title = strings.Replace(title, ",", "", 1)
+		title = strings.TrimLeft(title, " ")
+	}
+
 	if strings.HasPrefix(title, "i ") || strings.HasPrefix(title, "and ") || strings.HasPrefix(title, " i ") ||
 		strings.HasPrefix(title, "u ") || strings.HasPrefix(title, "u epizodi") {
 		title = fmt.Sprintf("%s %s", name, title)

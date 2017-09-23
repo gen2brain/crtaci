@@ -14,9 +14,12 @@ import (
 	"sync"
 
 	"github.com/ChannelMeter/iso8601duration"
+	"github.com/chrisport/go-lang-detector/langdet"
 	"github.com/gen2brain/vidextr"
 	"google.golang.org/api/youtube/v3"
 )
+
+//go:generate go-bindata -nocompress -pkg crtaci ../languages.json
 
 // Version name
 const Version = "1.9"
@@ -36,15 +39,17 @@ type Cartoon struct {
 	ThumbLarge     string  `json:"thumbLarge"`
 	Duration       float64 `json:"duration"`
 	DurationString string  `json:"durationString"`
+	Language       string  `json:"language"`
 }
 
 // Character type
 type Character struct {
-	Name     string `json:"name"`
-	AltName  string `json:"altname"`
-	AltName2 string `json:"altname2"`
-	Duration string `json:"duration"`
-	RawQuery string `json:"query"`
+	Name      string `json:"name"`
+	AltName   string `json:"altname"`
+	AltName2  string `json:"altname2"`
+	Duration  string `json:"duration"`
+	RawQuery  string `json:"query"`
+	Languages string `json:"languages"`
 }
 
 // Query returns character query to search for
@@ -66,102 +71,102 @@ func (c *Character) Query(escape bool) (query string) {
 
 // characters contains list of cartoon characters
 var characters = []Character{
-	{"atomski mrav", "", "", "medium", ""},
-	{"asteriks", "", "asterix", "xlong", ""},
-	{"a je to", "", "", "medium", "a je to crtani"},
-	{"anđeoski prijatelji", "andjeoski prijatelji", "", "medium", ""},
-	{"bananamen", "", "", "medium", ""},
-	{"blinki bil", "", "блинки бил", "long", ""},
-	{"blufonci", "", "", "medium", ""},
-	{"bombončići", "bomboncici", "", "medium", ""},
-	{"braća grim", "braca grim", "najlepse bajke", "long", ""},
-	{"brzi gonzales", "", "", "medium", ""},
-	{"čarli braun", "carli braun", "", "medium", ""},
-	{"čarobni školski autobus", "carobni skolski autobus", "", "long", ""},
-	{"čili vili", "cili vili", "", "medium", ""},
-	{"cipelići", "cipelici", "", "medium", ""},
-	{"denis napast", "", "", "long", ""},
-	{"doživljaji šašave družine", "dozivljaji sasave druzine", "", "long", ""},
-	{"droidi", "", "", "long", ""},
-	{"duško dugouško", "dusko dugousko", "dusko 20dugousko", "medium", ""},
-	{"džoni test", "dzoni test", "", "long", ""},
-	{"elmer", "", "", "medium", "elmer crtani"},
-	{"eustahije brzić", "eustahije brzic", "", "medium", ""},
-	{"evoksi", "", "", "long", ""},
-	{"generalova radnja", "", "", "medium", ""},
-	{"grčka mitologija", "grcka mitologija", "", "long", "grcka mitologija crtani"},
-	{"gustav", "gustavus", "", "medium", "gustavus crtani"},
-	{"helo kiti", "", "", "medium", ""},
-	{"hi men i gospodari svemira", "himen i gospodari svemira", "", "long", ""},
-	{"inspektor radiša", "inspektor radisa", "", "medium", ""},
-	{"iznogud", "", "", "medium", ""},
-	{"jež alfred na zadatku", "jez alfred na zadatku", "", "medium", ""},
-	{"kalimero", "", "kalimero - ", "medium", "kalimero- crtani"},
-	{"kasper", "", "", "medium", "kasper crtani"},
-	{"konanove avanture", "", "", "long", ""},
-	{"kuče dragoljupče", "kuce dragoljupce", "", "medium", ""},
-	{"lale gator", "", "", "medium", ""},
-	{"la linea", "", "", "medium", ""},
-	{"legenda o tarzanu", "", "", "long", ""},
-	{"le piaf", "", "", "short", ""},
-	{"liga super zloća", "liga super zloca", "", "medium", ""},
-	{"mali detektivi", "", "", "long", ""},
-	{"mali leteći medvjedići", "mali leteci medvjedici", "", "long", ""},
-	{"masa i medved", "masha i medved", "masa i medvjed", "medium", "masa i medved crtani"},
-	{"mačor mika", "macor mika", "", "long", ""},
-	{"mece dobrići", "mece dobrici", "", "medium", ""},
-	{"miki maus", "", "", "medium", ""},
-	{"mornar popaj", "", "", "medium", ""},
-	{"mr. bean", "mr bean", "mr.bean", "medium", "mr bean animated"},
-	{"mumijevi", "", "", "medium", ""},
-	{"nindža kornjače", "nindza kornjace", "ninja kornjace", "long", ""},
-	{"ogi i žohari", "ogi i zohari", "", "long", ""},
-	{"otkrića bez granica", "otkrica bez granica", "", "long", ""},
-	{"paja patak", "", "", "medium", ""},
-	{"patak dača", "patak daca", "", "medium", ""},
-	{"pepa prase", "", "", "medium", ""},
-	{"pepe le tvor", "", "", "medium", ""},
-	{"pera detlić", "pera detlic", "", "medium", ""},
-	{"pera kojot", "", "", "medium", ""},
-	{"pingvini sa madagaskara", "", "", "medium", ""},
-	{"pink panter", "", "", "medium", "pink panter crtani"},
-	{"plava princeza", "", "", "long", ""},
-	{"porodica kremenko", "", "", "long", ""},
-	{"poručnik draguljče", "porucnik draguljce", "", "medium", ""},
-	{"princeze sirene", "", "", "long", ""},
-	{"profesor baltazar", "", "", "medium", ""},
-	{"ptica trkačica", "ptica trkacica", "", "medium", ""},
-	{"pustolovine sa braćom kret", "pustolovine sa bracom kret", "", "long", ""},
-	{"rakuni", "", "", "long", ""},
-	{"ratnik kišna kap", "ratnik kisna kap", "", "long", ""},
-	{"ren i stimpi", "", "", "medium", ""},
-	{"robotek", "", "robotech", "long", ""},
-	{"šalabajzerići", "salabajzerici", "", "medium", ""},
-	{"silvester", "", "silvester i tviti", "medium", "silvester crtani"},
-	{"šilja", "silja", "", "medium", "silja crtani"},
-	{"snorkijevci", "", "", "medium", ""},
-	{"sofronije", "", "", "medium", ""},
-	{"super miš", "super mis", "", "medium", "super mis crtani"},
-	{"supermen", "", "", "medium", "supermen crtani"},
-	{"super špijunke", "super spijunke", "", "long", ""},
-	{"sport bili", "", "", "medium", ""},
-	{"srle i pajče", "srle i pajce", "", "medium", ""},
-	{"stanlio i olio", "", "", "medium", ""},
-	{"stari crtaći", "stari crtaci", "stari sinhronizovani crtaci", "medium", ""},
-	{"stripi", "", "", "medium", ""},
-	{"štrumfovi", "strumpfovi", "strumfovi", "medium", "strumfovi crtani"},
-	{"sundjer bob kockalone", "sundjer bob", "sunđer bob", "medium", ""},
-	{"talični tom", "talicni tom", "", "long", ""},
-	{"tarzan gospodar džungle", "tarzan gospodar dzungle", "", "long", ""},
-	{"tom i džeri", "tom i dzeri", "", "medium", ""},
-	{"transformersi", "", "", "long", ""},
-	{"vitez koja", "", "", "medium", ""},
-	{"voltron force", "", "", "long", "voltron force crtani"},
-	{"vuk vučko", "vuk vucko", "", "medium", ""},
-	{"wumi", "", "wummi", "short", "wumi crtani"},
-	{"zamenik boža", "zamenik boza", "", "medium", ""},
-	{"zemlja konja", "", "", "medium", ""},
-	{"zmajeva kugla", "zmajeva kugla", "zmajeva kugla z", "long", ""},
+	{"atomski mrav", "", "", "medium", "", "sr@latin"},
+	{"asteriks", "", "", "xlong", "", "sr@latin"},
+	{"a je to", "", "", "medium", "a je to crtani", "sr@latin"},
+	{"anđeoski prijatelji", "andjeoski prijatelji", "", "medium", "", "sr@latin,hr"},
+	{"bananamen", "", "", "medium", "", "sr@latin"},
+	{"blinki bil", "", "блинки бил", "long", "", "sr,sr@latin,hr"},
+	{"blufonci", "", "", "medium", "", "sr@latin,hr"},
+	{"bombončići", "bomboncici", "", "medium", "", "sr@latin,hr,en"},
+	{"braća grim", "braca grim", "najlepse bajke", "long", "", "sr@latin,hr"},
+	{"brzi gonzales", "", "", "medium", "", "sr@latin,en"},
+	{"čarli braun", "carli braun", "", "medium", "", "sr@latin"},
+	{"čarobni školski autobus", "carobni skolski autobus", "", "long", "", "sr@latin,hr,pl"},
+	{"čili vili", "cili vili", "", "medium", "", "sr@latin"},
+	{"cipelići", "cipelici", "", "medium", "", "sr@latin,hr,it"},
+	{"denis napast", "", "", "long", "", "sr@latin"},
+	{"doživljaji šašave družine", "dozivljaji sasave druzine", "", "long", "", "sr@latin"},
+	{"droidi", "", "", "long", "", "sr@latin,it"},
+	{"duško dugouško", "dusko dugousko", "dusko 20dugousko", "medium", "", "sr@latin,hr,en"},
+	{"džoni test", "dzoni test", "", "long", "", "sr@latin,en,pl"},
+	{"elmer", "", "", "medium", "elmer crtani", "sr@latin"},
+	{"eustahije brzić", "eustahije brzic", "", "medium", "", "sr@latin,hr,en"},
+	{"evoksi", "", "", "long", "", "sr@latin,hr"},
+	{"generalova radnja", "", "", "medium", "", "sr@latin,hr"},
+	{"grčka mitologija", "grcka mitologija", "", "long", "grcka mitologija crtani", "sr@latin,hr"},
+	{"gustav", "gustavus", "", "medium", "gustavus crtani", "sr@latin,en"},
+	{"helo kiti", "", "", "medium", "", "sr@latin,hr,en"},
+	{"hi men i gospodari svemira", "himen i gospodari svemira", "", "long", "", "sr@latin,hr"},
+	{"inspektor radiša", "inspektor radisa", "", "medium", "", "sr@latin,hr"},
+	{"iznogud", "", "", "medium", "", "sr@latin,hr"},
+	{"jež alfred na zadatku", "jez alfred na zadatku", "", "medium", "", "sr@latin,hr"},
+	{"kalimero", "", "kalimero - ", "medium", "kalimero- crtani", "sr@latin,hr"},
+	{"kasper", "", "", "medium", "kasper crtani", "sr@latin,hr"},
+	{"konanove avanture", "", "", "long", "", "sr@latin,hr"},
+	{"kuče dragoljupče", "kuce dragoljupce", "", "medium", "", "sr@latin,hr"},
+	{"lale gator", "", "", "medium", "", "sr@latin,hr,en"},
+	{"la linea", "", "", "medium", "", "sr@latin,hres,it,en"},
+	{"legenda o tarzanu", "", "", "long", "", "sr@latin,hr"},
+	{"le piaf", "", "", "short", "", "sr@latin,hr,es"},
+	{"liga super zloća", "liga super zloca", "", "medium", "", "sr@latin,hr"},
+	{"mali detektivi", "", "", "long", "", "hr"},
+	{"mali leteći medvjedići", "mali leteci medvjedici", "", "long", "", "sr@latin,hr"},
+	{"masa i medved", "masha i medved", "masa i medvjed", "medium", "masa i medved crtani", "sr@latin,hr,en"},
+	{"mačor mika", "macor mika", "", "long", "", "sr@latin,hr"},
+	{"mece dobrići", "mece dobrici", "", "medium", "", "sr@latin,hr"},
+	{"miki maus", "", "", "medium", "", "sr@latin"},
+	{"mornar popaj", "", "", "medium", "", "sr@latin"},
+	{"mr. bean", "mr bean", "mr.bean", "medium", "mr bean animated", "en"},
+	{"mumijevi", "", "", "medium", "", "sr@latin,hr"},
+	{"nindža kornjače", "nindza kornjace", "ninja kornjace", "long", "", "sr@latin,hr,pl"},
+	{"ogi i žohari", "ogi i zohari", "", "long", "", "sr@latin,hr"},
+	{"otkrića bez granica", "otkrica bez granica", "", "long", "", "sr@latin"},
+	{"paja patak", "", "", "medium", "", "sr@latin,hr"},
+	{"patak dača", "patak daca", "", "medium", "", "sr@latin"},
+	{"pepa prase", "", "", "medium", "", "sr@latin"},
+	{"pepe le tvor", "", "", "medium", "", "sr@latin,en"},
+	{"pera detlić", "pera detlic", "", "medium", "", "sr@latin,en"},
+	{"pera kojot", "", "", "medium", "", "sr@latin,pl"},
+	{"pingvini sa madagaskara", "", "", "medium", "", "sr@latin"},
+	{"pink panter", "", "", "medium", "pink panter crtani", "sr@latin,en"},
+	{"plava princeza", "", "", "long", "", "sr@latin,hr"},
+	{"porodica kremenko", "", "", "long", "", "sr@latin,hr"},
+	{"poručnik draguljče", "porucnik draguljce", "", "medium", "", "sr@latin,hr"},
+	{"princeze sirene", "", "", "long", "", "sr@latin,hr,en"},
+	{"profesor baltazar", "", "", "medium", "", "sr@latin,hr,es,en"},
+	{"ptica trkačica", "ptica trkacica", "", "medium", "", "sr@latin,hr,en"},
+	{"pustolovine sa braćom kret", "pustolovine sa bracom kret", "", "long", "", "sr@latin"},
+	{"rakuni", "", "", "long", "", "sr@latin,hr"},
+	{"ratnik kišna kap", "ratnik kisna kap", "", "long", "", "sr@latin"},
+	{"ren i stimpi", "", "", "medium", "", "sr@latin,hr"},
+	{"robotek", "", "robotech", "long", "", "sr@latin,hr"},
+	{"šalabajzerići", "salabajzerici", "", "medium", "", "sr@latin,hr"},
+	{"silvester", "", "silvester i tviti", "medium", "silvester crtani", "sr@latin,hr"},
+	{"šilja", "silja", "", "medium", "silja crtani", "sr@latin,hr"},
+	{"snorkijevci", "", "", "medium", "", "sr@latin,hr"},
+	{"sofronije", "", "", "medium", "", "sr@latin"},
+	{"super miš", "super mis", "", "medium", "super mis crtani", "sr@latin,en"},
+	{"supermen", "", "", "medium", "supermen crtani", "sr@latin,en"},
+	{"super špijunke", "super spijunke", "", "long", "", "sr@latin,hr"},
+	{"sport bili", "", "", "medium", "", "sr@latin,hr"},
+	{"srle i pajče", "srle i pajce", "", "medium", "", "sr@latin,hr"},
+	{"stanlio i olio", "", "", "medium", "", "sr@latin,it"},
+	{"stari crtaći", "stari crtaci", "stari sinhronizovani crtaci", "medium", "", "sr@latin,hr"},
+	{"stripi", "", "", "medium", "", "sr@latin,en"},
+	{"štrumfovi", "strumpfovi", "strumfovi", "medium", "strumfovi crtani", "sr@latin,hr"},
+	{"sundjer bob kockalone", "sundjer bob", "sunđer bob", "medium", "", "sr@latin"},
+	{"talični tom", "talicni tom", "", "long", "", "sr@latin,hr"},
+	{"tarzan gospodar džungle", "tarzan gospodar dzungle", "", "long", "", "sr@latin,hr"},
+	{"tom i džeri", "tom i dzeri", "", "medium", "", "sr@latin"},
+	{"transformersi", "", "", "long", "", "sr@latin,hr,it"},
+	{"vitez koja", "", "", "medium", "", "sr@latin"},
+	{"voltron force", "", "", "long", "voltron force crtani", "sr@latin,hr,it"},
+	{"vuk vučko", "vuk vucko", "", "medium", "", "sr@latin,hr,en"},
+	{"wumi", "", "wummi", "short", "wumi crtani", "sr@latin,hr,pl"},
+	{"zamenik boža", "zamenik boza", "", "medium", "", "sr@latin"},
+	{"zemlja konja", "", "", "medium", "", "sr@latin,hr"},
+	{"zmajeva kugla", "zmajeva kugla", "zmajeva kugla z", "long", "", "sr@latin,hr"},
 }
 
 var (
@@ -171,7 +176,30 @@ var (
 	cartoons []Cartoon
 
 	ctx, cancel = context.WithCancel(context.TODO())
+
+	detector = langdet.NewDetector()
 )
+
+func init() {
+	languages, _ := Asset("../languages.json")
+
+	customLanguages := []langdet.Language{}
+	json.Unmarshal(languages, &customLanguages)
+
+	detector.AddLanguage(customLanguages...)
+	detector.MinimumConfidence = 0.45
+}
+
+// langValid checks if detected language is valid
+func langValid(lang string, langs []string) bool {
+	for _, l := range langs {
+		if lang == l {
+			return true
+		}
+	}
+
+	return false
+}
 
 // youTube searches YouTube
 func youTube(char Character) {
@@ -262,7 +290,9 @@ func youTube(char Character) {
 			vd := newVideoDuration(videoDuration)
 			vt := newVideoTitle(videoTitle, filters, censoredWords, censoredIds)
 
-			if vt.Valid(name, altname, altname2, videoId) && char.Duration == vd.Desc() {
+			lang := detector.GetClosestLanguage(vt.Raw)
+
+			if vt.Valid(name, altname, altname2, videoId) && char.Duration == vd.Desc() && langValid(lang, strings.Split(char.Languages, ",")) {
 				c := Cartoon{
 					videoId,
 					name,
@@ -277,6 +307,7 @@ func youTube(char Character) {
 					videoThumbLarge,
 					vd.Duration,
 					vd.Format(),
+					lang,
 				}
 
 				mutex.Lock()
@@ -380,7 +411,9 @@ func dailyMotion(char Character) {
 			vd := newVideoDuration(videoDuration)
 			vt := newVideoTitle(videoTitle, filters, censoredWords, censoredIds)
 
-			if vt.Valid(name, altname, altname2, videoId) && char.Duration == vd.Desc() {
+			lang := detector.GetClosestLanguage(vt.Raw)
+
+			if vt.Valid(name, altname, altname2, videoId) && char.Duration == vd.Desc() && langValid(lang, strings.Split(char.Languages, ",")) {
 				c := Cartoon{
 					videoId,
 					name,
@@ -395,6 +428,7 @@ func dailyMotion(char Character) {
 					videoThumbLarge,
 					vd.Duration,
 					vd.Format(),
+					lang,
 				}
 
 				mutex.Lock()
@@ -509,7 +543,9 @@ func vimeo(char Character) {
 			vd := newVideoDuration(videoDuration)
 			vt := newVideoTitle(videoTitle, filters, censoredWords, censoredIds)
 
-			if vt.Valid(name, altname, altname2, videoId) && char.Duration == vd.Desc() {
+			lang := detector.GetClosestLanguage(vt.Raw)
+
+			if vt.Valid(name, altname, altname2, videoId) && char.Duration == vd.Desc() && langValid(lang, strings.Split(char.Languages, ",")) {
 				c := Cartoon{
 					videoId,
 					name,
@@ -524,6 +560,7 @@ func vimeo(char Character) {
 					videoThumbLarge,
 					vd.Duration,
 					vd.Format(),
+					lang,
 				}
 
 				mutex.Lock()

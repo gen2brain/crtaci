@@ -1,3 +1,8 @@
+v0.1.9 Sep , 2017:
+
+    * added language detection
+    * code refactoring
+
 v0.1.8 Oct 24, 2016:
 
     * desktop app is rewritten in Go

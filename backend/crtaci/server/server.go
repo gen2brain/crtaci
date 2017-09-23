@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net"
 	"net/http"
@@ -13,8 +12,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/elazarl/go-bindata-assetfs"
+	"github.com/mssola/user_agent"
+
 	"github.com/gen2brain/crtaci/backend/crtaci"
 )
+
+//go:generate go-bindata -nocompress -pkg main assets/...
 
 // Server struct
 type Server struct {
@@ -116,6 +120,21 @@ func (s *Server) Public(w http.ResponseWriter, r *http.Request) {
 
 // Index handles index
 func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
+	query := r.FormValue("c")
+
+	ua := user_agent.New(r.Header.Get("User-Agent"))
+	if ua.Bot() {
+		name, _ := ua.Browser()
+		if name != "Googlebot" && name != "bingbot" {
+			if query == "" {
+				w.WriteHeader(http.StatusOK)
+			} else {
+				http.Error(w, "404 Not Found", http.StatusNotFound)
+			}
+			return
+		}
+	}
+
 	list, err := crtaci.List()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -129,7 +148,6 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := r.FormValue("c")
 	if query == "" {
 		query = characters[0].Name
 	}
@@ -153,7 +171,7 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 	}
 
 	html := string(s.Template)
-	html = strings.Replace(html, "{TITLE}", "Crtaći / "+strings.Title(query), -1)
+	html = strings.Replace(html, "{TITLE}", strings.Title(query)+" / Crtaći", -1)
 	html = strings.Replace(html, "{CHARACTERS}", s.Characters(characters, query), -1)
 	html = strings.Replace(html, "{CARTOONS}", s.Cartoons(cartoons), -1)
 
@@ -212,8 +230,8 @@ func (s *Server) Cartoons(cartoons []crtaci.Cartoon) (h string) {
 			se = " - " + se
 		}
 
-		h += fmt.Sprintf("<li><div class=\"image\"><a class=\"media\" href=\"%s\"><img class=\"thumb\" data-original=\"%s\" width=\"240\" height=\"180\"/><div class=\"play\"></div></a></div><div class=\"text\">%s%s (%s)</div></li>",
-			c.Url, image, c.FormattedTitle, se, c.DurationString)
+		h += fmt.Sprintf("<li><div class=\"image\"><a class=\"media\" href=\"%s\"><img class=\"thumb\" data-original=\"%s\" width=\"240\" height=\"180\" alt=\"%s\"/><div class=\"play\"></div></a></div><div class=\"text\">%s%s (%s)</div></li>",
+			c.Url, image, c.FormattedTitle, c.FormattedTitle, se, c.DurationString)
 	}
 
 	return
@@ -221,10 +239,17 @@ func (s *Server) Cartoons(cartoons []crtaci.Cartoon) (h string) {
 
 // ListenAndServe listens on the TCP address and serves requests
 func (s *Server) ListenAndServe() {
+	fs := http.FileServer(&assetfs.AssetFS{Asset, AssetDir, AssetInfo, ""})
+	http.Handle("/assets/", fs)
+
+	http.HandleFunc("/robots.txt", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("User-agent: *\nDisallow: /\nUser-agent: Googlebot\nAllow: /\nUser-agent: bingbot\nAllow: /"))
+	})
+
 	http.HandleFunc("/list", s.List)
 	http.HandleFunc("/search", s.Search)
 	http.HandleFunc("/extract", s.Extract)
-	http.HandleFunc("/assets/", s.Public)
 	http.HandleFunc("/download/", s.Public)
 	http.HandleFunc("/", s.Index)
 
@@ -249,13 +274,11 @@ func main() {
 	srv.BaseDir, err = filepath.Abs(filepath.Dir(os.Args[0]))
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 
-	srv.Template, err = ioutil.ReadFile(filepath.Join(srv.BaseDir, "public", "assets", "view.html"))
+	srv.Template, err = Asset("assets/view.html")
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 
 	srv.ListenAndServe()
