@@ -152,10 +152,19 @@ func (s *Server) Index(w http.ResponseWriter, r *http.Request) {
 		query = characters[0].Name
 	}
 
-	search, err := crtaci.Search(query)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+	var search string
+	cache := newCache(os.TempDir())
+	cached := cache.Read(query, 7200)
+	if cached != nil {
+		search = string(cached)
+	} else {
+		search, err = crtaci.Search(query)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		cache.Write(query, []byte(search))
 	}
 
 	if search == "" || search == "empty" {

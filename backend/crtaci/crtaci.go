@@ -594,8 +594,6 @@ func List() (string, error) {
 
 // Search searches for cartoons
 func Search(query string) (string, error) {
-	ctx, cancel = context.WithCancel(context.TODO())
-
 	char := new(Character)
 	for _, c := range characters {
 		if query == c.Name || query == c.AltName {
@@ -605,8 +603,10 @@ func Search(query string) (string, error) {
 	}
 
 	if char.Name != "" {
-		wg.Add(3)
 		cartoons = make([]Cartoon, 0)
+		ctx, cancel = context.WithCancel(context.TODO())
+
+		wg.Add(3)
 		go youTube(*char)
 		go dailyMotion(*char)
 		go vimeo(*char)
