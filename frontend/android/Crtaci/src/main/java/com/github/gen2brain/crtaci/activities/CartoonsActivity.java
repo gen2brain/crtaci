@@ -32,7 +32,7 @@ import com.github.gen2brain.crtaci.entities.Cartoon;
 import com.github.gen2brain.crtaci.utils.Connectivity;
 import com.github.gen2brain.crtaci.utils.Utils;
 
-import go.crtaci.Crtaci;
+import crtaci.Crtaci;
 
 
 public class CartoonsActivity extends AppCompatActivity {
@@ -52,11 +52,11 @@ public class CartoonsActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_cartoons);
 
-        progressBar = (ProgressBar) findViewById(R.id.progressbar);
+        progressBar = findViewById(R.id.progressbar);
 
         twoPane = findViewById(R.id.cartoons_container) != null;
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        Toolbar toolbar = findViewById(R.id.toolbar);
 
         Bundle bundle = getIntent().getExtras();
         character = (Character) bundle.get("character");

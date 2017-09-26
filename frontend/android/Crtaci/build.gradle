@@ -1,15 +1,15 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 24
-    buildToolsVersion '24.0.3'
+    compileSdkVersion 26
+    buildToolsVersion '26.0.1'
 
     defaultConfig {
         applicationId "com.github.gen2brain.crtaci"
-        minSdkVersion 11
-        targetSdkVersion 24
-        versionCode 50
-        versionName "1.8"
+        minSdkVersion 15
+        targetSdkVersion 26
+        versionCode 55
+        versionName "1.9"
         setProperty("archivesBaseName", "crtaci-$versionName")
 
     }
@@ -29,10 +29,25 @@ repositories {
 }
 
 dependencies {
-    compile 'com.android.support:appcompat-v7:24.2.1'
-    compile 'com.google.android.gms:play-services-analytics:9.6.1'
-    compile 'com.google.code.gson:gson:2.7'
-    compile 'com.nostra13.universalimageloader:universal-image-loader:1.9.5'
+    compile 'com.android.support:appcompat-v7:26.0.2'
+    compile 'com.android.support:support-v13:26.0.2'
+    compile 'com.android.support:recyclerview-v7:26.0.2'
+
+    compile 'com.google.android.gms:play-services-analytics:11.0.4'
+    compile 'com.google.code.gson:gson:2.8.1'
+
+    //compile 'com.google.android.exoplayer:exoplayer:r2.5.2'
+    compile 'com.google.android.exoplayer:extension-okhttp:r2.5.2'
+    compile "com.google.android.exoplayer:exoplayer-core:r2.5.2"
+    //compile 'com.devbrackets.android:exomedia:4.0.3'
+    compile 'com.github.brianwernick:ExoMedia:master-SNAPSHOT'
+
+    compile 'com.github.bumptech.glide:glide:3.7.0'
+
+    compile ('com.afollestad.material-dialogs:core:0.9.4.7') {
+        exclude module: 'support-v13'
+        exclude module: 'recyclerview-v7'
+    }
 
     compile (name:'crtaci-arm7', ext:'aar')
     compile (name:'crtaci-arm64', ext:'aar')

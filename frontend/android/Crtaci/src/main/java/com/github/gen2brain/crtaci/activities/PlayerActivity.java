@@ -1,6 +1,7 @@
 package com.github.gen2brain.crtaci.activities;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.net.Uri;
@@ -9,32 +10,38 @@ import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.MediaController;
 import android.widget.ProgressBar;
-import android.widget.VideoView;
+import android.widget.Toast;
+
+import com.devbrackets.android.exomedia.listener.OnCompletionListener;
+import com.devbrackets.android.exomedia.listener.OnErrorListener;
+import com.devbrackets.android.exomedia.listener.OnPreparedListener;
+import com.devbrackets.android.exomedia.listener.VideoControlsButtonListener;
+import com.devbrackets.android.exomedia.ui.widget.VideoView;
+import com.devbrackets.android.exomedia.ui.widget.VideoControls;
+import com.devbrackets.android.exomedia.ui.widget.VideoControlsMobile;
 
 import com.github.gen2brain.crtaci.R;
 import com.github.gen2brain.crtaci.entities.Cartoon;
-import com.github.gen2brain.crtaci.utils.VideoEnabledWebChromeClient;
-import com.github.gen2brain.crtaci.utils.VideoEnabledWebView;
+import com.github.gen2brain.crtaci.utils.Utils;
 
-import go.crtaci.Crtaci;
+import crtaci.Crtaci;
 
 
 public class PlayerActivity extends Activity {
 
     public static final String TAG = "PlayerActivity";
 
-    private VideoEnabledWebView webView;
-    private VideoEnabledWebChromeClient webChromeClient;
-
     private String video;
     private Cartoon cartoon;
 
+    private VideoView videoView;
+
+    private int position;
     private int retry = 0;
 
     @Override
+    @SuppressWarnings("unchecked")
     public void onCreate(Bundle savedInstanceState) {
         Log.d(TAG, "onCreate");
         super.onCreate(savedInstanceState);
@@ -43,28 +50,49 @@ public class PlayerActivity extends Activity {
         cartoon = (Cartoon) bundle.get("cartoon");
         video = bundle.getString("video");
 
-        switch(cartoon.service) {
-            case "youtube":
-                if(video != null && !video.isEmpty()) {
-                    player(video);
-                } else {
-                    playYouTube();
-                }
-                break;
-            case "dailymotion":
-                if(video != null && !video.isEmpty()) {
-                    player(video);
-                } else {
-                    playDailyMotion();
-                }
-                break;
-            case "vimeo":
-                if(video != null && !video.isEmpty()) {
-                    player(video);
-                } else {
-                    playVimeo();
-                }
-                break;
+        if(video != null && !video.isEmpty()) {
+            player(video);
+        } else {
+            Toast.makeText(PlayerActivity.this, getString(R.string.error_video), Toast.LENGTH_LONG).show();
+            onBackPressed();
+        }
+    }
+
+    @Override
+    public void onDestroy() {
+        Log.d(TAG, "onDestroy");
+
+        try {
+            Crtaci.cancel();
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        if(videoView != null) {
+            if(videoView.isPlaying()) {
+                videoView.stopPlayback();
+            }
+            videoView.release();
+        }
+
+        super.onDestroy();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        position = (int) videoView.getCurrentPosition();
+        if(videoView != null && videoView.isPlaying()) {
+            videoView.pause();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        if(videoView != null) {
+            videoView.seekTo(position);
+            videoView.start();
         }
     }
 
@@ -76,75 +104,39 @@ public class PlayerActivity extends Activity {
             intent.setDataAndType(Uri.parse(url), "video/*");
             startActivity(intent);
         } else if(player.equals("default")) {
-            defaultPlayer(url);
+            videoPlayer(url);
         }
     }
 
-    public void playYouTube() {
-        String params = "?fs=1&autoplay=1&disablekb=1&showinfo=0";
-        String url = "https://www.youtube.com/embed/" + cartoon.id + params;
-        webViewPlayer(url);
-    }
-
-    public void playDailyMotion() {
-        String params = "?html=1&fullscreen=1&autoplay=1&related=0&logo=0&info=0";
-        String url = "http://www.dailymotion.com/embed/video/" + cartoon.id + params;
-        webViewPlayer(url);
-    }
-
-    public void playVimeo() {
-        String params = "?autoplay=1&badge=0&byline=0&portrait=0&title=0";
-        String url = "http://player.vimeo.com/video/" + cartoon.id + params;
-        webViewPlayer(url);
-    }
-
-    public void webViewPlayer(String url) {
-        setContentView(R.layout.player_webview);
-        webView = (VideoEnabledWebView) findViewById(R.id.webView);
-
-        View nonVideoLayout = findViewById(R.id.nonVideoLayout);
-        ViewGroup videoLayout = (ViewGroup) findViewById(R.id.videoLayout);
-        View loadingView = getLayoutInflater().inflate(R.layout.loading, null);
-
-        webChromeClient = new VideoEnabledWebChromeClient(nonVideoLayout, videoLayout, loadingView);
-        webView.setWebChromeClient(webChromeClient);
-
-        webView.setKeepScreenOn(true);
-        webView.setBackgroundColor(0x00000000);
-        webView.loadUrl(url);
-    }
-
-    public void defaultPlayer(String url) {
+    public void videoPlayer(String url) {
         setContentView(R.layout.player);
-        final VideoView videoView = (VideoView) findViewById(R.id.video_view);
-        final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);
+        videoView = findViewById(R.id.video_view);
+        final ProgressBar progressBar = findViewById(R.id.progress_bar);
         progressBar.setVisibility(View.VISIBLE);
 
-        videoView.setOnPreparedListener(new android.media.MediaPlayer.OnPreparedListener() {
+        final VideoControls controls = new Controls(this);
+        videoView.setControls(controls);
+
+        controls.setPreviousButtonRemoved(true);
+        controls.setNextButtonRemoved(true);
+        controls.setButtonListener(new ControlsListener());
+
+        videoView.setOnPreparedListener(new OnPreparedListener() {
             @Override
-            public void onPrepared(android.media.MediaPlayer mp) {
+            public void onPrepared() {
                 progressBar.setVisibility(View.INVISIBLE);
+                controls.setTitle(Utils.toTitleCase(cartoon.character) + " - " + Utils.toTitleCase(cartoon.formattedTitle));
                 videoView.start();
             }
         });
 
-        videoView.setOnErrorListener(new android.media.MediaPlayer.OnErrorListener() {
+        videoView.setOnErrorListener(new OnErrorListener() {
             @Override
-            public boolean onError(android.media.MediaPlayer mp, int what, int extra) {
+            public boolean onError(Exception e) {
                 Log.d(TAG, "onError");
                 if(retry >= 2) {
-                    video = null;
-                    switch(cartoon.service) {
-                        case "youtube":
-                            playYouTube();
-                            break;
-                        case "dailymotion":
-                            playDailyMotion();
-                            break;
-                        case "vimeo":
-                            playVimeo();
-                            break;
-                    }
+                    Toast.makeText(PlayerActivity.this, getString(R.string.error_video), Toast.LENGTH_LONG).show();
+                    onBackPressed();
                 } else {
                     Log.d(TAG, "retry " + String.valueOf(retry));
                     new ExtractTask().execute(cartoon.service, cartoon.id);
@@ -153,31 +145,56 @@ public class PlayerActivity extends Activity {
             }
         });
 
-        videoView.setOnCompletionListener(new android.media.MediaPlayer.OnCompletionListener() {
+        videoView.setOnCompletionListener(new OnCompletionListener() {
             @Override
-            public void onCompletion(android.media.MediaPlayer mediaPlayer) {
+            public void onCompletion() {
                 onBackPressed();
             }
         });
 
-        MediaController mediaController = new MediaController(this);
-        mediaController.setAnchorView(videoView);
-        mediaController.setMediaPlayer(videoView);
         videoView.setKeepScreenOn(true);
-        videoView.setMediaController(mediaController);
         videoView.setVideoURI(Uri.parse(url));
         videoView.requestFocus();
     }
 
-    @Override
-    public void onBackPressed() {
-        if(video == null || video.isEmpty()) {
-            if(webChromeClient != null && webView != null) {
-                webChromeClient.onBackPressed();
-                webView.destroy();
-            }
+    private class Controls extends VideoControlsMobile {
+
+        public Controls(Context context) {
+            super(context);
         }
-        super.onBackPressed();
+
+        @Override
+        protected int getLayoutResource() {
+            return R.layout.player_controls;
+        }
+
+    }
+
+    private class ControlsListener implements VideoControlsButtonListener {
+        @Override
+        public boolean onPlayPauseClicked() {
+            return false;
+        }
+
+        @Override
+        public boolean onPreviousClicked() {
+            return false;
+        }
+
+        @Override
+        public boolean onNextClicked() {
+            return false;
+        }
+
+        @Override
+        public boolean onRewindClicked() {
+            return false;
+        }
+
+        @Override
+        public boolean onFastForwardClicked() {
+            return false;
+        }
     }
 
     private class ExtractTask extends AsyncTask<String, Void, String> {

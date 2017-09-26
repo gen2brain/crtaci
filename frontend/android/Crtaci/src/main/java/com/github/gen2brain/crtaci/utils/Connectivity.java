@@ -71,7 +71,7 @@ public class Connectivity {
 	public static boolean isConnectionFast(int type, int subType){
 		if(type==ConnectivityManager.TYPE_WIFI){
 			return true;
-		}else if(type==ConnectivityManager.TYPE_MOBILE){
+		} else if(type==ConnectivityManager.TYPE_MOBILE){
 			switch(subType){
 			case TelephonyManager.NETWORK_TYPE_1xRTT:
 				return false; // ~ 50-100 kbps
@@ -112,7 +112,7 @@ public class Connectivity {
 			default:
 				return false;
 			}
-		}else{
+		} else {
 			return false;
 		}
 	}

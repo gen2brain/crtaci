@@ -29,6 +29,8 @@ public class Cartoon implements Serializable {
 
     public String durationString;
 
+    public String language;
+
     @Override
     public boolean equals(Object obj) {
        	if(obj == null) return false;
@@ -56,6 +58,7 @@ public class Cartoon implements Serializable {
         result.append("  thumbMedium: " + this.thumbMedium + NL);
         result.append("  thumbLarge: " + this.thumbLarge + NL);
         result.append("  durationString: " + this.durationString + NL);
+        result.append("  language: " + this.language + NL);
         result.append("}" + NL);
 
         return result.toString();

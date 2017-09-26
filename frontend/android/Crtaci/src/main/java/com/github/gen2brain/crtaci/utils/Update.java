@@ -8,7 +8,7 @@ import android.os.Environment;
 import android.preference.PreferenceManager;
 import java.util.Locale;
 
-import go.crtaci.Crtaci;
+import crtaci.Crtaci;
 
 
 public class Update {
@@ -25,27 +25,23 @@ public class Update {
             edit.apply();
             return true;
         }
+
         return false;
     }
 
-    static String getCurrentVersion(Context ctx) {
+    static String getCurrentVersion() {
         return Crtaci.Version;
     }
 
-    private static String getUpdateVersion(Context ctx) {
-        String ver = getCurrentVersion(ctx);
+    private static String getUpdateVersion() {
+        String ver = getCurrentVersion();
         float version = Float.parseFloat(ver) + 0.1f;
         return String.format(Locale.ROOT, "%.1f", version);
     }
 
-    private static String getUpdateUrl(Context ctx) {
-        String ver = getUpdateVersion(ctx);
-        return String.format(Locale.ROOT, "https://crtaci.rs/download/crtaci-%s.apk", ver);
-    }
-
-    public static boolean updateExists(Context ctx) {
+    public static boolean updateExists() {
         try {
-            return Crtaci.checkUpdate();
+            return Crtaci.updateExists();
         } catch(Exception e) {
             e.printStackTrace();
             return false;
@@ -55,13 +51,16 @@ public class Update {
     static void downloadUpdate(Context ctx) {
         DownloadManager downloadmanager;
         downloadmanager = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
-        Uri uri = Uri.parse(getUpdateUrl(ctx));
+
+        String updateVersion = getUpdateVersion();
+        String updateUrl = String.format(Locale.ROOT, "https://crtaci.rs/download/crtaci-%s.apk", updateVersion);
+
+        Uri uri = Uri.parse(updateUrl);
         DownloadManager.Request request = new DownloadManager.Request(uri);
-        request.setTitle("Downloading update");
-        request.setDescription("Crtaci");
+        request.setTitle(String.format(Locale.ROOT, "crtaci-%s", updateVersion));
         request.setMimeType("application/vnd.android.package-archive");
        	request.setVisibleInDownloadsUi(true);
-       	request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, "crtaci-"+getUpdateVersion(ctx)+".apk");
+       	request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, String.format(Locale.ROOT, "crtaci-%s.apk", updateVersion));
         downloadmanager.enqueue(request);
     }
 

@@ -9,8 +9,8 @@
         android:layout_width="55dip"
         android:layout_height="55dip"
         android:layout_margin="10dip"
-        android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
+        android:scaleType="fitXY"
+        android:adjustViewBounds="false"
         android:contentDescription="@string/app_name" />
 
     <TextView

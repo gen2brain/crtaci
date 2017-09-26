@@ -20,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.Toast;
 
 import com.github.gen2brain.crtaci.utils.Dialogs;
 import com.github.gen2brain.crtaci.utils.Update;
@@ -33,7 +34,7 @@ import com.github.gen2brain.crtaci.fragments.CharactersFragment;
 import com.github.gen2brain.crtaci.R;
 import com.github.gen2brain.crtaci.entities.Character;
 
-import go.crtaci.Crtaci;
+import crtaci.Crtaci;
 
 public class CharactersActivity extends AppCompatActivity {
 
@@ -43,7 +44,7 @@ public class CharactersActivity extends AppCompatActivity {
     private ArrayList<Character> characters;
     private ProgressBar progressBar;
 
-    public static final int RC_PERMISSION_WRITE_EXTERNAL_STORAGE = 313;
+    public static final int PERMISSION_WRITE_EXTERNAL_STORAGE = 313;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,10 +53,9 @@ public class CharactersActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_characters);
 
-        progressBar = (ProgressBar) findViewById(R.id.progressbar);
+        progressBar = findViewById(R.id.progressbar);
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        //toolbar.setLogo(R.drawable.ic_launcher);
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         twoPane = findViewById(R.id.cartoons_container) != null;
@@ -66,8 +66,7 @@ public class CharactersActivity extends AppCompatActivity {
 
         int permissionCheck = ContextCompat.checkSelfPermission(CharactersActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE);
        	if(permissionCheck != PackageManager.PERMISSION_GRANTED) {
-            Log.d(TAG, String.format("permissionCheck:%d", permissionCheck));
-            ActivityCompat.requestPermissions(CharactersActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, RC_PERMISSION_WRITE_EXTERNAL_STORAGE);
+            ActivityCompat.requestPermissions(CharactersActivity.this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, PERMISSION_WRITE_EXTERNAL_STORAGE);
        	}
 
         if(savedInstanceState != null) {
@@ -153,11 +152,9 @@ public class CharactersActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
        	switch(requestCode) {
-            case RC_PERMISSION_WRITE_EXTERNAL_STORAGE: {
-               	if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d(TAG, "External storage allowed");
-               	} else {
-                    Log.d(TAG, "External storage denied");
+            case PERMISSION_WRITE_EXTERNAL_STORAGE: {
+               	if(grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(getApplicationContext(), getString(R.string.error_storage_not_granted), Toast.LENGTH_LONG).show();
                	}
                	break;
             }
@@ -252,7 +249,7 @@ public class CharactersActivity extends AppCompatActivity {
         }
 
         protected Boolean doInBackground(Void... params) {
-            return Update.updateExists(getApplication());
+            return Update.updateExists();
         }
 
         protected void onPostExecute(Boolean result) {

@@ -1,9 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <color name="primary">#B2DFDB</color>
+    <color name="primaryDark">#212121</color>
+    <color name="accent">#009688</color>
+
     <color name="item">#27408B</color>
     <color name="item_selected">#6484A4</color>
+
     <color name="background">#FFFFFF</color>
     <color name="background_alternate">#F0F8FF</color>
     <color name="background_cartoon">#87CEEB</color>
+
     <color name="transparent">#00000000</color>
 </resources>

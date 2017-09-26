@@ -1,9 +1,9 @@
 package com.github.gen2brain.crtaci.fragments;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -28,22 +28,11 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
-import com.nostra13.universalimageloader.cache.disc.impl.UnlimitedDiskCache;
-import com.nostra13.universalimageloader.core.DisplayImageOptions;
-import com.nostra13.universalimageloader.core.ImageLoader;
-import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
-import com.nostra13.universalimageloader.core.display.FadeInBitmapDisplayer;
-import com.nostra13.universalimageloader.core.display.SimpleBitmapDisplayer;
-import com.nostra13.universalimageloader.core.listener.ImageLoadingListener;
-import com.nostra13.universalimageloader.core.listener.SimpleImageLoadingListener;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Locale;
 
 import com.github.gen2brain.crtaci.R;
@@ -51,7 +40,7 @@ import com.github.gen2brain.crtaci.activities.PlayerActivity;
 import com.github.gen2brain.crtaci.entities.Cartoon;
 import com.github.gen2brain.crtaci.utils.Utils;
 
-import go.crtaci.Crtaci;
+import crtaci.Crtaci;
 
 
 public class CartoonsFragment extends Fragment {
@@ -62,8 +51,6 @@ public class CartoonsFragment extends Fragment {
     private ArrayList<Cartoon> cartoons;
     private Cartoon selectedCartoon;
     private ProgressBar progressBar;
-
-    protected ImageLoader imageLoader = ImageLoader.getInstance();
 
     public static CartoonsFragment newInstance(ArrayList<Cartoon> cartoons, boolean twoPane) {
         CartoonsFragment fragment = new CartoonsFragment();
@@ -86,25 +73,13 @@ public class CartoonsFragment extends Fragment {
 
         twoPane = getArguments().getBoolean("twoPane");
 
-        View view = inflater.inflate(R.layout.fragment_cartoons, container, false);
-
-        if(!imageLoader.isInited()) {
-            File cacheDir = new File(getActivity().getCacheDir().toString());
-            ImageLoaderConfiguration config = new
-                    ImageLoaderConfiguration.Builder(getActivity().getApplicationContext())
-                    .diskCache(new UnlimitedDiskCache(cacheDir))
-                    .defaultDisplayImageOptions(DisplayImageOptions.createSimple())
-                    .build();
-            imageLoader.init(config);
-        }
-
-        return view;
+        return inflater.inflate(R.layout.fragment_cartoons, container, false);
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        progressBar = (ProgressBar) view.getRootView().findViewById(R.id.progressbar);
+        progressBar = view.getRootView().findViewById(R.id.progressbar);
         createListView(view);
 
         if(cartoons != null && !cartoons.isEmpty()) {
@@ -124,7 +99,7 @@ public class CartoonsFragment extends Fragment {
     }
 
     public void createListView(View view) {
-        ListView listView = (ListView) view.findViewById(R.id.cartoons);
+        ListView listView = view.findViewById(R.id.cartoons);
         final ItemAdapter adapter = new ItemAdapter();
         listView.setAdapter(adapter);
         listView.setChoiceMode(ListView.CHOICE_MODE_MULTIPLE_MODAL);
@@ -151,7 +126,7 @@ public class CartoonsFragment extends Fragment {
                	return false;
             }
 
-                        @Override
+            @Override
             public void onItemCheckedStateChanged(android.view.ActionMode mode, int position, long id, boolean checked) {
                	if(checked) {
                     adapter.selectItem(position);
@@ -184,25 +159,13 @@ public class CartoonsFragment extends Fragment {
     }
 
 
-    class ItemAdapter extends BaseAdapter {
+    private class ItemAdapter extends BaseAdapter {
 
-        private ImageLoadingListener animateFirstListener = new AnimateFirstDisplayListener();
         private ArrayList<Cartoon> selectedCartoons = new ArrayList<>();
-
-        DisplayImageOptions options = new DisplayImageOptions.Builder()
-                .showImageOnLoading(R.drawable.ic_stub)
-                .showImageForEmptyUri(R.drawable.ic_empty)
-                .showImageOnFail(R.drawable.ic_error)
-                .cacheInMemory(true)
-                .cacheOnDisk(true)
-                .considerExifParams(true)
-                .displayer(new SimpleBitmapDisplayer())
-                .build();
 
         private class ViewHolder {
             public TextView title;
             ImageView thumbnail;
-            public ImageView logo;
         }
 
         @Override
@@ -232,12 +195,14 @@ public class CartoonsFragment extends Fragment {
             final Cartoon cartoon = cartoons.get(position);
 
             if(convertView == null) {
-                LayoutInflater inflater = getLayoutInflater(null);
+                Context context = parent.getContext();
+                LayoutInflater inflater = LayoutInflater.from(context);
+
                 view = inflater.inflate(R.layout.item_list_cartoon, parent, false);
 
                 holder = new ViewHolder();
-                holder.title = (TextView) view.findViewById(R.id.title);
-                holder.thumbnail = (ImageView) view.findViewById(R.id.thumbnail);
+                holder.title = view.findViewById(R.id.title);
+                holder.thumbnail = view.findViewById(R.id.thumbnail);
 
                 Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/ComicRelief.ttf");
                 holder.title.setTypeface(tf);
@@ -259,7 +224,7 @@ public class CartoonsFragment extends Fragment {
                 thumb = cartoon.thumbSmall;
             }
 
-            imageLoader.displayImage(thumb, holder.thumbnail, options, animateFirstListener);
+            Glide.with(getContext()).load(thumb).into(holder.thumbnail);
 
             return view;
         }
@@ -299,24 +264,6 @@ public class CartoonsFragment extends Fragment {
 
         int getSelectedCount() {
             return selectedCartoons.size();
-        }
-    }
-
-
-    private static class AnimateFirstDisplayListener extends SimpleImageLoadingListener {
-
-        static final List<String> displayedImages = Collections.synchronizedList(new LinkedList<String>());
-
-        @Override
-        public void onLoadingComplete(String imageUri, View view, Bitmap loadedImage) {
-            if(loadedImage != null) {
-                ImageView imageView = (ImageView) view;
-                boolean firstDisplay = !displayedImages.contains(imageUri);
-                if(firstDisplay) {
-                    FadeInBitmapDisplayer.animate(imageView, 500);
-                    displayedImages.add(imageUri);
-                }
-            }
         }
     }
 

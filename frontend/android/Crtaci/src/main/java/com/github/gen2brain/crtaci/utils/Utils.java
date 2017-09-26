@@ -63,7 +63,6 @@ public class Utils {
        	Uri uri = Uri.parse(url);
        	DownloadManager.Request request = new DownloadManager.Request(uri);
        	request.setTitle(title.replace(" ", "_")+".mp4");
-       	request.setDescription("Crtaci");
        	request.setVisibleInDownloadsUi(true);
        	request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, title.replace(" ", "_")+".mp4");
        	downloadmanager.enqueue(request);

@@ -1,6 +1,7 @@
-v0.1.9 Sep , 2017:
+v0.1.9 Sep 26, 2017:
 
     * added language detection
+    * internal player now uses ExoPlayer
     * code refactoring
 
 v0.1.8 Oct 24, 2016:

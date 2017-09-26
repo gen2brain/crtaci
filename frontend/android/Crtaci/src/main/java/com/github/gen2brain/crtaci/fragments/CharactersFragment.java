@@ -1,5 +1,6 @@
 package com.github.gen2brain.crtaci.fragments;
 
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -35,7 +36,7 @@ import com.github.gen2brain.crtaci.entities.Character;
 import com.github.gen2brain.crtaci.utils.Connectivity;
 import com.github.gen2brain.crtaci.utils.Utils;
 
-import go.crtaci.Crtaci;
+import crtaci.Crtaci;
 
 
 public class CharactersFragment extends Fragment {
@@ -74,7 +75,7 @@ public class CharactersFragment extends Fragment {
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        progressBar = (ProgressBar) view.getRootView().findViewById(R.id.progressbar);
+        progressBar = view.getRootView().findViewById(R.id.progressbar);
         createListView(view);
     }
 
@@ -119,7 +120,7 @@ public class CharactersFragment extends Fragment {
     }
 
     public void createListView(View view) {
-        final ListView listView = (ListView) view.findViewById(R.id.characters);
+        final ListView listView = view.findViewById(R.id.characters);
         final ItemAdapter adapter = new ItemAdapter();
 
         listView.setAdapter(adapter);
@@ -152,7 +153,7 @@ public class CharactersFragment extends Fragment {
     }
 
 
-    class ItemAdapter extends BaseAdapter {
+    private class ItemAdapter extends BaseAdapter {
 
         private class ViewHolder {
             public TextView name;
@@ -186,12 +187,14 @@ public class CharactersFragment extends Fragment {
             Character character = characters.get(position);
 
             if(convertView == null) {
-                LayoutInflater inflater = getLayoutInflater(null);
+                Context context = parent.getContext();
+                LayoutInflater inflater = LayoutInflater.from(context);
+
                 view = inflater.inflate(R.layout.item_list_character, parent, false);
 
                 holder = new ViewHolder();
-                holder.name = (TextView) view.findViewById(R.id.name);
-                holder.icon = (ImageView) view.findViewById(R.id.icon);
+                holder.name = view.findViewById(R.id.name);
+                holder.icon = view.findViewById(R.id.icon);
 
                 Typeface tf=Typeface.createFromAsset(getActivity().getAssets(), "fonts/ComicRelief.ttf");
                 holder.name.setTypeface(tf);

@@ -15,6 +15,8 @@ public class Character implements Serializable {
 
     public String query;
 
+    public String languages;
+
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
@@ -26,6 +28,7 @@ public class Character implements Serializable {
         result.append("  altname2: " + this.altname2 + NL);
         result.append("  duration: " + this.duration + NL);
         result.append("  query: " + this.query + NL);
+        result.append("  languages: " + this.languages + NL);
         result.append("}" + NL);
 
         return result.toString();
