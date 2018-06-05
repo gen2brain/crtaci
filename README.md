@@ -5,11 +5,6 @@ About
 
 Application is available for Windows, Mac OS X, Linux, Android and Web.
 
-Web Site
--------
-
-https://crtaci.rs
-
 License
 -------
 
